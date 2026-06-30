@@ -13,7 +13,7 @@ const STEP_LABELS = [
 
 export function WizardShell({ step, children }: { step: number; children: React.ReactNode }) {
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="force-light flex min-h-screen flex-col bg-background text-foreground">
       <header className="border-b px-6 py-4">
         <Link href="/" className="flex items-center gap-2 font-bold">
           <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary text-sm text-primary-foreground">
