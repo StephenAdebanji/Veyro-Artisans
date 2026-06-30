@@ -4,7 +4,7 @@ import { DisputeList } from "@/components/admin/dispute-list";
 export default async function AdminReportsPage() {
   const disputes = await matchingRepository.listOpenDisputes();
 
-  const items = disputes.map((d) => ({
+  const items = disputes.map((d: (typeof disputes)[number]) => ({
     id: d.id,
     jobId: d.jobId,
     raisedBy: d.raisedBy,
