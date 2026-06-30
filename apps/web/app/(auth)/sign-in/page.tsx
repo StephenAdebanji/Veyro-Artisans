@@ -9,7 +9,7 @@ export default async function SignInPage({
   const params = await searchParams;
 
   return (
-    <AuthLayout title="Welcome back" subtitle="Hire trusted artisans in minutes.">
+    <AuthLayout title="Welcome back" subtitle="Hire trusted artisans in minutes." mode="sign-in">
       {params.registered === "1" && (
         <div className="mb-4 rounded-md border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
           Account created successfully — please sign in to continue.

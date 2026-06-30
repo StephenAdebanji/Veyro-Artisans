@@ -3,7 +3,7 @@ import { SignUpForm } from "@/components/auth/sign-up-form";
 
 export default function SignUpPage() {
   return (
-    <AuthLayout title="Create your account" subtitle="Find verified artisans near you.">
+    <AuthLayout title="Create your account" subtitle="Find verified artisans near you." mode="sign-up">
       <SignUpForm />
     </AuthLayout>
   );

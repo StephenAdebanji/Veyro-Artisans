@@ -10,7 +10,7 @@ export default async function ResetPasswordPage({
 
   if (!token) {
     return (
-      <AuthLayout title="Invalid link" subtitle="">
+      <AuthLayout title="Invalid link" subtitle="" mode="sign-in">
         <p className="text-sm text-destructive">
           This password reset link is invalid or has expired.{" "}
           <a href="/forgot-password" className="text-primary underline">
@@ -23,7 +23,7 @@ export default async function ResetPasswordPage({
   }
 
   return (
-    <AuthLayout title="Set a new password" subtitle="Choose a strong password for your account.">
+    <AuthLayout title="Set a new password" subtitle="Choose a strong password for your account." mode="sign-in">
       <ResetPasswordForm token={token} />
     </AuthLayout>
   );
