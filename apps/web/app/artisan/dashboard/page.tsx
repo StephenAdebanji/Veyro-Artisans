@@ -9,7 +9,7 @@ import { auth } from "@/platform/auth-session";
 import { isAvailableNow } from "@/services/user/availability";
 import { matchingService } from "@/services/matching/matching.service";
 import { userService } from "@/services/user/user.service";
-import type { ArtisanOnboardingStatus } from "@prisma/client";
+type ArtisanOnboardingStatus = "DRAFT" | "PENDING_REVIEW" | "ACTIVE" | "SUSPENDED";
 
 interface ArtisanProfileRecord {
   id: string;

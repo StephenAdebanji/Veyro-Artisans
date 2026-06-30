@@ -8,12 +8,10 @@ import { EXPERIENCE_LABELS, SKILL_LABELS } from "@/components/shared/skill-label
 import { matchingService } from "@/services/matching/matching.service";
 import { userService } from "@/services/user/user.service";
 import { blockchainService } from "@/services/blockchain/blockchain.service";
-import type {
-  ArtisanOnboardingStatus,
-  ArtisanVerificationStatusCache,
-  ExperienceLevel,
-  SkillCategory,
-} from "@prisma/client";
+type ArtisanOnboardingStatus = "DRAFT" | "PENDING_REVIEW" | "ACTIVE" | "SUSPENDED";
+type ArtisanVerificationStatusCache = "UNVERIFIED" | "PENDING" | "VERIFIED" | "REJECTED";
+type ExperienceLevel = "ZERO_TO_TWO" | "THREE_TO_FIVE" | "SIX_TO_TEN" | "TEN_PLUS";
+type SkillCategory = import("@veyro/contracts").SkillCategory;
 
 interface ArtisanProfileRecord {
   id: string;
