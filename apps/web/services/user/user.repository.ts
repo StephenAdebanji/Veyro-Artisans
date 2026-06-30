@@ -14,6 +14,13 @@ export const userRepository = {
     return prisma.homeownerProfile.findUnique({ where: { userId } });
   },
 
+  async updateHomeownerProfile(
+    userId: string,
+    data: { phone?: string; address?: string; city?: string; state?: string },
+  ) {
+    return prisma.homeownerProfile.update({ where: { userId }, data });
+  },
+
   async createArtisanDraft(userId: string) {
     return prisma.artisanProfile.create({ data: { userId } });
   },

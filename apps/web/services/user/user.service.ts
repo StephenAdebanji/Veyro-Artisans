@@ -34,6 +34,13 @@ class UserService implements UserServicePort {
     return profile ? { id: profile.id, userId: profile.userId, fullName: profile.fullName } : null;
   }
 
+  async updateHomeownerProfile(
+    userId: string,
+    data: { phone?: string; address?: string; city?: string; state?: string },
+  ) {
+    return userRepository.updateHomeownerProfile(userId, data);
+  }
+
   async createArtisanDraft(userId: string): Promise<string> {
     const profile = await userRepository.createArtisanDraft(userId);
     return profile.id;

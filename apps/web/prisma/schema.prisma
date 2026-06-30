@@ -181,6 +181,10 @@ model HomeownerProfile {
   /// replaced by a local denormalized {userId, role} copy synced via UserRegistered.
   user      User     @relation(fields: [userId], references: [id])
   fullName  String?
+  phone     String?
+  address   String?
+  city      String?
+  state     String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
