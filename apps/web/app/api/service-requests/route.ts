@@ -3,20 +3,11 @@ import { z } from "zod";
 import { auth } from "@/platform/auth-session";
 import { matchingService } from "@/services/matching/matching.service";
 import { userService } from "@/services/user/user.service";
-
-const SKILL_CATEGORIES = [
-  "ELECTRICIAN",
-  "PLUMBER",
-  "CARPENTER",
-  "PAINTER",
-  "WELDER",
-  "SOLAR_TECHNICIAN",
-  "CCTV_INSTALLER",
-  "INTERIOR_DECORATOR",
-] as const;
+import { SKILL_CATEGORIES } from "@/components/shared/skill-labels";
+import type { SkillCategory } from "@veyro/contracts";
 
 const createRequestSchema = z.object({
-  category: z.enum(SKILL_CATEGORIES),
+  category: z.enum(SKILL_CATEGORIES as unknown as [string, ...string[]]).transform((v) => v as SkillCategory),
   description: z.string().min(1),
   location: z.object({ lat: z.number(), lng: z.number() }),
   address: z.string().min(1),
