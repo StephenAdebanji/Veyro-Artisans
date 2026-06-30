@@ -30,7 +30,7 @@ export function CategoryPicker() {
         onClick={() => setOpen((o) => !o)}
         className="flex w-full items-center justify-between gap-2 rounded-full border bg-card px-4 py-2 text-sm text-muted-foreground shadow-sm transition-colors hover:border-primary"
       >
-        <span>What do you need fixed?</span>
+        <span>Which artisan are you looking for today?</span>
         <ChevronDown className={`size-4 shrink-0 transition-transform ${open ? "rotate-180" : ""}`} />
       </button>
 
