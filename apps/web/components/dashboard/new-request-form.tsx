@@ -16,11 +16,6 @@ import {
 import { SKILL_CATEGORIES, SKILL_LABELS } from "@/components/shared/skill-labels";
 import type { SkillCategory } from "@veyro/contracts";
 
-// Lagos city-centre fallback — Mapbox geocoding isn't wired yet (no token),
-// so every request gets this placeholder location until Phase 5+ adds real
-// address→coordinates lookup via platform/mapbox.ts.
-const FALLBACK_LOCATION = { lat: 6.5244, lng: 3.3792 };
-
 export function NewRequestForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -52,7 +47,6 @@ export function NewRequestForm() {
         category,
         description,
         address,
-        location: FALLBACK_LOCATION,
         budgetMin: budgetMin ? Number(budgetMin) : undefined,
         budgetMax: budgetMax ? Number(budgetMax) : undefined,
         preferredDate: preferredDate || undefined,
