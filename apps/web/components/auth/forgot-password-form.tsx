@@ -31,14 +31,20 @@ export function ForgotPasswordForm() {
 
   if (sent) {
     return (
-      <div className="rounded-md border border-emerald-300 bg-emerald-50 px-4 py-4 text-sm text-emerald-700">
-        If an account exists for <strong>{email}</strong>, you'll receive a reset link shortly.
-        Check your inbox (and spam folder).
-        <div className="mt-4">
-          <Link href="/sign-in" className="text-primary underline">
-            Back to sign in
-          </Link>
+      <div className="flex flex-col items-center gap-4 text-center">
+        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 text-2xl">
+          ✓
         </div>
+        <div>
+          <p className="font-semibold text-foreground">Check your inbox</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            We sent a password reset link to <strong>{email}</strong>.
+            If it doesn't arrive, check your spam folder.
+          </p>
+        </div>
+        <Button asChild className="w-full mt-2">
+          <Link href="/sign-in">Back to sign in</Link>
+        </Button>
       </div>
     );
   }
