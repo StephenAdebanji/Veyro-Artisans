@@ -3,11 +3,13 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
-import { LogOut, Settings, User } from "lucide-react";
+import { Briefcase, LogOut, MessageSquare, Settings } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 
 interface NavLink {
   href: string;
   label: string;
+  icon: LucideIcon;
 }
 
 interface DashboardNavbarProps {
@@ -16,19 +18,19 @@ interface DashboardNavbarProps {
 }
 
 const ARTISAN_LINKS: NavLink[] = [
-  { href: "/artisan/jobs", label: "Jobs" },
-  { href: "/artisan/messages", label: "Messages" },
+  { href: "/artisan/jobs", label: "Jobs", icon: Briefcase },
+  { href: "/artisan/messages", label: "Messages", icon: MessageSquare },
 ];
 
 const HOMEOWNER_LINKS: NavLink[] = [
-  { href: "/homeowner/requests/new", label: "New Request" },
-  { href: "/homeowner/messages", label: "Messages" },
+  { href: "/homeowner/messages", label: "Messages", icon: MessageSquare },
+  { href: "/homeowner/settings", label: "Settings", icon: Settings },
 ];
 
 export function DashboardNavbar({ role, userName }: DashboardNavbarProps) {
   const pathname = usePathname();
   const links = role === "artisan" ? ARTISAN_LINKS : HOMEOWNER_LINKS;
-  const profileHref = role === "artisan" ? "/artisan/profile/edit" : "#";
+  const settingsHref = role === "artisan" ? "/artisan/profile/edit" : "/homeowner/settings";
 
   return (
     <nav className="sticky top-0 z-50 w-full bg-[#1E3A8A] text-white shadow-md">
@@ -46,19 +48,20 @@ export function DashboardNavbar({ role, userName }: DashboardNavbarProps) {
 
         {/* Nav links */}
         <div className="hidden items-center gap-1 md:flex">
-          {links.map((link) => {
-            const active = pathname === link.href || pathname.startsWith(link.href + "/");
+          {links.map(({ href, label, icon: Icon }) => {
+            const active = pathname === href || pathname.startsWith(href + "/");
             return (
               <Link
-                key={link.href}
-                href={link.href}
-                className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                key={href}
+                href={href}
+                className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
                   active
                     ? "bg-white/20 text-white"
                     : "text-blue-100 hover:bg-white/10 hover:text-white"
                 }`}
               >
-                {link.label}
+                <Icon className="h-4 w-4" />
+                {label}
               </Link>
             );
           })}
@@ -70,8 +73,8 @@ export function DashboardNavbar({ role, userName }: DashboardNavbarProps) {
 
           {role === "artisan" && (
             <Link
-              href={profileHref}
-              className="flex items-center gap-1 rounded-md px-2 py-1.5 text-sm text-blue-100 hover:bg-white/10 hover:text-white"
+              href={settingsHref}
+              className="flex items-center gap-1.5 rounded-md px-2 py-1.5 text-sm text-blue-100 hover:bg-white/10 hover:text-white"
             >
               <Settings className="h-4 w-4" />
               <span className="hidden md:inline">Edit Profile</span>
@@ -80,7 +83,7 @@ export function DashboardNavbar({ role, userName }: DashboardNavbarProps) {
 
           <button
             onClick={() => signOut({ callbackUrl: "/" })}
-            className="flex items-center gap-1 rounded-md px-2 py-1.5 text-sm text-blue-100 hover:bg-white/10 hover:text-white"
+            className="flex items-center gap-1.5 rounded-md px-2 py-1.5 text-sm text-blue-100 hover:bg-white/10 hover:text-white"
           >
             <LogOut className="h-4 w-4" />
             <span className="hidden md:inline">Logout</span>
@@ -90,25 +93,27 @@ export function DashboardNavbar({ role, userName }: DashboardNavbarProps) {
 
       {/* Mobile nav */}
       <div className="flex gap-1 overflow-x-auto px-4 pb-2 md:hidden">
-        {links.map((link) => {
-          const active = pathname === link.href || pathname.startsWith(link.href + "/");
+        {links.map(({ href, label, icon: Icon }) => {
+          const active = pathname === href || pathname.startsWith(href + "/");
           return (
             <Link
-              key={link.href}
-              href={link.href}
-              className={`shrink-0 rounded-md px-3 py-1 text-sm font-medium ${
+              key={href}
+              href={href}
+              className={`flex shrink-0 items-center gap-1.5 rounded-md px-3 py-1 text-sm font-medium ${
                 active ? "bg-white/20 text-white" : "text-blue-100 hover:bg-white/10"
               }`}
             >
-              {link.label}
+              <Icon className="h-4 w-4" />
+              {label}
             </Link>
           );
         })}
         {role === "artisan" && (
           <Link
-            href={profileHref}
-            className="shrink-0 rounded-md px-3 py-1 text-sm text-blue-100 hover:bg-white/10"
+            href={settingsHref}
+            className="flex shrink-0 items-center gap-1.5 rounded-md px-3 py-1 text-sm text-blue-100 hover:bg-white/10"
           >
+            <Settings className="h-4 w-4" />
             Edit Profile
           </Link>
         )}
