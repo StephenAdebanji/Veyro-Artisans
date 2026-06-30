@@ -7,7 +7,7 @@ import { StepFooter } from "./step-footer";
 import { getOnboardingArtisanId } from "./onboarding-storage";
 import { patchOnboardingStep } from "./onboarding-api";
 
-const SLOT_COUNT = 8;
+const SLOT_COUNT = 10;
 
 export function Step7Portfolio() {
   const router = useRouter();
@@ -40,17 +40,26 @@ export function Step7Portfolio() {
     }
   }
 
+  const uploadedCount = urls.filter(Boolean).length;
+
   return (
     <form onSubmit={handleSubmit}>
-      <h2 className="font-semibold">Portfolio</h2>
-      <p className="text-sm text-muted-foreground">Upload up to 12 before &amp; after photos.</p>
-      <div className="mt-4 grid grid-cols-4 gap-3">
+      <h2 className="font-semibold">Upload photos of previous work done (before and after)</h2>
+      <p className="mt-1 text-sm text-muted-foreground">
+        Add up to {SLOT_COUNT} images showcasing your work. Images only · max 5MB each.
+      </p>
+      {uploadedCount > 0 && (
+        <p className="mt-1 text-sm font-medium text-primary">{uploadedCount} photo{uploadedCount !== 1 ? "s" : ""} uploaded</p>
+      )}
+      <div className="mt-4 grid grid-cols-4 gap-3 sm:grid-cols-5">
         {urls.map((_, index) => (
           <FileUpload
             key={index}
             uploadType="portfolio"
-            label=""
+            label={`Photo ${index + 1}`}
             accept="image/*"
+            maxSizeMb={5}
+            showPreview={true}
             onUploaded={(url) => setSlot(index, url)}
           />
         ))}

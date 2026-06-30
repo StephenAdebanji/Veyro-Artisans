@@ -22,18 +22,24 @@ export function Step5ProofOfAddress() {
       setError("Your session expired — please start again from step 1.");
       return;
     }
+    if (!utilityBillUrl) {
+      setError("Please upload your utility bill before continuing.");
+      return;
+    }
+    if (!bankStatementUrl) {
+      setError("Please upload your bank statement before continuing.");
+      return;
+    }
 
     const credentials = [
-      utilityBillUrl ? { type: "UTILITY_BILL", fileUrl: utilityBillUrl } : null,
-      bankStatementUrl ? { type: "BANK_STATEMENT", fileUrl: bankStatementUrl } : null,
-    ].filter((credential): credential is { type: string; fileUrl: string } => credential !== null);
+      { type: "UTILITY_BILL", fileUrl: utilityBillUrl },
+      { type: "BANK_STATEMENT", fileUrl: bankStatementUrl },
+    ];
 
     setError(null);
     setLoading(true);
     try {
-      // Uploads are optional at this step (no asterisk in the design) — an
-      // incomplete profile just won't clear verification until added later.
-      await patchOnboardingStep(artisanId, 5, undefined, credentials.length > 0 ? credentials : undefined);
+      await patchOnboardingStep(artisanId, 5, undefined, credentials);
       router.push("/join-artisan/steps/6");
     } catch (err) {
       setError((err as Error).message);
@@ -43,15 +49,35 @@ export function Step5ProofOfAddress() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="grid gap-4 sm:grid-cols-2">
+    <form onSubmit={handleSubmit} className="grid gap-6 sm:grid-cols-2">
       <div className="flex flex-col gap-1.5">
-        <Label>Utility bill</Label>
-        <FileUpload uploadType="proof-of-address" label="Click to upload" onUploaded={setUtilityBillUrl} />
+        <Label>
+          Utility bill <span className="text-destructive">*</span>
+        </Label>
+        <p className="text-xs text-muted-foreground">Electricity, water or gas bill (images only)</p>
+        <FileUpload
+          uploadType="proof-of-address"
+          label="Click to upload"
+          accept="image/*"
+          showPreview={false}
+          onUploaded={setUtilityBillUrl}
+        />
       </div>
+
       <div className="flex flex-col gap-1.5">
-        <Label>Bank statement</Label>
-        <FileUpload uploadType="proof-of-address" label="Click to upload" onUploaded={setBankStatementUrl} />
+        <Label>
+          Bank statement <span className="text-destructive">*</span>
+        </Label>
+        <p className="text-xs text-muted-foreground">Last 3 months statement (images only)</p>
+        <FileUpload
+          uploadType="proof-of-address"
+          label="Click to upload"
+          accept="image/*"
+          showPreview={false}
+          onUploaded={setBankStatementUrl}
+        />
       </div>
+
       {error && <p className="text-sm text-destructive sm:col-span-2">{error}</p>}
       <div className="sm:col-span-2">
         <StepFooter step={5} loading={loading} />
