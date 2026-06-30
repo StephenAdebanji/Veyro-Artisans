@@ -93,7 +93,7 @@ export function DashboardNavbar({ role, userName }: DashboardNavbarProps) {
                 className="flex items-center gap-1.5 rounded-md px-2 py-1.5 text-sm text-blue-100 hover:bg-white/10 hover:text-white"
               >
                 <Settings className="h-4 w-4" />
-                <span className="hidden md:inline">Edit Profile</span>
+                <span className="hidden md:inline">Settings</span>
               </Link>
             </>
           )}
@@ -131,7 +131,7 @@ export function DashboardNavbar({ role, userName }: DashboardNavbarProps) {
             className="flex shrink-0 items-center gap-1.5 rounded-md px-3 py-1 text-sm text-blue-100 hover:bg-white/10"
           >
             <Settings className="h-4 w-4" />
-            Edit Profile
+            Settings
           </Link>
         )}
         {role === "homeowner" &&

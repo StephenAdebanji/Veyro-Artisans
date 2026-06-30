@@ -126,6 +126,27 @@ class UserService implements UserServicePort {
     await userRepository.setOnboardingStep(artisanId, step);
   }
 
+  async updateArtisanSettings(
+    artisanId: string,
+    data: {
+      bio?: string;
+      serviceRadiusKm?: number;
+      city?: string;
+      state?: string;
+      gpsLat?: number;
+      gpsLng?: number;
+    },
+  ): Promise<void> {
+    await userRepository.updateArtisanProfile(artisanId, {
+      bio: data.bio ?? undefined,
+      serviceRadiusKm: data.serviceRadiusKm,
+      city: data.city ?? undefined,
+      state: data.state ?? undefined,
+      gpsLat: data.gpsLat,
+      gpsLng: data.gpsLng,
+    });
+  }
+
   async submitArtisanOnboarding(artisanId: string): Promise<void> {
     await userRepository.submitOnboarding(artisanId);
   }

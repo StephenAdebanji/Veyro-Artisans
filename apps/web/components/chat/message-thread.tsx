@@ -10,6 +10,7 @@ interface MessageThreadProps {
   conversationId: string;
   currentProfileId: string;
   counterpartName: string;
+  hideHeader?: boolean;
 }
 
 function formatTime(iso: string): string {
@@ -26,7 +27,7 @@ function formatDay(iso: string): string {
   return d.toLocaleDateString([], { month: "short", day: "numeric" });
 }
 
-export function MessageThread({ conversationId, currentProfileId, counterpartName }: MessageThreadProps) {
+export function MessageThread({ conversationId, currentProfileId, counterpartName, hideHeader }: MessageThreadProps) {
   const [messages, setMessages] = useState<MessageRecord[]>([]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
@@ -137,10 +138,12 @@ export function MessageThread({ conversationId, currentProfileId, counterpartNam
 
   return (
     <div className="flex h-full flex-col">
-      {/* Header */}
-      <div className="border-b px-5 py-3">
-        <p className="font-semibold">{counterpartName}</p>
-      </div>
+      {/* Header — hidden on mobile when parent already shows back+name row */}
+      {!hideHeader && (
+        <div className="border-b px-5 py-3">
+          <p className="font-semibold">{counterpartName}</p>
+        </div>
+      )}
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-5 py-4">

@@ -138,7 +138,7 @@ export function MatchingScreen({
             )}
           </div>
 
-          {!acceptedMatchId && (
+          {!acceptedMatchId && secondsLeft > 0 && (
             <div className="text-right">
               <p className="text-xs text-muted-foreground">Offer window closes in</p>
               <p
@@ -174,38 +174,50 @@ export function MatchingScreen({
 
       {/* Offers */}
       <div>
-        <h2 className="mb-3 text-lg font-semibold">
-          {offers.length === 0 ? "Waiting for artisans…" : `${offers.length} offer${offers.length === 1 ? "" : "s"} received`}
-        </h2>
-
-        {offers.length === 0 && !acceptedMatchId && (
-          <div className="flex flex-col items-center gap-3 py-12 text-center text-muted-foreground">
-            <Loader2 className="h-8 w-8 animate-spin" />
-            <p className="text-sm">Nearby artisans are being notified. Offers appear here live.</p>
-          </div>
-        )}
-
-        <div className="space-y-3">
-          {offers.map((offer) => (
-            <OfferCard
-              key={offer.matchId}
-              offer={offer}
-              onAccept={handleAccept}
-              disabled={!!acceptedMatchId}
-            />
-          ))}
-        </div>
-
-        {secondsLeft === 0 && !acceptedMatchId && offers.length === 0 && (
-          <p className="mt-6 text-center text-sm text-muted-foreground">
-            No artisans responded within the window.{" "}
+        {secondsLeft === 0 && !acceptedMatchId && offers.length === 0 ? (
+          <div className="flex flex-col items-center gap-6 rounded-xl border bg-card py-16 text-center">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted text-3xl">
+              ⏱
+            </div>
+            <div>
+              <h2 className="text-xl font-semibold">No artisans responded</h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                No one picked up your request within the offer window.
+              </p>
+            </div>
             <button
               onClick={() => router.push("/homeowner/requests/new")}
-              className="font-medium text-primary underline underline-offset-2"
+              className="rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
             >
               Post again
             </button>
-          </p>
+          </div>
+        ) : (
+          <>
+            <h2 className="mb-3 text-lg font-semibold">
+              {offers.length === 0
+                ? "Waiting for artisans…"
+                : `${offers.length} offer${offers.length === 1 ? "" : "s"} received`}
+            </h2>
+
+            {offers.length === 0 && !acceptedMatchId && (
+              <div className="flex flex-col items-center gap-3 py-12 text-center text-muted-foreground">
+                <Loader2 className="h-8 w-8 animate-spin" />
+                <p className="text-sm">Nearby artisans are being notified. Offers appear here live.</p>
+              </div>
+            )}
+
+            <div className="space-y-3">
+              {offers.map((offer) => (
+                <OfferCard
+                  key={offer.matchId}
+                  offer={offer}
+                  onAccept={handleAccept}
+                  disabled={!!acceptedMatchId}
+                />
+              ))}
+            </div>
+          </>
         )}
       </div>
     </div>

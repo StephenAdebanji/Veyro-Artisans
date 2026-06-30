@@ -12,9 +12,9 @@ export default async function HomeownerLayout({ children }: { children: React.Re
   const firstName = profile?.fullName?.split(" ")[0] ?? "there";
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex min-h-0 flex-1 flex-col">
       <DashboardNavbar role="homeowner" userName={firstName} />
-      <div className="flex flex-1 flex-col">{children}</div>
+      <div className="flex min-h-0 flex-1 flex-col">{children}</div>
     </div>
   );
 }

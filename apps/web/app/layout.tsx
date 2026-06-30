@@ -16,7 +16,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="h-full antialiased" suppressHydrationWarning>
-      <body className="min-h-full flex flex-col">
+      <body className="flex h-full flex-col">
         <TopLoader color="#1E3A8A" height={3} showSpinner={false} />
         <Providers>{children}</Providers>
       </body>

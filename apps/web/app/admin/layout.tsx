@@ -1,12 +1,13 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { BarChart2, ShieldCheck, AlertTriangle } from "lucide-react";
+import { BarChart2, ShieldCheck, AlertTriangle, Settings } from "lucide-react";
 import { auth } from "@/platform/auth-session";
 
 const NAV = [
   { href: "/admin/console", label: "Console", icon: BarChart2 },
   { href: "/admin/verifications", label: "Verifications", icon: ShieldCheck },
   { href: "/admin/reports", label: "Disputes", icon: AlertTriangle },
+  { href: "/admin/settings", label: "Settings", icon: Settings },
 ];
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {

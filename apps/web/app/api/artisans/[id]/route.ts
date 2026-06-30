@@ -2,16 +2,13 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/platform/auth-session";
 import { userService } from "@/services/user/user.service";
+import { geocodeAddress } from "@/platform/mapbox";
 
 const editSchema = z.object({
-  firstName: z.string().min(1).optional(),
-  lastName: z.string().min(1).optional(),
   bio: z.string().optional(),
-  hourlyRate: z.number().positive().optional(),
   serviceRadiusKm: z.number().positive().optional(),
   city: z.string().optional(),
   state: z.string().optional(),
-  availableNow: z.boolean().optional(),
 });
 
 /** Public artisan profile. residentialAddress/gps are stripped unless the
@@ -44,8 +41,21 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   const parsed = editSchema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
 
-  const { availableNow, ...profileFields } = parsed.data;
-  await userService.updateArtisanOnboardingStep(id, 0, profileFields);
+  const { city, state, ...rest } = parsed.data;
+
+  // Geocode city+state so dashboard location-based counts stay accurate.
+  let gpsLat: number | undefined;
+  let gpsLng: number | undefined;
+  if (city || state) {
+    const parts = [city, state, "Nigeria"].filter(Boolean).join(", ");
+    const geo = await geocodeAddress(parts);
+    if (geo) {
+      gpsLat = geo.lat;
+      gpsLng = geo.lng;
+    }
+  }
+
+  await userService.updateArtisanSettings(id, { ...rest, city, state, gpsLat, gpsLng });
 
   return NextResponse.json({ ok: true });
 }

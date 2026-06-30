@@ -167,7 +167,7 @@ export default async function ArtisanDashboardPage() {
           </div>
 
           <Link href="/artisan/profile/edit" className="block text-center text-sm font-medium text-primary">
-            Edit profile →
+            Settings →
           </Link>
         </div>
       </div>
