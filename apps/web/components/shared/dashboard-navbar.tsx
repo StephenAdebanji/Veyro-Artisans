@@ -17,20 +17,24 @@ interface DashboardNavbarProps {
   userName: string;
 }
 
-const ARTISAN_LINKS: NavLink[] = [
+const ARTISAN_CENTER_LINKS: NavLink[] = [
   { href: "/artisan/jobs", label: "Jobs", icon: Briefcase },
   { href: "/artisan/messages", label: "Messages", icon: MessageSquare },
 ];
 
-const HOMEOWNER_LINKS: NavLink[] = [
+const HOMEOWNER_RIGHT_LINKS: NavLink[] = [
   { href: "/homeowner/messages", label: "Messages", icon: MessageSquare },
   { href: "/homeowner/settings", label: "Settings", icon: Settings },
 ];
 
+function linkClass(active: boolean) {
+  return `flex items-center gap-1.5 rounded-md px-2 py-1.5 text-sm font-medium transition-colors ${
+    active ? "bg-white/20 text-white" : "text-blue-100 hover:bg-white/10 hover:text-white"
+  }`;
+}
+
 export function DashboardNavbar({ role, userName }: DashboardNavbarProps) {
   const pathname = usePathname();
-  const links = role === "artisan" ? ARTISAN_LINKS : HOMEOWNER_LINKS;
-  const settingsHref = role === "artisan" ? "/artisan/profile/edit" : "/homeowner/settings";
 
   return (
     <nav className="sticky top-0 z-50 w-full bg-[#1E3A8A] text-white shadow-md">
@@ -46,39 +50,52 @@ export function DashboardNavbar({ role, userName }: DashboardNavbarProps) {
           <span className="text-xl font-extrabold tracking-tight text-white">VEYRO</span>
         </Link>
 
-        {/* Nav links */}
-        <div className="hidden items-center gap-1 md:flex">
-          {links.map(({ href, label, icon: Icon }) => {
-            const active = pathname === href || pathname.startsWith(href + "/");
-            return (
+        {/* Center — artisan only */}
+        {role === "artisan" && (
+          <div className="hidden items-center gap-1 md:flex">
+            {ARTISAN_CENTER_LINKS.map(({ href, label, icon: Icon }) => (
               <Link
                 key={href}
                 href={href}
-                className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-                  active
-                    ? "bg-white/20 text-white"
-                    : "text-blue-100 hover:bg-white/10 hover:text-white"
-                }`}
+                className={linkClass(pathname === href || pathname.startsWith(href + "/"))}
               >
                 <Icon className="h-4 w-4" />
                 {label}
               </Link>
-            );
-          })}
-        </div>
+            ))}
+          </div>
+        )}
 
         {/* Right side */}
-        <div className="flex items-center gap-2">
-          <span className="hidden text-sm text-blue-100 md:block">{userName}</span>
+        <div className="flex items-center gap-1">
+          {/* Homeowner quick links sit here, before logout */}
+          {role === "homeowner" && (
+            <div className="hidden items-center gap-1 md:flex">
+              {HOMEOWNER_RIGHT_LINKS.map(({ href, label, icon: Icon }) => (
+                <Link
+                  key={href}
+                  href={href}
+                  className={linkClass(pathname === href || pathname.startsWith(href + "/"))}
+                >
+                  <Icon className="h-4 w-4" />
+                  <span className="hidden md:inline">{label}</span>
+                </Link>
+              ))}
+            </div>
+          )}
 
+          {/* Artisan username + edit profile */}
           {role === "artisan" && (
-            <Link
-              href={settingsHref}
-              className="flex items-center gap-1.5 rounded-md px-2 py-1.5 text-sm text-blue-100 hover:bg-white/10 hover:text-white"
-            >
-              <Settings className="h-4 w-4" />
-              <span className="hidden md:inline">Edit Profile</span>
-            </Link>
+            <>
+              <span className="hidden text-sm text-blue-100 md:block mr-1">{userName}</span>
+              <Link
+                href="/artisan/profile/edit"
+                className="flex items-center gap-1.5 rounded-md px-2 py-1.5 text-sm text-blue-100 hover:bg-white/10 hover:text-white"
+              >
+                <Settings className="h-4 w-4" />
+                <span className="hidden md:inline">Edit Profile</span>
+              </Link>
+            </>
           )}
 
           <button
@@ -93,30 +110,45 @@ export function DashboardNavbar({ role, userName }: DashboardNavbarProps) {
 
       {/* Mobile nav */}
       <div className="flex gap-1 overflow-x-auto px-4 pb-2 md:hidden">
-        {links.map(({ href, label, icon: Icon }) => {
-          const active = pathname === href || pathname.startsWith(href + "/");
-          return (
+        {role === "artisan" &&
+          ARTISAN_CENTER_LINKS.map(({ href, label, icon: Icon }) => (
             <Link
               key={href}
               href={href}
               className={`flex shrink-0 items-center gap-1.5 rounded-md px-3 py-1 text-sm font-medium ${
-                active ? "bg-white/20 text-white" : "text-blue-100 hover:bg-white/10"
+                pathname === href || pathname.startsWith(href + "/")
+                  ? "bg-white/20 text-white"
+                  : "text-blue-100 hover:bg-white/10"
               }`}
             >
               <Icon className="h-4 w-4" />
               {label}
             </Link>
-          );
-        })}
+          ))}
         {role === "artisan" && (
           <Link
-            href={settingsHref}
+            href="/artisan/profile/edit"
             className="flex shrink-0 items-center gap-1.5 rounded-md px-3 py-1 text-sm text-blue-100 hover:bg-white/10"
           >
             <Settings className="h-4 w-4" />
             Edit Profile
           </Link>
         )}
+        {role === "homeowner" &&
+          HOMEOWNER_RIGHT_LINKS.map(({ href, label, icon: Icon }) => (
+            <Link
+              key={href}
+              href={href}
+              className={`flex shrink-0 items-center gap-1.5 rounded-md px-3 py-1 text-sm font-medium ${
+                pathname === href || pathname.startsWith(href + "/")
+                  ? "bg-white/20 text-white"
+                  : "text-blue-100 hover:bg-white/10"
+              }`}
+            >
+              <Icon className="h-4 w-4" />
+              {label}
+            </Link>
+          ))}
       </div>
     </nav>
   );

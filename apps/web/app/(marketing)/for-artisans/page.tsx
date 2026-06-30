@@ -64,7 +64,7 @@ export default function ForArtisansPage() {
             <Button asChild size="lg" className="bg-white text-[#1E3A8A] hover:bg-blue-50">
               <Link href="/join-artisan/steps/1">Join as an artisan</Link>
             </Button>
-            <Button asChild size="lg" variant="outline" className="border-white/40 text-white hover:bg-white/10">
+            <Button asChild size="lg" className="bg-white/20 text-white border border-white hover:bg-white/30">
               <Link href="/how-it-works">See how it works</Link>
             </Button>
           </div>
