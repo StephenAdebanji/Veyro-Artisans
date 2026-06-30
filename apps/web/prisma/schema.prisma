@@ -1,0 +1,559 @@
+// VEYRO — Prisma schema for the modular monolith.
+//
+// One native Postgres schema per bounded service (multiSchema preview feature).
+// Rule enforced in code (see services/*/.*repository.ts): a service's repository
+// is the only file allowed to query models that belong to ITS OWN @@schema. Cross-
+// service references are plain scalar id fields (no @relation, no FK) EXCEPT the
+// one deliberate exception noted below — this is what keeps each schema splittable
+// into its own physical database later without an application rewrite.
+//
+// Exception: user.HomeownerProfile/ArtisanProfile have a real @relation + FK to
+// auth.User, because "who is this profile for" is core referential integrity, not
+// a cross-service business read. On physical split, User Service would replace
+// this FK with a local denormalized copy of {userId, role}, kept in sync via the
+// UserRegistered event.
+//
+// Shared vocabulary types (e.g. SkillCategory) are intentionally single-sourced
+// across schemas in this monolith phase — Prisma's multiSchema feature explicitly
+// supports a model/enum in one @@schema referencing a model/enum declared in
+// another. At physical-split time these are cheap to duplicate per-service since
+// they carry no aggregate data, unlike a real cross-service join would.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_DATABASE_URL")
+  schemas   = ["auth", "user", "matching", "trust", "chat", "notification", "blockchain", "ai"]
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// AUTH SERVICE — credentials, sessions, role assignment, privileged-action audit
+// ─────────────────────────────────────────────────────────────────────────────
+
+enum Role {
+  HOMEOWNER
+  ARTISAN
+  ADMIN
+
+  @@schema("auth")
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+
+  @@schema("auth")
+}
+
+model User {
+  id           String     @id @default(uuid())
+  email        String     @unique
+  phone        String?    @unique
+  passwordHash String
+  role         Role
+  status       UserStatus @default(ACTIVE)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  adminActions     AdminActionLog[]  @relation("AdminActor")
+  homeownerProfile HomeownerProfile?
+  artisanProfile   ArtisanProfile?
+
+  @@schema("auth")
+}
+
+model AdminActionLog {
+  id         String   @id @default(uuid())
+  adminId    String
+  admin      User     @relation("AdminActor", fields: [adminId], references: [id])
+  action     String
+  targetType String
+  targetId   String
+  notes      String?
+  createdAt  DateTime @default(now())
+
+  @@schema("auth")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// USER SERVICE — homeowner/artisan profiles, availability, portfolio
+// ─────────────────────────────────────────────────────────────────────────────
+
+enum SkillCategory {
+  ELECTRICIAN
+  PLUMBER
+  CARPENTER
+  PAINTER
+  WELDER
+  SOLAR_TECHNICIAN
+  CCTV_INSTALLER
+  INTERIOR_DECORATOR
+
+  @@schema("user")
+}
+
+enum ExperienceLevel {
+  ZERO_TO_TWO
+  THREE_TO_FIVE
+  SIX_TO_TEN
+  TEN_PLUS
+
+  @@schema("user")
+}
+
+enum ArtisanOnboardingStatus {
+  DRAFT
+  PENDING_REVIEW
+  ACTIVE
+  REJECTED
+  SUSPENDED
+
+  @@schema("user")
+}
+
+/// Denormalized cache of Trust Service's authoritative status (trust.TrustProfile),
+/// kept in sync via the IdentityVerified / TrustScoreUpdated events. Never written
+/// directly by User Service business logic.
+enum ArtisanVerificationStatusCache {
+  UNVERIFIED
+  PENDING
+  VERIFIED
+  REJECTED
+
+  @@schema("user")
+}
+
+model HomeownerProfile {
+  id        String   @id @default(uuid())
+  userId    String   @unique
+  /// Cross-schema relation to auth.User — the one deliberate exception (see file
+  /// header). Code convention: never `include`/`select` anything but `id` here;
+  /// email/passwordHash/role belong to Auth Service. On physical split this FK is
+  /// replaced by a local denormalized {userId, role} copy synced via UserRegistered.
+  user      User     @relation(fields: [userId], references: [id])
+  fullName  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@schema("user")
+}
+
+model ArtisanProfile {
+  id                     String                         @id @default(uuid())
+  userId                 String                         @unique
+  /// Cross-schema relation to auth.User — see HomeownerProfile.user doc comment.
+  user                   User                           @relation(fields: [userId], references: [id])
+  firstName              String?
+  lastName               String?
+  profilePhotoUrl        String?
+  primarySkill           SkillCategory?
+  secondarySkills        String[]
+  experienceLevel        ExperienceLevel?
+  bio                    String?
+  serviceRadiusKm        Int                            @default(10)
+  country                String?
+  state                  String?
+  city                   String?
+  lga                    String?
+  /// Private — only ever returned when UserServicePort.getArtisanProfile is called with { includePrivate: true } (admin context).
+  residentialAddress     String?
+  gpsLat                 Float?
+  gpsLng                 Float?
+  onboardingStatus       ArtisanOnboardingStatus        @default(DRAFT)
+  onboardingStep         Int                            @default(1)
+  /// Cache — see ArtisanVerificationStatusCache doc comment.
+  verificationStatus     ArtisanVerificationStatusCache @default(UNVERIFIED)
+  /// Cache of trust.TrustProfile.trustScore, synced via TrustScoreUpdated event.
+  trustScore             Float                          @default(0)
+  /// Cache of trust.TrustProfile.{ratingAvg,ratingCount,completedJobs,responseTimeAvgSeconds}, synced via JobCompleted/ReviewSubmitted events.
+  ratingAvg              Float                          @default(0)
+  ratingCount            Int                            @default(0)
+  completedJobs          Int                            @default(0)
+  responseTimeAvgSeconds Int?
+  createdAt              DateTime                       @default(now())
+  updatedAt              DateTime                       @updatedAt
+
+  availability ArtisanAvailability?
+  portfolio    PortfolioItem[]
+
+  @@schema("user")
+}
+
+model ArtisanAvailability {
+  id                 String         @id @default(uuid())
+  artisanId          String         @unique
+  artisan            ArtisanProfile @relation(fields: [artisanId], references: [id])
+  workingDays        String[]
+  startTime          String?
+  endTime            String?
+  emergencyAvailable Boolean        @default(false)
+  updatedAt          DateTime       @updatedAt
+
+  @@schema("user")
+}
+
+model PortfolioItem {
+  id        String         @id @default(uuid())
+  artisanId String
+  artisan   ArtisanProfile @relation(fields: [artisanId], references: [id])
+  beforeUrl String?
+  afterUrl  String?
+  caption   String?
+  createdAt DateTime       @default(now())
+
+  @@schema("user")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MATCHING SERVICE — service requests, offers, job lifecycle, reviews, disputes
+// ─────────────────────────────────────────────────────────────────────────────
+
+enum ServiceRequestStatus {
+  SEARCHING
+  MATCHED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+
+  @@schema("matching")
+}
+
+enum MatchStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  EXPIRED
+
+  @@schema("matching")
+}
+
+enum JobStatus {
+  ACTIVE
+  COMPLETED
+  DISPUTED
+  CANCELLED
+
+  @@schema("matching")
+}
+
+enum DisputeStatus {
+  OPEN
+  RESOLVED
+  REJECTED
+
+  @@schema("matching")
+}
+
+model ServiceRequest {
+  id            String               @id @default(uuid())
+  /// Logical ref -> user.HomeownerProfile.id (cross-service: no FK, see file header)
+  homeownerId   String
+  category      SkillCategory
+  description   String
+  lat           Float
+  lng           Float
+  address       String
+  budgetMin     Int?
+  budgetMax     Int?
+  preferredDate DateTime?
+  status        ServiceRequestStatus @default(SEARCHING)
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+
+  matches Match[]
+  job     Job?
+
+  @@schema("matching")
+}
+
+model Match {
+  id               String         @id @default(uuid())
+  serviceRequestId String
+  serviceRequest   ServiceRequest @relation(fields: [serviceRequestId], references: [id])
+  /// Logical ref -> user.ArtisanProfile.id
+  artisanId        String
+  proposedPrice    Int
+  etaMinutes       Int
+  distanceKm       Float
+  status           MatchStatus    @default(PENDING)
+  respondedAt      DateTime?
+  createdAt        DateTime       @default(now())
+
+  @@schema("matching")
+}
+
+model Job {
+  id               String         @id @default(uuid())
+  serviceRequestId String         @unique
+  serviceRequest   ServiceRequest @relation(fields: [serviceRequestId], references: [id])
+  matchId          String         @unique
+  /// Logical refs -> user.ArtisanProfile.id / user.HomeownerProfile.id
+  artisanId        String
+  homeownerId      String
+  agreedPrice      Int
+  status           JobStatus      @default(ACTIVE)
+  startedAt        DateTime       @default(now())
+  completedAt      DateTime?
+
+  review   Review?
+  disputes Dispute[]
+
+  @@schema("matching")
+}
+
+model Review {
+  id               String   @id @default(uuid())
+  jobId            String   @unique
+  job              Job      @relation(fields: [jobId], references: [id])
+  homeownerId      String
+  artisanId        String
+  rating           Int
+  comment          String?
+  verificationHash String
+  createdAt        DateTime @default(now())
+
+  @@schema("matching")
+}
+
+model Dispute {
+  id         String        @id @default(uuid())
+  jobId      String
+  job        Job           @relation(fields: [jobId], references: [id])
+  raisedBy   String
+  reason     String
+  status     DisputeStatus @default(OPEN)
+  resolution String?
+  createdAt  DateTime      @default(now())
+  resolvedAt DateTime?
+
+  @@schema("matching")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TRUST SERVICE — credential verification workflow, authoritative trust score
+// ─────────────────────────────────────────────────────────────────────────────
+
+enum CredentialType {
+  NIN
+  NATIONAL_ID
+  DRIVERS_LICENSE
+  PASSPORT
+  UTILITY_BILL
+  BANK_STATEMENT
+  TRADE_CERTIFICATE
+  LICENSE
+  OTHER
+
+  @@schema("trust")
+}
+
+enum CredentialStatus {
+  PENDING
+  APPROVED
+  REJECTED
+
+  @@schema("trust")
+}
+
+enum VerificationStatus {
+  UNVERIFIED
+  PENDING
+  VERIFIED
+  REJECTED
+
+  @@schema("trust")
+}
+
+enum TrustScoreSource {
+  SYSTEM_RECALC
+  ADMIN_OVERRIDE
+
+  @@schema("trust")
+}
+
+model Credential {
+  id            String           @id @default(uuid())
+  /// Logical ref -> user.ArtisanProfile.id
+  artisanId     String
+  type          CredentialType
+  fileUrl       String
+  status        CredentialStatus @default(PENDING)
+  reviewedBy    String?
+  reviewedAt    DateTime?
+  onChainTxHash String?
+  createdAt     DateTime         @default(now())
+
+  @@schema("trust")
+}
+
+/// Authoritative trust/reputation record for an artisan. user.ArtisanProfile
+/// keeps a denormalized cache of a subset of these fields — see the cache doc
+/// comments there.
+model TrustProfile {
+  id                     String             @id @default(uuid())
+  artisanId              String             @unique
+  verificationStatus     VerificationStatus @default(UNVERIFIED)
+  trustScore             Float              @default(0)
+  ratingAvg              Float              @default(0)
+  ratingCount            Int                @default(0)
+  /// Incremented on MatchAccepted — denominator for completionRate.
+  totalJobsAccepted      Int                @default(0)
+  completedJobs          Int                @default(0)
+  responseTimeAvgSeconds Int?
+  updatedAt              DateTime           @updatedAt
+
+  history TrustScoreHistory[]
+
+  @@schema("trust")
+}
+
+model TrustScoreHistory {
+  id             String           @id @default(uuid())
+  trustProfileId String
+  trustProfile   TrustProfile     @relation(fields: [trustProfileId], references: [id])
+  score          Float
+  breakdown      Json
+  source         TrustScoreSource
+  onChainTxHash  String?
+  createdAt      DateTime         @default(now())
+
+  @@schema("trust")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CHAT SERVICE — conversations and messages
+// ─────────────────────────────────────────────────────────────────────────────
+
+enum MessageType {
+  TEXT
+  IMAGE
+  LOCATION
+
+  @@schema("chat")
+}
+
+model Conversation {
+  id            String    @id @default(uuid())
+  /// Logical refs -> user.HomeownerProfile.id / user.ArtisanProfile.id
+  homeownerId   String
+  artisanId     String
+  /// Logical ref -> matching.Job.id, optional (chat can start pre-hire)
+  jobId         String?
+  lastMessageAt DateTime?
+  createdAt     DateTime  @default(now())
+
+  messages Message[]
+
+  @@schema("chat")
+}
+
+model Message {
+  id             String       @id @default(uuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id])
+  senderId       String
+  type           MessageType  @default(TEXT)
+  content        String?
+  mediaUrl       String?
+  readAt         DateTime?
+  createdAt      DateTime     @default(now())
+
+  @@schema("chat")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// NOTIFICATION SERVICE — fan-out consumer, in-app notifications
+// ─────────────────────────────────────────────────────────────────────────────
+
+enum NotificationType {
+  MATCH_OFFERED
+  MATCH_ACCEPTED
+  JOB_COMPLETED
+  CREDENTIAL_APPROVED
+  CREDENTIAL_REJECTED
+  TRUST_SCORE_UPDATED
+  MESSAGE_RECEIVED
+  DISPUTE_RAISED
+  DISPUTE_RESOLVED
+
+  @@schema("notification")
+}
+
+model Notification {
+  id        String           @id @default(uuid())
+  /// Logical ref -> auth.User.id
+  userId    String
+  type      NotificationType
+  payload   Json
+  readAt    DateTime?
+  createdAt DateTime         @default(now())
+
+  @@schema("notification")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// BLOCKCHAIN SERVICE — polymorphic mirror of every on-chain write
+// ─────────────────────────────────────────────────────────────────────────────
+
+enum BlockchainRecordType {
+  IDENTITY_VERIFIED
+  CREDENTIAL_VERIFIED
+  TRUST_SCORE_UPDATE
+  REVIEW_HASH
+  DISPUTE_RESOLUTION
+
+  @@schema("blockchain")
+}
+
+enum BlockchainRecordStatus {
+  PENDING
+  CONFIRMED
+  FAILED
+
+  @@schema("blockchain")
+}
+
+enum BlockchainNetwork {
+  HARDHAT_LOCAL
+  POLYGON_AMOY
+
+  @@schema("blockchain")
+}
+
+model BlockchainRecord {
+  id              String                 @id @default(uuid())
+  /// Polymorphic — artisanId / credentialId / reviewId / disputeId depending on `type`. Intentionally not an FK.
+  refId           String
+  type            BlockchainRecordType
+  status          BlockchainRecordStatus @default(PENDING)
+  txHash          String?
+  contractAddress String?
+  network         BlockchainNetwork?
+  payload         Json
+  blockNumber     Int?
+  createdAt       DateTime               @default(now())
+  confirmedAt     DateTime?
+
+  @@index([refId])
+  @@schema("blockchain")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// AI RECOMMENDATION SERVICE — evaluation/reproducibility log (no operational data)
+// ─────────────────────────────────────────────────────────────────────────────
+
+model RecommendationLog {
+  id               String        @id @default(uuid())
+  serviceRequestId String
+  category         SkillCategory
+  candidateCount   Int
+  input            Json
+  output           Json
+  createdAt        DateTime      @default(now())
+
+  @@schema("ai")
+}

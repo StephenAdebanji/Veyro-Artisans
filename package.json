@@ -1,0 +1,19 @@
+{
+  "name": "veyro",
+  "version": "0.1.0",
+  "private": true,
+  "description": "VEYRO — AI-driven, blockchain-trusted artisan-homeowner matching platform.",
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=20"
+  },
+  "packageManager": "pnpm@9.15.9",
+  "scripts": {
+    "dev:web": "pnpm --filter web dev",
+    "dev:realtime": "pnpm --filter realtime dev",
+    "build:web": "pnpm --filter web build",
+    "build:realtime": "pnpm --filter realtime build",
+    "build:chain": "pnpm --filter chain compile",
+    "test:chain": "pnpm --filter chain test"
+  }
+}

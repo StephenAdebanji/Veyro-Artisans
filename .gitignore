@@ -1,0 +1,28 @@
+node_modules/
+.pnpm-store/
+
+# Next.js
+apps/web/.next/
+apps/web/next-env.d.ts
+
+# Build output
+dist/
+build/
+
+# Hardhat
+apps/chain/cache/
+apps/chain/artifacts/
+apps/chain/typechain-types/
+
+# Env files
+.env
+.env.local
+*.env
+!*.env.example
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
