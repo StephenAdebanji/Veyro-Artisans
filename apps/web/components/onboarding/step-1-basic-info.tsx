@@ -46,7 +46,7 @@ export function Step1BasicInfo() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="grid gap-4 sm:grid-cols-2">
+    <form onSubmit={handleSubmit} className="grid gap-4 sm:grid-cols-2" autoComplete="off">
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="firstName">First name</Label>
         <Input id="firstName" placeholder="Emeka" value={form.firstName} onChange={update("firstName")} required />
@@ -60,6 +60,7 @@ export function Step1BasicInfo() {
         <Input
           id="email"
           type="email"
+          autoComplete="off"
           placeholder="you@example.com"
           value={form.email}
           onChange={update("email")}
@@ -75,6 +76,7 @@ export function Step1BasicInfo() {
         <Input
           id="password"
           type="password"
+          autoComplete="new-password"
           minLength={8}
           value={form.password}
           onChange={update("password")}

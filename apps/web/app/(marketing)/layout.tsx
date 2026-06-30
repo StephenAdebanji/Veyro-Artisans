@@ -21,7 +21,7 @@ export default function MarketingLayout({ children }: { children: React.ReactNod
           <Link href="/sign-in">Sign in</Link>
           <Link
             href="/sign-up"
-            className="rounded-md border px-3 py-2 transition-colors hover:bg-muted"
+            className="rounded-md bg-primary px-3 py-2 text-primary-foreground"
           >
             Join as homeowner
           </Link>

@@ -32,7 +32,7 @@ export function DashboardNavbar({ role, userName }: DashboardNavbarProps) {
 
   return (
     <nav className="sticky top-0 z-50 w-full bg-[#1E3A8A] text-white shadow-md">
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3">
+      <div className="flex w-full items-center justify-between px-4 py-3">
         {/* Logo */}
         <Link
           href={role === "artisan" ? "/artisan/dashboard" : "/homeowner/dashboard"}
@@ -41,7 +41,7 @@ export function DashboardNavbar({ role, userName }: DashboardNavbarProps) {
           <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-white font-extrabold text-[#1E3A8A]">
             V
           </span>
-          <span className="text-xl font-extrabold tracking-tight text-white">EYRO</span>
+          <span className="text-xl font-extrabold tracking-tight text-white">VEYRO</span>
         </Link>
 
         {/* Nav links */}
