@@ -13,7 +13,7 @@ export function AuthLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="grid min-h-screen md:grid-cols-2">
+    <div className="force-light grid min-h-screen bg-background text-foreground md:grid-cols-2">
       {/* Left panel — image with overlay */}
       <div className="relative hidden md:block">
         <Image
