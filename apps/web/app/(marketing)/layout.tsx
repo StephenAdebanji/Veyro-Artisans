@@ -20,6 +20,12 @@ export default function MarketingLayout({ children }: { children: React.ReactNod
         <div className="flex items-center gap-3 text-sm">
           <Link href="/sign-in">Sign in</Link>
           <Link
+            href="/sign-up"
+            className="rounded-md border px-3 py-2 transition-colors hover:bg-muted"
+          >
+            Join as homeowner
+          </Link>
+          <Link
             href="/join-artisan/steps/1"
             className="rounded-md bg-primary px-3 py-2 text-primary-foreground"
           >

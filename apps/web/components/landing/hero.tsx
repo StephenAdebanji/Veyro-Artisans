@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ShieldCheck, Sparkles, Star } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { SKILL_CATEGORIES, SKILL_LABELS } from "@/components/shared/skill-labels";
+import { CategorySearch } from "@/components/landing/category-search";
 
 export function Hero() {
   return (
@@ -18,25 +18,7 @@ export function Hero() {
           credential and review is independently verified.
         </p>
 
-        <Link
-          href="/sign-up"
-          className="flex items-center justify-between gap-3 rounded-full border bg-card px-2 py-2 pl-5 text-sm text-muted-foreground shadow-sm transition-colors hover:border-primary"
-        >
-          Try &lsquo;electrician&rsquo;, &lsquo;plumber&rsquo;, &lsquo;interior decorator&rsquo;...
-          <span className="shrink-0 rounded-full bg-primary px-4 py-2 font-medium text-primary-foreground">
-            Find artisans
-          </span>
-        </Link>
-
-        <div className="flex flex-wrap gap-2">
-          {SKILL_CATEGORIES.map((category) => (
-            <Link key={category} href="/sign-up">
-              <Badge variant="outline" className="cursor-pointer font-normal">
-                {SKILL_LABELS[category]}
-              </Badge>
-            </Link>
-          ))}
-        </div>
+        <CategorySearch />
 
         <div className="flex flex-wrap gap-4 pt-2 text-xs text-muted-foreground">
           <span className="flex items-center gap-1.5">
