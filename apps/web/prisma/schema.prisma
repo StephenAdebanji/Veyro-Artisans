@@ -59,9 +59,10 @@ model User {
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
 
-  adminActions     AdminActionLog[]  @relation("AdminActor")
-  homeownerProfile HomeownerProfile?
-  artisanProfile   ArtisanProfile?
+  adminActions        AdminActionLog[]     @relation("AdminActor")
+  homeownerProfile    HomeownerProfile?
+  artisanProfile      ArtisanProfile?
+  passwordResetTokens PasswordResetToken[]
 
   @@schema("auth")
 }
@@ -75,6 +76,18 @@ model AdminActionLog {
   targetId   String
   notes      String?
   createdAt  DateTime @default(now())
+
+  @@schema("auth")
+}
+
+model PasswordResetToken {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
 
   @@schema("auth")
 }

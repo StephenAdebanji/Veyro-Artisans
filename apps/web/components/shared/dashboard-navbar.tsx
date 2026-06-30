@@ -16,13 +16,11 @@ interface DashboardNavbarProps {
 }
 
 const ARTISAN_LINKS: NavLink[] = [
-  { href: "/artisan/dashboard", label: "Dashboard" },
   { href: "/artisan/jobs", label: "Jobs" },
   { href: "/artisan/messages", label: "Messages" },
 ];
 
 const HOMEOWNER_LINKS: NavLink[] = [
-  { href: "/homeowner/dashboard", label: "Dashboard" },
   { href: "/homeowner/requests/new", label: "New Request" },
   { href: "/homeowner/messages", label: "Messages" },
 ];
@@ -36,8 +34,14 @@ export function DashboardNavbar({ role, userName }: DashboardNavbarProps) {
     <nav className="sticky top-0 z-50 w-full bg-[#1E3A8A] text-white shadow-md">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3">
         {/* Logo */}
-        <Link href="/" className="text-xl font-extrabold tracking-tight text-white hover:opacity-90">
-          VEYRO
+        <Link
+          href={role === "artisan" ? "/artisan/dashboard" : "/homeowner/dashboard"}
+          className="flex items-center gap-2 hover:opacity-90"
+        >
+          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-white font-extrabold text-[#1E3A8A]">
+            V
+          </span>
+          <span className="text-xl font-extrabold tracking-tight text-white">EYRO</span>
         </Link>
 
         {/* Nav links */}

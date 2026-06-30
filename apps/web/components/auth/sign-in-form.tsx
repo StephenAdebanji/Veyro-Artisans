@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { getSession, signIn } from "next-auth/react";
 import { Button } from "@/components/ui/button";
@@ -65,7 +66,12 @@ export function SignInForm() {
         />
       </div>
       {error && <p className="text-sm text-destructive">{error}</p>}
-      <Button type="submit" disabled={loading} className="mt-2">
+      <div className="flex justify-end">
+        <Link href="/forgot-password" className="text-sm text-primary hover:underline">
+          Forgot password?
+        </Link>
+      </div>
+      <Button type="submit" disabled={loading} className="mt-1">
         {loading ? "Signing in…" : "Sign in"}
       </Button>
     </form>

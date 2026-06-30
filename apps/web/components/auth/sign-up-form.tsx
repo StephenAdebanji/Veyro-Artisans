@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { signIn } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -33,16 +32,7 @@ export function SignUpForm() {
       return;
     }
 
-    const result = await signIn("credentials", { email, password, redirect: false });
-    if (result?.error) {
-      setError("Account created — please sign in.");
-      setLoading(false);
-      router.push("/sign-in");
-      return;
-    }
-
-    router.push("/homeowner/dashboard");
-    router.refresh();
+    router.push("/sign-in?registered=1");
   }
 
   return (
