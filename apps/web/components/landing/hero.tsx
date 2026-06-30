@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { ShieldCheck, Sparkles, Star } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { CategorySearch } from "@/components/landing/category-search";
@@ -34,7 +35,14 @@ export function Hero() {
       </div>
 
       <div className="relative">
-        <div className="aspect-square rounded-2xl bg-gradient-to-br from-primary/15 via-primary/5 to-transparent" />
+        <Image
+          src="/hero-artisans.png"
+          alt="Verified Nigerian artisans on VEYRO"
+          width={800}
+          height={600}
+          className="rounded-2xl object-cover w-full"
+          priority
+        />
         <div className="absolute left-1/2 top-4 -translate-x-1/2 rounded-xl border bg-card px-4 py-3 shadow-lg md:left-auto md:right-4 md:translate-x-0">
           <p className="text-xs font-medium text-muted-foreground">MATCH FOUND</p>
           <p className="text-sm font-semibold">3 artisans responded in 14s</p>
