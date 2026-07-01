@@ -163,9 +163,23 @@ export const matchingRepository = {
     const userIds = [...new Set(disputes.map((d) => d.raisedBy))];
     const users = await prisma.user.findMany({
       where: { id: { in: userIds } },
-      select: { id: true, name: true, email: true, role: true },
+      select: {
+        id: true,
+        email: true,
+        role: true,
+        artisanProfile: { select: { firstName: true, lastName: true } },
+        homeownerProfile: { select: { fullName: true } },
+      },
     });
-    const userMap = new Map(users.map((u) => [u.id, u]));
+    const userMap = new Map(
+      users.map((u) => {
+        const name =
+          (u.artisanProfile
+            ? [u.artisanProfile.firstName, u.artisanProfile.lastName].filter(Boolean).join(" ")
+            : u.homeownerProfile?.fullName) || null;
+        return [u.id, { id: u.id, name, email: u.email, role: u.role }];
+      }),
+    );
 
     return disputes.map((d) => ({
       ...d,
