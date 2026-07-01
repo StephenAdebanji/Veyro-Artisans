@@ -35,8 +35,8 @@ export function ProfilePhotoUpload({
   async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 5 * 1024 * 1024) {
-      setError("File must be under 5 MB");
+    if (file.size > 1 * 1024 * 1024) {
+      setError("File must be under 1 MB");
       return;
     }
     setLoading(true);

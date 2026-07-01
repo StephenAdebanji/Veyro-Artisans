@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { Briefcase, LogOut, MessageSquare, UserCircle } from "lucide-react";
@@ -36,23 +35,7 @@ function linkClass(active: boolean) {
   }`;
 }
 
-function NavAvatar({ src, name }: { src?: string | null; name?: string }) {
-  const initials = name ? name.slice(0, 1).toUpperCase() : "?";
-  if (src) {
-    return (
-      <span className="flex h-7 w-7 shrink-0 overflow-hidden rounded-full ring-2 ring-white/40">
-        <Image src={src} alt={name ?? "avatar"} width={28} height={28} className="h-full w-full object-cover" />
-      </span>
-    );
-  }
-  return (
-    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white/20 text-xs font-bold text-white ring-2 ring-white/40">
-      {initials}
-    </span>
-  );
-}
-
-export function DashboardNavbar({ role, userName, profilePhotoUrl }: DashboardNavbarProps) {
+export function DashboardNavbar({ role, userName, profilePhotoUrl: _profilePhotoUrl }: DashboardNavbarProps) {
   const pathname = usePathname();
 
   return (
@@ -85,17 +68,6 @@ export function DashboardNavbar({ role, userName, profilePhotoUrl }: DashboardNa
               ),
             )}
           </div>
-
-          {/* Avatar + name */}
-          <Link
-            href={role === "artisan" ? "/artisan/account" : "/homeowner/account"}
-            className="ml-1 flex items-center gap-2 rounded-md px-2 py-1.5 hover:bg-white/10"
-          >
-            <NavAvatar src={profilePhotoUrl} name={userName} />
-            {userName && (
-              <span className="hidden text-sm font-medium text-white md:inline">{userName}</span>
-            )}
-          </Link>
 
           <button
             onClick={() => signOut({ callbackUrl: "/" })}

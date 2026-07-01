@@ -6,7 +6,6 @@ import { Eye, Pencil, Trash2, ShieldOff, ShieldCheck } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { SKILL_LABELS } from "@/components/shared/skill-labels";
-import { Avatar } from "@/components/shared/avatar";
 import { EditArtisanModal, type EditArtisanData } from "./edit-user-modal";
 import type { SkillCategory } from "@veyro/contracts";
 
@@ -95,12 +94,7 @@ function ArtisanActionRow({ row, index }: { row: ArtisanRow; index: number }) {
     <>
       <tr className="border-b last:border-b-0 hover:bg-muted/30">
         <td className="py-3 pl-4 text-sm text-muted-foreground">{index}</td>
-        <td className="py-3">
-          <div className="flex items-center gap-2">
-            <Avatar src={data.profilePhotoUrl} name={name} size={28} />
-            <span className="font-medium">{name}</span>
-          </div>
-        </td>
+        <td className="py-3 font-medium">{name}</td>
         <td className="py-3 text-sm text-muted-foreground">{data.user.email}</td>
         <td className="py-3">
           <Badge className={ROLE_STYLE[data.user.role] ?? "bg-muted text-muted-foreground"}>

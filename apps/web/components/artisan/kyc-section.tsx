@@ -10,6 +10,7 @@ import {
   ShieldCheck,
   AlertTriangle,
   PartyPopper,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -274,6 +275,7 @@ export function KycSection({
   const [credentials, setCredentials] = useState(initialCredentials);
   const [currentVerificationStatus, setCurrentVerificationStatus] =
     useState<VerificationStatus>(verificationStatus);
+  const [verifiedBannerDismissed, setVerifiedBannerDismissed] = useState(false);
 
   function getLatestForCategory(types: readonly string[]): CredentialRecord | undefined {
     return credentials
@@ -328,8 +330,8 @@ export function KycSection({
       </div>
 
       {/* Final decision banners */}
-      {currentVerificationStatus === "VERIFIED" && (
-        <div className="mb-5 flex items-start gap-3 rounded-lg border border-emerald-200 bg-emerald-50 p-4 dark:border-emerald-900 dark:bg-emerald-950/30">
+      {currentVerificationStatus === "VERIFIED" && !verifiedBannerDismissed && (
+        <div className="relative mb-5 flex items-start gap-3 rounded-lg border border-emerald-200 bg-emerald-50 p-4 pr-10 dark:border-emerald-900 dark:bg-emerald-950/30">
           <PartyPopper className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" />
           <div>
             <p className="text-sm font-semibold text-emerald-800 dark:text-emerald-300">
@@ -343,6 +345,13 @@ export function KycSection({
               page to start viewing and accepting job requests.
             </p>
           </div>
+          <button
+            onClick={() => setVerifiedBannerDismissed(true)}
+            aria-label="Dismiss"
+            className="absolute right-3 top-3 rounded p-0.5 text-emerald-600 hover:bg-emerald-100 dark:hover:bg-emerald-900"
+          >
+            <X className="h-4 w-4" />
+          </button>
         </div>
       )}
 

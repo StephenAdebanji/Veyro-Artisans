@@ -8,6 +8,7 @@ import { auth } from "@/platform/auth-session";
 import { isAvailableNow } from "@/services/user/availability";
 import { matchingService } from "@/services/matching/matching.service";
 import { userService } from "@/services/user/user.service";
+import { VerifiedBanner } from "@/components/artisan/verified-banner";
 type ArtisanOnboardingStatus = "DRAFT" | "PENDING_REVIEW" | "ACTIVE" | "SUSPENDED";
 type ArtisanVerificationStatus = "UNVERIFIED" | "VERIFIED" | "REJECTED";
 
@@ -80,6 +81,10 @@ export default async function ArtisanDashboardPage() {
 
   return (
     <main className="flex-1 px-6 py-10">
+      {profile.verificationStatus === "VERIFIED" && (
+        <VerifiedBanner artisanId={profile.id} />
+      )}
+
       {isPendingReview && (
         <div className="mb-6 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
           Your application is being reviewed by our trust team — you&apos;ll start receiving job
