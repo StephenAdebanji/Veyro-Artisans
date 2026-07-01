@@ -9,11 +9,13 @@ import {
   Eye,
   ShieldCheck,
   AlertTriangle,
+  PartyPopper,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
 type CredentialStatus = "PENDING" | "APPROVED" | "REJECTED";
+type VerificationStatus = "UNVERIFIED" | "VERIFIED" | "REJECTED";
 
 type CredentialRecord = {
   id: string;
@@ -96,17 +98,32 @@ async function uploadToCloudinary(file: File, uploadType: UploadType): Promise<s
   return data.secure_url as string;
 }
 
-function StatusBadge({ status }: { status: CredentialStatus | "NOT_UPLOADED" }) {
+function StatusBadge({
+  status,
+  verificationStatus,
+}: {
+  status: CredentialStatus | "NOT_UPLOADED";
+  verificationStatus: VerificationStatus;
+}) {
+  if (status === "NOT_UPLOADED")
+    return (
+      <Badge className="gap-1 bg-muted text-muted-foreground">
+        <Upload className="h-3 w-3" /> Not uploaded
+      </Badge>
+    );
+
+  // Before final decision, mask individual status as "Under review"
+  if (verificationStatus === "UNVERIFIED")
+    return (
+      <Badge className="gap-1 bg-amber-100 text-amber-700">
+        <Clock className="h-3 w-3" /> Under review
+      </Badge>
+    );
+
   if (status === "APPROVED")
     return (
       <Badge className="gap-1 bg-emerald-100 text-emerald-700">
         <CheckCircle2 className="h-3 w-3" /> Approved
-      </Badge>
-    );
-  if (status === "PENDING")
-    return (
-      <Badge className="gap-1 bg-amber-100 text-amber-700">
-        <Clock className="h-3 w-3" /> Under review
       </Badge>
     );
   if (status === "REJECTED")
@@ -116,8 +133,8 @@ function StatusBadge({ status }: { status: CredentialStatus | "NOT_UPLOADED" }) 
       </Badge>
     );
   return (
-    <Badge className="gap-1 bg-muted text-muted-foreground">
-      <Upload className="h-3 w-3" /> Not uploaded
+    <Badge className="gap-1 bg-amber-100 text-amber-700">
+      <Clock className="h-3 w-3" /> Under review
     </Badge>
   );
 }
@@ -125,18 +142,27 @@ function StatusBadge({ status }: { status: CredentialStatus | "NOT_UPLOADED" }) 
 function CategoryRow({
   category,
   credential,
+  verificationStatus,
   onUploaded,
 }: {
   category: (typeof REQUIRED_CATEGORIES)[number];
   credential: CredentialRecord | undefined;
+  verificationStatus: VerificationStatus;
   onUploaded: (type: string, fileUrl: string) => void;
 }) {
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
-  const status = credential?.status ?? "NOT_UPLOADED";
-  const canUpload = status === "NOT_UPLOADED" || status === "REJECTED";
+  const rawStatus = credential?.status ?? "NOT_UPLOADED";
+
+  // Can upload: not uploaded yet, OR doc was rejected and admin made final rejection decision
+  const canUpload =
+    rawStatus === "NOT_UPLOADED" ||
+    (rawStatus === "REJECTED" && verificationStatus === "REJECTED");
+
+  // Don't show upload option if already verified
+  const showUpload = canUpload && verificationStatus !== "VERIFIED";
 
   async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -185,7 +211,10 @@ function CategoryRow({
         </div>
 
         <div className="flex shrink-0 flex-col items-end gap-2">
-          <StatusBadge status={status as CredentialStatus | "NOT_UPLOADED"} />
+          <StatusBadge
+            status={rawStatus as CredentialStatus | "NOT_UPLOADED"}
+            verificationStatus={verificationStatus}
+          />
           {credential && (
             <a
               href={credential.fileUrl}
@@ -199,15 +228,19 @@ function CategoryRow({
         </div>
       </div>
 
-      {canUpload && (
+      {showUpload && (
         <div className="mt-3 border-t pt-3">
-          {status === "REJECTED" && (
+          {rawStatus === "REJECTED" && (
             <p className="mb-2 flex items-center gap-1.5 text-xs text-red-600">
               <AlertTriangle className="h-3.5 w-3.5" />
               This document was rejected. Please upload a clearer copy.
             </p>
           )}
-          <label className={`inline-flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition-colors hover:bg-muted ${uploading || pending ? "pointer-events-none opacity-50" : ""}`}>
+          <label
+            className={`inline-flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition-colors hover:bg-muted ${
+              uploading || pending ? "pointer-events-none opacity-50" : ""
+            }`}
+          >
             <input
               type="file"
               accept="image/*,application/pdf"
@@ -216,7 +249,13 @@ function CategoryRow({
               disabled={uploading || pending}
             />
             <Upload className="h-4 w-4" />
-            {uploading ? "Uploading…" : pending ? "Submitting…" : status === "REJECTED" ? "Re-upload document" : "Upload document"}
+            {uploading
+              ? "Uploading…"
+              : pending
+              ? "Submitting…"
+              : rawStatus === "REJECTED"
+              ? "Re-upload document"
+              : "Upload document"}
           </label>
           {uploadError && <p className="mt-1 text-xs text-destructive">{uploadError}</p>}
         </div>
@@ -225,8 +264,16 @@ function CategoryRow({
   );
 }
 
-export function KycSection({ initialCredentials }: { initialCredentials: CredentialRecord[] }) {
+export function KycSection({
+  initialCredentials,
+  verificationStatus,
+}: {
+  initialCredentials: CredentialRecord[];
+  verificationStatus: VerificationStatus;
+}) {
   const [credentials, setCredentials] = useState(initialCredentials);
+  const [currentVerificationStatus, setCurrentVerificationStatus] =
+    useState<VerificationStatus>(verificationStatus);
 
   function getLatestForCategory(types: readonly string[]): CredentialRecord | undefined {
     return credentials
@@ -245,15 +292,18 @@ export function KycSection({ initialCredentials }: { initialCredentials: Credent
         createdAt: new Date().toISOString(),
       },
     ]);
+    // If re-uploading after rejection, reset to pending review
+    if (currentVerificationStatus === "REJECTED") {
+      setCurrentVerificationStatus("UNVERIFIED");
+    }
   }
 
-  const approvedCount = REQUIRED_CATEGORIES.filter((cat) => {
-    const latest = getLatestForCategory(cat.types);
-    return latest?.status === "APPROVED";
-  }).length;
+  const submittedCount = REQUIRED_CATEGORIES.filter((cat) =>
+    getLatestForCategory(cat.types),
+  ).length;
 
   const total = REQUIRED_CATEGORIES.length;
-  const pct = Math.round((approvedCount / total) * 100);
+  const pct = Math.round((submittedCount / total) * 100);
 
   return (
     <section className="rounded-xl border bg-card p-6">
@@ -262,43 +312,78 @@ export function KycSection({ initialCredentials }: { initialCredentials: Credent
           <ShieldCheck className="h-5 w-5 text-primary" />
           <h2 className="text-base font-semibold">KYC Verification</h2>
         </div>
-        <span
-          className={`text-sm font-semibold ${
-            approvedCount === total
-              ? "text-emerald-600"
-              : approvedCount > 0
-              ? "text-amber-600"
-              : "text-muted-foreground"
-          }`}
-        >
-          {approvedCount}/{total} approved
-        </span>
-      </div>
-
-      {/* Progress bar */}
-      <div className="mb-5">
-        <div className="mb-1 flex justify-between text-xs text-muted-foreground">
-          <span>Verification progress</span>
-          <span>{pct}%</span>
-        </div>
-        <div className="h-2 overflow-hidden rounded-full bg-muted">
-          <div
-            className={`h-full rounded-full transition-all duration-500 ${
-              pct === 100 ? "bg-emerald-500" : pct > 0 ? "bg-amber-500" : "bg-muted"
-            }`}
-            style={{ width: `${pct}%` }}
-          />
-        </div>
-        {approvedCount === total ? (
-          <p className="mt-1.5 flex items-center gap-1 text-xs text-emerald-600">
-            <CheckCircle2 className="h-3.5 w-3.5" /> All documents verified
-          </p>
+        {currentVerificationStatus === "VERIFIED" ? (
+          <Badge className="gap-1 bg-emerald-100 text-emerald-700">
+            <CheckCircle2 className="h-3.5 w-3.5" /> Verified
+          </Badge>
+        ) : currentVerificationStatus === "REJECTED" ? (
+          <Badge className="gap-1 bg-red-100 text-red-700">
+            <XCircle className="h-3.5 w-3.5" /> Rejected
+          </Badge>
         ) : (
-          <p className="mt-1.5 text-xs text-muted-foreground">
-            Upload all required documents to complete verification
-          </p>
+          <span className="text-sm font-semibold text-muted-foreground">
+            {submittedCount}/{total} submitted
+          </span>
         )}
       </div>
+
+      {/* Final decision banners */}
+      {currentVerificationStatus === "VERIFIED" && (
+        <div className="mb-5 flex items-start gap-3 rounded-lg border border-emerald-200 bg-emerald-50 p-4 dark:border-emerald-900 dark:bg-emerald-950/30">
+          <PartyPopper className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" />
+          <div>
+            <p className="text-sm font-semibold text-emerald-800 dark:text-emerald-300">
+              Your application has been accepted!
+            </p>
+            <p className="mt-0.5 text-sm text-emerald-700 dark:text-emerald-400">
+              You are now fully verified. Go to the{" "}
+              <a href="/artisan/jobs" className="underline underline-offset-2">
+                Jobs
+              </a>{" "}
+              page to start viewing and accepting job requests.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {currentVerificationStatus === "REJECTED" && (
+        <div className="mb-5 flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-900 dark:bg-red-950/30">
+          <XCircle className="mt-0.5 h-5 w-5 shrink-0 text-red-600" />
+          <div>
+            <p className="text-sm font-semibold text-red-800 dark:text-red-300">
+              Your application was rejected
+            </p>
+            <p className="mt-1 text-sm text-red-700 dark:text-red-400">
+              One or more of your documents could not be verified. Please check the documents below
+              and re-upload clearer copies. Once you re-upload, your application will automatically
+              re-enter the review queue.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Progress bar — only show when pending */}
+      {currentVerificationStatus === "UNVERIFIED" && (
+        <div className="mb-5">
+          <div className="mb-1 flex justify-between text-xs text-muted-foreground">
+            <span>Documents submitted</span>
+            <span>{pct}%</span>
+          </div>
+          <div className="h-2 overflow-hidden rounded-full bg-muted">
+            <div
+              className={`h-full rounded-full transition-all duration-500 ${
+                pct === 100 ? "bg-primary" : pct > 0 ? "bg-amber-500" : "bg-muted"
+              }`}
+              style={{ width: `${pct}%` }}
+            />
+          </div>
+          <p className="mt-1.5 text-xs text-muted-foreground">
+            {submittedCount === total
+              ? "All documents submitted — our team will review and get back to you shortly."
+              : "Upload all required documents to complete your submission."}
+          </p>
+        </div>
+      )}
 
       <div className="flex flex-col gap-3">
         {REQUIRED_CATEGORIES.map((cat) => (
@@ -306,6 +391,7 @@ export function KycSection({ initialCredentials }: { initialCredentials: Credent
             key={cat.id}
             category={cat}
             credential={getLatestForCategory(cat.types)}
+            verificationStatus={currentVerificationStatus}
             onUploaded={handleUploaded}
           />
         ))}

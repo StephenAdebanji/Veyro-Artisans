@@ -9,6 +9,7 @@ import { isAvailableNow } from "@/services/user/availability";
 import { matchingService } from "@/services/matching/matching.service";
 import { userService } from "@/services/user/user.service";
 type ArtisanOnboardingStatus = "DRAFT" | "PENDING_REVIEW" | "ACTIVE" | "SUSPENDED";
+type ArtisanVerificationStatus = "UNVERIFIED" | "VERIFIED" | "REJECTED";
 
 interface ArtisanProfileRecord {
   id: string;
@@ -24,6 +25,7 @@ interface ArtisanProfileRecord {
   responseTimeAvgSeconds: number | null;
   totalJobsAccepted?: number;
   onboardingStatus: ArtisanOnboardingStatus;
+  verificationStatus: ArtisanVerificationStatus;
   availability: {
     workingDays: string[];
     startTime: string | null;
@@ -45,7 +47,9 @@ export default async function ArtisanDashboardPage() {
   })) as ArtisanProfileRecord | null;
   if (!profile) redirect("/sign-in");
 
-  const isPendingReview = profile.onboardingStatus !== "ACTIVE";
+  const isPendingReview =
+    profile.onboardingStatus !== "ACTIVE" && profile.verificationStatus === "UNVERIFIED";
+  const isRejected = profile.verificationStatus === "REJECTED";
 
   const [availableJobs, activeJobsCount, jobsFeed, disputesCount] = await Promise.all([
     profile.primarySkill && profile.gpsLat !== null && profile.gpsLng !== null
@@ -80,6 +84,20 @@ export default async function ArtisanDashboardPage() {
         <div className="mb-6 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
           Your application is being reviewed by our trust team — you&apos;ll start receiving job
           requests once verified.
+        </div>
+      )}
+
+      {isRejected && (
+        <div className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+          <p className="font-semibold">Your application was rejected.</p>
+          <p className="mt-0.5">
+            One or more of your verification documents could not be approved. Please go to{" "}
+            <a href="/artisan/account" className="font-medium underline underline-offset-2">
+              Account &rsaquo; Profile &rsaquo; KYC Verification
+            </a>{" "}
+            to see which documents need to be re-uploaded. Once re-submitted, your application will
+            automatically return to the review queue.
+          </p>
         </div>
       )}
 

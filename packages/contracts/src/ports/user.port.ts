@@ -41,6 +41,7 @@ export interface ArtisanProfileSummary {
   primarySkill: SkillCategory | null;
   serviceRadiusKm: number;
   location: GeoPoint | null;
+  verificationStatus: "UNVERIFIED" | "VERIFIED" | "REJECTED";
 }
 
 export interface FeaturedArtisan {

@@ -27,6 +27,12 @@ export default async function ArtisanAccountPage() {
     <ArtisanAccount
       artisanId={ref.id}
       email={user.email}
+      verificationStatus={
+        ((profile.verificationStatus as string | undefined) ?? "UNVERIFIED") as
+          | "UNVERIFIED"
+          | "VERIFIED"
+          | "REJECTED"
+      }
       initialData={{
         firstName: (profile.firstName as string | null) ?? "",
         lastName: (profile.lastName as string | null) ?? "",

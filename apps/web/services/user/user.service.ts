@@ -58,6 +58,7 @@ class UserService implements UserServicePort {
       primarySkill: profile.primarySkill as SkillCategory | null,
       serviceRadiusKm: profile.serviceRadiusKm,
       location: profile.gpsLat !== null && profile.gpsLng !== null ? { lat: profile.gpsLat, lng: profile.gpsLng } : null,
+      verificationStatus: (profile.verificationStatus ?? "UNVERIFIED") as "UNVERIFIED" | "VERIFIED" | "REJECTED",
     };
   }
 

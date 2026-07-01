@@ -19,7 +19,10 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
   if (body.decision === "APPROVED") {
     await trustService.verifyIdentity(artisanId, admin.id ?? "admin");
-    await userRepository.updateArtisanProfile(artisanId, { verificationStatus: "VERIFIED" });
+    await userRepository.updateArtisanProfile(artisanId, {
+      verificationStatus: "VERIFIED",
+      onboardingStatus: "ACTIVE",
+    });
   } else if (body.decision === "REJECTED") {
     await trustService.rejectIdentity(artisanId, admin.id ?? "admin");
     await userRepository.updateArtisanProfile(artisanId, { verificationStatus: "REJECTED" });

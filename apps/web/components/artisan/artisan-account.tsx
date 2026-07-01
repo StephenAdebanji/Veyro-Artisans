@@ -24,6 +24,7 @@ type Tab = "profile" | "settings";
 interface ArtisanAccountProps {
   artisanId: string;
   email: string;
+  verificationStatus: "UNVERIFIED" | "VERIFIED" | "REJECTED";
   initialData: {
     firstName: string;
     lastName: string;
@@ -122,7 +123,7 @@ function AppearanceSection() {
   );
 }
 
-export function ArtisanAccount({ artisanId, email, initialData, credentials }: ArtisanAccountProps) {
+export function ArtisanAccount({ artisanId, email, verificationStatus, initialData, credentials }: ArtisanAccountProps) {
   const router = useRouter();
   const [tab, setTab] = useState<Tab>("profile");
   const [pending, startTransition] = useTransition();
@@ -250,7 +251,7 @@ export function ArtisanAccount({ artisanId, email, initialData, credentials }: A
             </form>
 
             {/* KYC */}
-            <KycSection initialCredentials={credentials} />
+            <KycSection initialCredentials={credentials} verificationStatus={verificationStatus} />
           </>
         )}
 
