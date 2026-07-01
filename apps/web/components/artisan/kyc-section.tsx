@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import {
   CheckCircle2,
   Clock,
@@ -14,13 +14,12 @@ import {
   Loader2,
   FilePlus,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
-type CredentialStatus = "PENDING" | "APPROVED" | "REJECTED";
-type VerificationStatus = "UNVERIFIED" | "VERIFIED" | "REJECTED";
+export type CredentialStatus = "PENDING" | "APPROVED" | "REJECTED";
+export type VerificationStatus = "UNVERIFIED" | "VERIFIED" | "REJECTED";
 
-type CredentialRecord = {
+export type CredentialRecord = {
   id: string;
   type: string;
   fileUrl: string;
@@ -28,7 +27,7 @@ type CredentialRecord = {
   createdAt: string;
 };
 
-type StagedItem = {
+export type StagedItem = {
   type: string;
   fileUrl: string;
   uploadType: UploadType;
@@ -37,7 +36,7 @@ type StagedItem = {
 
 type UploadType = "id-document" | "proof-of-address" | "credential";
 
-const REQUIRED_CATEGORIES = [
+export const REQUIRED_CATEGORIES = [
   {
     id: "gov-id",
     label: "Government ID",
@@ -174,12 +173,12 @@ function CategoryRow({
   const [uploadError, setUploadError] = useState<string | null>(null);
 
   const rawStatus = credential?.status ?? "NOT_UPLOADED";
-
   const canUpload =
     rawStatus === "NOT_UPLOADED" ||
     (rawStatus === "REJECTED" && verificationStatus === "REJECTED");
-
   const showUpload = canUpload && verificationStatus !== "VERIFIED";
+  const isStaged = staged !== null;
+  const displayFileUrl = staged?.fileUrl ?? credential?.fileUrl;
 
   async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -188,10 +187,9 @@ function CategoryRow({
       setUploadError("File must be under 5MB");
       return;
     }
+    e.target.value = "";
     setUploading(true);
     setUploadError(null);
-    // Reset input so the same file can be re-selected if user wants to change
-    e.target.value = "";
     try {
       const url = await uploadToCloudinary(file, category.uploadType);
       onStaged(category.id, {
@@ -207,11 +205,12 @@ function CategoryRow({
     }
   }
 
-  const displayFileUrl = staged?.fileUrl ?? credential?.fileUrl;
-  const isStaged = staged !== null;
-
   return (
-    <div className={`rounded-xl border bg-card p-4 ${isStaged ? "border-blue-200 bg-blue-50/30 dark:border-blue-900 dark:bg-blue-950/10" : ""}`}>
+    <div
+      className={`rounded-xl border bg-card p-4 ${
+        isStaged ? "border-blue-200 bg-blue-50/30 dark:border-blue-900 dark:bg-blue-950/10" : ""
+      }`}
+    >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
@@ -222,9 +221,7 @@ function CategoryRow({
           </div>
           <p className="mt-0.5 text-xs text-muted-foreground">{category.hint}</p>
           {isStaged ? (
-            <p className="mt-1 text-xs text-blue-600">
-              {staged.fileName} — staged, not yet saved
-            </p>
+            <p className="mt-1 text-xs text-blue-600">{staged.fileName} — staged, not yet saved</p>
           ) : credential ? (
             <p className="mt-1 text-xs text-muted-foreground">
               {TYPE_LABELS[credential.type] ?? credential.type} ·{" "}
@@ -263,7 +260,7 @@ function CategoryRow({
           {isStaged && (
             <p className="mb-2 flex items-center gap-1.5 text-xs text-blue-600">
               <CheckCircle2 className="h-3.5 w-3.5" />
-              File staged. Click Save below to submit, or choose a different file.
+              File staged. Hit Save to submit, or choose a different file.
             </p>
           )}
           <label
@@ -285,7 +282,11 @@ function CategoryRow({
             ) : (
               <>
                 <Upload className="h-4 w-4" />
-                {isStaged ? "Choose different file" : rawStatus === "REJECTED" ? "Re-upload document" : "Upload document"}
+                {isStaged
+                  ? "Choose different file"
+                  : rawStatus === "REJECTED"
+                  ? "Re-upload document"
+                  : "Upload document"}
               </>
             )}
           </label>
@@ -297,21 +298,17 @@ function CategoryRow({
 }
 
 export function KycSection({
-  initialCredentials,
+  credentials,
   verificationStatus,
+  staged,
+  onStaged,
 }: {
-  initialCredentials: CredentialRecord[];
+  credentials: CredentialRecord[];
   verificationStatus: VerificationStatus;
+  staged: Record<string, StagedItem>;
+  onStaged: (categoryId: string, item: StagedItem) => void;
 }) {
-  const [credentials, setCredentials] = useState(initialCredentials);
-  const [currentVerificationStatus, setCurrentVerificationStatus] =
-    useState<VerificationStatus>(verificationStatus);
   const [verifiedBannerDismissed, setVerifiedBannerDismissed] = useState(false);
-  const [staged, setStaged] = useState<Record<string, StagedItem>>({});
-  const [saving, startSave] = useTransition();
-  const [saveError, setSaveError] = useState<string | null>(null);
-
-  const hasStaged = Object.keys(staged).length > 0;
 
   function getLatestForCategory(types: readonly string[]): CredentialRecord | undefined {
     return credentials
@@ -319,81 +316,12 @@ export function KycSection({
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0];
   }
 
-  function handleStaged(categoryId: string, item: StagedItem) {
-    setStaged((prev) => ({ ...prev, [categoryId]: item }));
-  }
-
-  function handleCancel() {
-    setStaged({});
-  }
-
-  function handleSave() {
-    setSaveError(null);
-    startSave(async () => {
-      const items = Object.values(staged);
-      const results = await Promise.allSettled(
-        items.map((item) =>
-          fetch("/api/artisans/credentials", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ type: item.type, fileUrl: item.fileUrl }),
-          }).then((res) => {
-            if (!res.ok) throw new Error(`Failed to submit ${item.type}`);
-            return item;
-          }),
-        ),
-      );
-
-      const succeeded = results
-        .filter((r): r is PromiseFulfilledResult<StagedItem> => r.status === "fulfilled")
-        .map((r) => r.value);
-
-      const failed = results.filter((r) => r.status === "rejected");
-
-      if (succeeded.length > 0) {
-        setCredentials((prev) => [
-          ...prev,
-          ...succeeded.map((item) => ({
-            id: `local-${Date.now()}-${item.type}`,
-            type: item.type,
-            fileUrl: item.fileUrl,
-            status: "PENDING" as CredentialStatus,
-            createdAt: new Date().toISOString(),
-          })),
-        ]);
-
-        // Remove saved items from staged
-        setStaged((prev) => {
-          const next = { ...prev };
-          for (const item of succeeded) {
-            for (const [catId, s] of Object.entries(next)) {
-              if (s.type === item.type && s.fileUrl === item.fileUrl) {
-                delete next[catId];
-              }
-            }
-          }
-          return next;
-        });
-
-        if (currentVerificationStatus === "REJECTED") {
-          setCurrentVerificationStatus("UNVERIFIED");
-        }
-      }
-
-      if (failed.length > 0) {
-        setSaveError(
-          `${failed.length} document(s) failed to submit. Please try saving again.`,
-        );
-      }
-    });
-  }
-
   const submittedCount = REQUIRED_CATEGORIES.filter(
     (cat) => getLatestForCategory(cat.types) || staged[cat.id],
   ).length;
-
   const total = REQUIRED_CATEGORIES.length;
   const pct = Math.round((submittedCount / total) * 100);
+  const hasStaged = Object.keys(staged).length > 0;
 
   return (
     <section className="rounded-xl border bg-card p-6">
@@ -402,11 +330,11 @@ export function KycSection({
           <ShieldCheck className="h-5 w-5 text-primary" />
           <h2 className="text-base font-semibold">KYC Verification</h2>
         </div>
-        {currentVerificationStatus === "VERIFIED" ? (
+        {verificationStatus === "VERIFIED" ? (
           <Badge className="gap-1 bg-emerald-100 text-emerald-700">
             <CheckCircle2 className="h-3.5 w-3.5" /> Verified
           </Badge>
-        ) : currentVerificationStatus === "REJECTED" ? (
+        ) : verificationStatus === "REJECTED" ? (
           <Badge className="gap-1 bg-red-100 text-red-700">
             <XCircle className="h-3.5 w-3.5" /> Rejected
           </Badge>
@@ -417,8 +345,7 @@ export function KycSection({
         )}
       </div>
 
-      {/* Final decision banners */}
-      {currentVerificationStatus === "VERIFIED" && !verifiedBannerDismissed && (
+      {verificationStatus === "VERIFIED" && !verifiedBannerDismissed && (
         <div className="relative mb-5 flex items-start gap-3 rounded-lg border border-emerald-200 bg-emerald-50 p-4 pr-10 dark:border-emerald-900 dark:bg-emerald-950/30">
           <PartyPopper className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" />
           <div>
@@ -443,7 +370,7 @@ export function KycSection({
         </div>
       )}
 
-      {currentVerificationStatus === "REJECTED" && (
+      {verificationStatus === "REJECTED" && (
         <div className="mb-5 flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-900 dark:bg-red-950/30">
           <XCircle className="mt-0.5 h-5 w-5 shrink-0 text-red-600" />
           <div>
@@ -451,15 +378,14 @@ export function KycSection({
               Your application was rejected
             </p>
             <p className="mt-1 text-sm text-red-700 dark:text-red-400">
-              One or more of your documents could not be verified. Please re-upload clearer
-              copies below, then click <strong>Save</strong> to re-submit for review.
+              One or more of your documents could not be verified. Please re-upload clearer copies
+              below, then click <strong>Save</strong> to re-submit for review.
             </p>
           </div>
         </div>
       )}
 
-      {/* Progress bar */}
-      {currentVerificationStatus === "UNVERIFIED" && (
+      {verificationStatus === "UNVERIFIED" && (
         <div className="mb-5">
           <div className="mb-1 flex justify-between text-xs text-muted-foreground">
             <span>Documents submitted</span>
@@ -474,10 +400,10 @@ export function KycSection({
             />
           </div>
           <p className="mt-1.5 text-xs text-muted-foreground">
-            {submittedCount === total && !hasStaged
-              ? "All documents submitted — our team will review and get back to you shortly."
-              : hasStaged
+            {hasStaged
               ? "Files staged. Click Save to submit them for review."
+              : submittedCount === total
+              ? "All documents submitted — our team will review and get back to you shortly."
               : "Upload all required documents to complete your submission."}
           </p>
         </div>
@@ -489,28 +415,12 @@ export function KycSection({
             key={cat.id}
             category={cat}
             credential={getLatestForCategory(cat.types)}
-            verificationStatus={currentVerificationStatus}
+            verificationStatus={verificationStatus}
             staged={staged[cat.id] ?? null}
-            onStaged={handleStaged}
+            onStaged={onStaged}
           />
         ))}
       </div>
-
-      {/* Save / Cancel — only visible when something is staged */}
-      {hasStaged && (
-        <div className="mt-5 border-t pt-5">
-          {saveError && <p className="mb-3 text-sm text-destructive">{saveError}</p>}
-          <div className="flex items-center gap-3">
-            <Button onClick={handleSave} disabled={saving} className="gap-2">
-              {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-              {saving ? "Saving…" : `Save ${Object.keys(staged).length} document${Object.keys(staged).length > 1 ? "s" : ""}`}
-            </Button>
-            <Button variant="outline" onClick={handleCancel} disabled={saving}>
-              Cancel
-            </Button>
-          </div>
-        </div>
-      )}
     </section>
   );
 }
