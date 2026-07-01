@@ -51,9 +51,7 @@ function CredentialRow({
           Artisan <span className="font-mono text-xs">{item.artisanId.slice(0, 12)}…</span>
         </p>
         <a
-          href={`/artisans/${item.artisanId}`}
-          target="_blank"
-          rel="noreferrer"
+          href={`/admin/artisans/${item.artisanId}`}
           className="mt-1 inline-flex items-center gap-1 text-xs text-primary hover:underline"
         >
           View profile <ExternalLink className="h-3 w-3" />

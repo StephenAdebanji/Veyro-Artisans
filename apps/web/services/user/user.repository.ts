@@ -108,4 +108,49 @@ export const userRepository = {
   async countVerifiedArtisans() {
     return prisma.artisanProfile.count({ where: { verificationStatus: "VERIFIED" } });
   },
+
+  async countAllHomeowners() {
+    return prisma.homeownerProfile.count();
+  },
+
+  async countAllArtisans() {
+    return prisma.artisanProfile.count();
+  },
+
+  async listAllArtisans() {
+    return prisma.artisanProfile.findMany({
+      include: { availability: true, portfolio: true, user: { select: { email: true, status: true } } },
+      orderBy: { createdAt: "desc" },
+    });
+  },
+
+  async listAllHomeowners() {
+    return prisma.homeownerProfile.findMany({
+      include: { user: { select: { email: true, status: true } } },
+      orderBy: { createdAt: "desc" },
+    });
+  },
+
+  async findArtisanProfileFull(artisanId: string) {
+    return prisma.artisanProfile.findUnique({
+      where: { id: artisanId },
+      include: { availability: true, portfolio: true, user: { select: { email: true, status: true, createdAt: true } } },
+    });
+  },
+
+  async suspendUser(userId: string) {
+    return prisma.user.update({ where: { id: userId }, data: { status: "SUSPENDED" } });
+  },
+
+  async activateUser(userId: string) {
+    return prisma.user.update({ where: { id: userId }, data: { status: "ACTIVE" } });
+  },
+
+  async deleteArtisan(artisanId: string) {
+    await prisma.artisanProfile.delete({ where: { id: artisanId } });
+  },
+
+  async deleteHomeowner(homeownerId: string) {
+    await prisma.homeownerProfile.delete({ where: { id: homeownerId } });
+  },
 };

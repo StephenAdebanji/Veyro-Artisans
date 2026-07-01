@@ -40,13 +40,16 @@ function StatTile({
 }
 
 export default async function AdminConsolePage() {
-  const [totalUsers, verifiedArtisans, activeRequests, openDisputes, pending] = await Promise.all([
-    authRepository.countAll(),
-    userRepository.countVerifiedArtisans(),
-    matchingRepository.countAllServiceRequests(),
-    matchingRepository.countOpenDisputes(),
-    trustService.listPendingCredentials(),
-  ]);
+  const [totalUsers, verifiedArtisans, totalArtisans, totalHomeowners, activeRequests, openDisputes, pending] =
+    await Promise.all([
+      authRepository.countAll(),
+      userRepository.countVerifiedArtisans(),
+      userRepository.countAllArtisans(),
+      userRepository.countAllHomeowners(),
+      matchingRepository.countAllServiceRequests(),
+      matchingRepository.countOpenDisputes(),
+      trustService.listPendingCredentials(),
+    ]);
 
   return (
     <main className="flex-1 px-6 py-10">
@@ -54,8 +57,9 @@ export default async function AdminConsolePage() {
       <p className="mt-1 text-sm text-muted-foreground">Platform overview — live data from all services.</p>
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <StatTile icon={Users} value={totalUsers} label="Total users" />
-        <StatTile icon={ShieldCheck} value={verifiedArtisans} label="Verified artisans" />
+        <StatTile icon={Users} value={totalUsers} label="Total users" href="/admin/artisans" />
+        <StatTile icon={ShieldCheck} value={totalArtisans} label="Total artisans" href="/admin/artisans" />
+        <StatTile icon={Users} value={totalHomeowners} label="Total homeowners" href="/admin/homeowners" />
         <StatTile icon={Briefcase} value={activeRequests} label="Active requests" />
         <StatTile
           icon={Clock}
@@ -87,6 +91,18 @@ export default async function AdminConsolePage() {
             className="rounded-lg border bg-card px-4 py-2.5 text-sm font-medium hover:bg-muted"
           >
             Manage disputes →
+          </Link>
+          <Link
+            href="/admin/artisans"
+            className="rounded-lg border bg-card px-4 py-2.5 text-sm font-medium hover:bg-muted"
+          >
+            Manage artisans →
+          </Link>
+          <Link
+            href="/admin/homeowners"
+            className="rounded-lg border bg-card px-4 py-2.5 text-sm font-medium hover:bg-muted"
+          >
+            Manage homeowners →
           </Link>
         </div>
       </div>
