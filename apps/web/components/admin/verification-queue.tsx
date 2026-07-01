@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { CheckCircle2, XCircle, ShieldCheck, ExternalLink, Loader2 } from "lucide-react";
+import Link from "next/link";
+import { CheckCircle2, XCircle, ExternalLink, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import type { PendingCredentialSummary } from "@veyro/contracts";
@@ -12,14 +13,10 @@ const CREDENTIAL_LABELS: Record<string, string> = {
   TRADE_CERTIFICATE: "Trade Certificate",
 };
 
-interface Item extends PendingCredentialSummary {
-  // PendingCredentialSummary: { id, artisanId, type, createdAt }
-}
-
 function relativeTime(iso: string) {
   const diff = Date.now() - new Date(iso).getTime();
-  const h = Math.floor(diff / 3_600_000);
   const d = Math.floor(diff / 86_400_000);
+  const h = Math.floor(diff / 3_600_000);
   if (d > 0) return `${d}d ago`;
   if (h > 0) return `${h}h ago`;
   return "just now";
@@ -28,17 +25,26 @@ function relativeTime(iso: string) {
 function CredentialRow({
   item,
   onDecision,
-  onVerifyIdentity,
 }: {
-  item: Item;
+  item: PendingCredentialSummary;
   onDecision: (id: string, decision: "APPROVED" | "REJECTED") => void;
-  onVerifyIdentity: (artisanId: string) => void;
 }) {
   const [pending, startTransition] = useTransition();
   const [done, setDone] = useState(false);
-  const [identityDone, setIdentityDone] = useState(false);
 
   if (done) return null;
+
+  async function decide(decision: "APPROVED" | "REJECTED") {
+    startTransition(async () => {
+      await fetch(`/api/trust/credentials/${item.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ decision }),
+      });
+      onDecision(item.id, decision);
+      setDone(true);
+    });
+  }
 
   return (
     <li className="flex flex-wrap items-start justify-between gap-4 rounded-xl border bg-card p-4">
@@ -50,53 +56,22 @@ function CredentialRow({
         <p className="mt-1 text-sm">
           Artisan <span className="font-mono text-xs">{item.artisanId.slice(0, 12)}…</span>
         </p>
-        <a
-          href={`/admin/artisans/${item.artisanId}`}
-          className="mt-1 inline-flex items-center gap-1 text-xs text-primary hover:underline"
-        >
-          View profile <ExternalLink className="h-3 w-3" />
-        </a>
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
-        {!identityDone && (
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={pending}
-            onClick={() =>
-              startTransition(async () => {
-                await fetch(`/api/admin/artisans/${item.artisanId}/verify-identity`, { method: "POST" });
-                setIdentityDone(true);
-              })
-            }
-          >
-            {pending ? <Loader2 className="h-3 w-3 animate-spin" /> : <ShieldCheck className="h-3 w-3" />}
-            Verify identity
+        <Link href={`/admin/artisans/${item.artisanId}`}>
+          <Button variant="outline" size="sm" className="gap-1">
+            <ExternalLink className="h-3 w-3" />
+            View profile
           </Button>
-        )}
-        {identityDone && (
-          <Badge variant="secondary" className="text-xs">
-            Identity verified
-          </Badge>
-        )}
+        </Link>
 
         <Button
           variant="outline"
           size="sm"
           className="border-green-300 text-green-700 hover:bg-green-50"
           disabled={pending}
-          onClick={() =>
-            startTransition(async () => {
-              await fetch(`/api/trust/credentials/${item.id}`, {
-                method: "PATCH",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ decision: "APPROVED" }),
-              });
-              onDecision(item.id, "APPROVED");
-              setDone(true);
-            })
-          }
+          onClick={() => decide("APPROVED")}
         >
           {pending ? <Loader2 className="h-3 w-3 animate-spin" /> : <CheckCircle2 className="h-3 w-3" />}
           Approve
@@ -107,17 +82,7 @@ function CredentialRow({
           size="sm"
           className="border-red-300 text-red-700 hover:bg-red-50"
           disabled={pending}
-          onClick={() =>
-            startTransition(async () => {
-              await fetch(`/api/trust/credentials/${item.id}`, {
-                method: "PATCH",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ decision: "REJECTED" }),
-              });
-              onDecision(item.id, "REJECTED");
-              setDone(true);
-            })
-          }
+          onClick={() => decide("REJECTED")}
         >
           {pending ? <Loader2 className="h-3 w-3 animate-spin" /> : <XCircle className="h-3 w-3" />}
           Reject
@@ -146,12 +111,7 @@ export function VerificationQueue({ initialItems }: { initialItems: PendingCrede
   return (
     <ul className="space-y-3">
       {items.map((item) => (
-        <CredentialRow
-          key={item.id}
-          item={item}
-          onDecision={handleDecision}
-          onVerifyIdentity={() => {}}
-        />
+        <CredentialRow key={item.id} item={item} onDecision={handleDecision} />
       ))}
     </ul>
   );
