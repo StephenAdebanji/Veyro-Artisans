@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Briefcase, CheckCircle2, ListChecks, Star } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -166,9 +165,6 @@ export default async function ArtisanDashboardPage() {
             </dl>
           </div>
 
-          <Link href="/artisan/profile/edit" className="block text-center text-sm font-medium text-primary">
-            Settings →
-          </Link>
         </div>
       </div>
     </main>
