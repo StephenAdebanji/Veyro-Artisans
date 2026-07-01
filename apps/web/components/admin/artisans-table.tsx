@@ -14,7 +14,13 @@ type ArtisanRow = {
   lastName: string | null;
   primarySkill: string | null;
   verificationStatus: string;
-  user: { email: string; status: string };
+  user: { email: string; status: string; role: string };
+};
+
+const ROLE_STYLE: Record<string, string> = {
+  ADMIN:     "bg-rose-100 text-rose-700",
+  ARTISAN:   "bg-violet-100 text-violet-700",
+  HOMEOWNER: "bg-sky-100 text-sky-700",
 };
 
 const VERIFICATION_STYLE: Record<string, string> = {
@@ -57,7 +63,9 @@ function ArtisanActionRow({ row }: { row: ArtisanRow }) {
       <td className="py-3 pl-4 font-medium">{name}</td>
       <td className="py-3 text-sm text-muted-foreground">{row.user.email}</td>
       <td className="py-3">
-        <Badge className="bg-violet-100 text-violet-700">Artisan</Badge>
+        <Badge className={ROLE_STYLE[row.user.role] ?? "bg-muted text-muted-foreground"}>
+          {row.user.role.charAt(0) + row.user.role.slice(1).toLowerCase()}
+        </Badge>
       </td>
       <td className="py-3">
         <Badge className={VERIFICATION_STYLE[row.verificationStatus] ?? ""}>

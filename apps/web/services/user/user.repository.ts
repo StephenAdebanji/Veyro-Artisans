@@ -119,14 +119,14 @@ export const userRepository = {
 
   async listAllArtisans() {
     return prisma.artisanProfile.findMany({
-      include: { availability: true, portfolio: true, user: { select: { email: true, status: true } } },
+      include: { availability: true, portfolio: true, user: { select: { email: true, status: true, role: true } } },
       orderBy: { createdAt: "desc" },
     });
   },
 
   async listAllHomeowners() {
     return prisma.homeownerProfile.findMany({
-      include: { user: { select: { email: true, status: true } } },
+      include: { user: { select: { email: true, status: true, role: true } } },
       orderBy: { createdAt: "desc" },
     });
   },

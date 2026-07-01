@@ -10,12 +10,18 @@ type HomeownerRow = {
   fullName: string | null;
   city: string | null;
   state: string | null;
-  user: { email: string; status: string };
+  user: { email: string; status: string; role: string };
 };
 
 const STATUS_STYLE: Record<string, string> = {
   ACTIVE: "bg-emerald-100 text-emerald-700",
   SUSPENDED: "bg-red-100 text-red-700",
+};
+
+const ROLE_STYLE: Record<string, string> = {
+  ADMIN:     "bg-rose-100 text-rose-700",
+  ARTISAN:   "bg-violet-100 text-violet-700",
+  HOMEOWNER: "bg-sky-100 text-sky-700",
 };
 
 function HomeownerActionRow({ row }: { row: HomeownerRow }) {
@@ -52,7 +58,9 @@ function HomeownerActionRow({ row }: { row: HomeownerRow }) {
       <td className="py-3 pl-4 font-medium">{row.fullName ?? "—"}</td>
       <td className="py-3 text-sm text-muted-foreground">{row.user.email}</td>
       <td className="py-3">
-        <Badge className="bg-sky-100 text-sky-700">Homeowner</Badge>
+        <Badge className={ROLE_STYLE[row.user.role] ?? "bg-muted text-muted-foreground"}>
+          {row.user.role.charAt(0) + row.user.role.slice(1).toLowerCase()}
+        </Badge>
       </td>
       <td className="py-3">
         <Badge className={STATUS_STYLE[status] ?? ""}>{status}</Badge>
