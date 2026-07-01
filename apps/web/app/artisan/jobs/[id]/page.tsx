@@ -92,9 +92,12 @@ export default async function JobDetailPage({
               Chat
             </Link>
           ) : (
-            <span className="flex items-center justify-center gap-2 rounded-xl border bg-muted px-4 py-3 text-sm font-medium text-muted-foreground">
+            <span
+              title="Chat opens once the homeowner accepts your offer"
+              className="flex items-center justify-center gap-2 rounded-xl border bg-muted px-4 py-3 text-sm font-medium text-muted-foreground"
+            >
               <MessageCircle className="h-4 w-4" />
-              Chat (pending)
+              Chat unavailable
             </span>
           )}
 

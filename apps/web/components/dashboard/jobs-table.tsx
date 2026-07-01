@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Eye } from "lucide-react";
 import type { JobFeedItem, JobFeedStatus } from "@veyro/contracts";
 
 const STATUS_STYLE: Record<JobFeedStatus, string> = {
@@ -27,15 +29,14 @@ export function JobsTable({ rows }: { rows: JobsTableRow[] }) {
           <th className="py-2 font-medium">Customer</th>
           <th className="py-2 font-medium">Status</th>
           <th className="py-2 text-right font-medium">Price</th>
+          <th className="py-2 text-right font-medium">Action</th>
         </tr>
       </thead>
       <tbody>
         {rows.map((row) => (
           <tr key={row.id} className="border-b last:border-b-0 transition-colors hover:bg-muted/40">
             <td className="py-3">
-              <Link href={`/artisan/jobs/${row.id}`} className="line-clamp-1 font-medium hover:underline">
-                {row.description}
-              </Link>
+              <span className="line-clamp-1 font-medium">{row.description}</span>
             </td>
             <td className="py-3 text-muted-foreground">{row.customerName}</td>
             <td className="py-3">
@@ -44,6 +45,13 @@ export function JobsTable({ rows }: { rows: JobsTableRow[] }) {
               </Badge>
             </td>
             <td className="py-3 text-right font-medium">₦{row.price.toLocaleString()}</td>
+            <td className="py-3 text-right">
+              <Link href={`/artisan/jobs/${row.id}`}>
+                <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs">
+                  <Eye className="h-3.5 w-3.5" /> View
+                </Button>
+              </Link>
+            </td>
           </tr>
         ))}
       </tbody>
