@@ -5,6 +5,7 @@ import { useTheme } from "next-themes";
 import {
   UserCircle,
   Settings2,
+  AlertOctagon,
   Sun,
   Moon,
   Monitor,
@@ -15,7 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-type Tab = "profile" | "settings";
+type Tab = "profile" | "disputes" | "settings";
 
 interface HomeownerAccountProps {
   email: string;
@@ -141,6 +142,7 @@ export function HomeownerAccount({ email, fullName, initial }: HomeownerAccountP
       <div className="mt-6 flex gap-1 rounded-xl border bg-muted/40 p-1">
         {([
           { id: "profile" as Tab, icon: UserCircle, label: "Profile" },
+          { id: "disputes" as Tab, icon: AlertOctagon, label: "Disputes" },
           { id: "settings" as Tab, icon: Settings2, label: "Settings" },
         ]).map(({ id, icon: Icon, label }) => (
           <button
@@ -211,12 +213,9 @@ export function HomeownerAccount({ email, fullName, initial }: HomeownerAccountP
           </>
         )}
 
-        {tab === "settings" && (
-          <>
-            <LogDisputeSection />
-            <AppearanceSection />
-          </>
-        )}
+        {tab === "disputes" && <LogDisputeSection />}
+
+        {tab === "settings" && <AppearanceSection />}
       </div>
     </div>
   );
