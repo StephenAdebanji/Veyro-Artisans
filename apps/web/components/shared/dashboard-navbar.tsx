@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
-import { Briefcase, LogOut, MessageSquare, Settings } from "lucide-react";
+import { Briefcase, LogOut, MessageSquare, UserCircle } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 interface NavLink {
@@ -20,12 +20,12 @@ interface DashboardNavbarProps {
 const ARTISAN_RIGHT_LINKS: NavLink[] = [
   { href: "/artisan/jobs", label: "Jobs", icon: Briefcase },
   { href: "/artisan/messages", label: "Messages", icon: MessageSquare },
-  { href: "/artisan/profile/edit", label: "Settings", icon: Settings },
+  { href: "/artisan/account", label: "Account", icon: UserCircle },
 ];
 
 const HOMEOWNER_RIGHT_LINKS: NavLink[] = [
   { href: "/homeowner/messages", label: "Messages", icon: MessageSquare },
-  { href: "/homeowner/settings", label: "Settings", icon: Settings },
+  { href: "/homeowner/account", label: "Account", icon: UserCircle },
 ];
 
 function linkClass(active: boolean) {
