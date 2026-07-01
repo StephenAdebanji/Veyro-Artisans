@@ -273,7 +273,7 @@ export function ArtisanAccount({
         ).map(({ id, icon: Icon, label }) => (
           <button
             key={id}
-            onClick={() => setTab(id)}
+            onClick={() => { setTab(id); setSaved(false); setSaveError(null); }}
             className={`flex flex-1 items-center justify-center gap-2 rounded-lg py-2 text-sm font-medium transition-colors ${
               tab === id
                 ? "bg-white shadow-sm dark:bg-card"
