@@ -8,17 +8,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 
-const PERMISSIONS = [
-  "View all users and profiles",
-  "Verify artisan identities",
-  "Approve or reject credentials",
-  "Resolve disputes",
-  "Access analytics and reports",
-  "Manage platform settings",
-  "View financial transactions",
-  "Send system notifications",
-];
-
 export default function AdminSettingsPage() {
   const { data: session, update: updateSession } = useSession();
   const { theme, setTheme } = useTheme();
@@ -43,18 +32,21 @@ export default function AdminSettingsPage() {
     setError(null);
     setSaved(false);
 
+    const trimmedName = name.trim() || undefined;
+    const trimmedEmail = email.trim() || undefined;
+
     const res = await fetch("/api/admin/account", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: name.trim() || undefined, email: email.trim() || undefined }),
+      body: JSON.stringify({ name: trimmedName, email: trimmedEmail }),
     });
 
     if (!res.ok) {
       const body = (await res.json()) as { error?: string };
       setError(typeof body.error === "string" ? body.error : "Failed to save changes.");
     } else {
-      // Refresh the session so the navbar/header updates.
-      await updateSession();
+      // Pass updated values into the session so they persist without re-login.
+      await updateSession({ name: trimmedName, email: trimmedEmail });
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
     }
@@ -68,13 +60,12 @@ export default function AdminSettingsPage() {
         <h1 className="text-2xl font-bold">Settings</h1>
         <p className="mt-1 text-sm text-muted-foreground">Manage your admin account and preferences.</p>
 
-        <div className="mt-8 flex flex-col gap-8">
-          {/* Account info — editable */}
+        <form onSubmit={handleSave} className="mt-8 flex flex-col gap-8">
+          {/* Account info */}
           <section className="rounded-xl border bg-card p-6">
             <h2 className="text-base font-semibold">Account information</h2>
             <p className="mt-0.5 text-sm text-muted-foreground">Update your display name and email address.</p>
-
-            <form onSubmit={handleSave} className="mt-5 grid gap-4 sm:grid-cols-2">
+            <div className="mt-5 grid gap-4 sm:grid-cols-2">
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor="admin-name">Full name</Label>
                 <Input
@@ -94,42 +85,7 @@ export default function AdminSettingsPage() {
                   placeholder="you@example.com"
                 />
               </div>
-
-              {error && <p className="text-sm text-destructive sm:col-span-2">{error}</p>}
-
-              <div className="flex items-center gap-3 sm:col-span-2">
-                <Button type="submit" disabled={saving}>
-                  {saving ? (
-                    <><Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> Saving…</>
-                  ) : (
-                    <><Save className="mr-1.5 h-4 w-4" /> Save changes</>
-                  )}
-                </Button>
-                {saved && (
-                  <span className="flex items-center gap-1 text-sm text-emerald-600">
-                    <Check className="h-4 w-4" /> Saved
-                  </span>
-                )}
-              </div>
-            </form>
-          </section>
-
-          {/* Permissions */}
-          <section className="rounded-xl border bg-card p-6">
-            <h2 className="text-base font-semibold">Permissions</h2>
-            <p className="mt-0.5 text-sm text-muted-foreground">
-              As an admin, you have full access to all platform capabilities.
-            </p>
-            <ul className="mt-4 grid gap-2 sm:grid-cols-2">
-              {PERMISSIONS.map((perm) => (
-                <li key={perm} className="flex items-center gap-2.5 text-sm">
-                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-950">
-                    <Check className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
-                  </span>
-                  {perm}
-                </li>
-              ))}
-            </ul>
+            </div>
           </section>
 
           {/* Appearance */}
@@ -160,7 +116,24 @@ export default function AdminSettingsPage() {
               ))}
             </div>
           </section>
-        </div>
+
+          {/* Save — always at the bottom */}
+          {error && <p className="text-sm text-destructive">{error}</p>}
+          <div className="flex items-center gap-3">
+            <Button type="submit" disabled={saving}>
+              {saving ? (
+                <><Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> Saving…</>
+              ) : (
+                <><Save className="mr-1.5 h-4 w-4" /> Save changes</>
+              )}
+            </Button>
+            {saved && (
+              <span className="flex items-center gap-1 text-sm text-emerald-600">
+                <Check className="h-4 w-4" /> Saved
+              </span>
+            )}
+          </div>
+        </form>
       </div>
     </main>
   );
