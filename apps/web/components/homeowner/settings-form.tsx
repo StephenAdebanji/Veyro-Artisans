@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useTheme } from "next-themes";
-import { Moon, Sun, Monitor, CheckCircle2 } from "lucide-react";
+import { Moon, Sun, Monitor, CheckCircle2, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,6 +16,67 @@ interface SettingsFormProps {
     city: string;
     state: string;
   };
+}
+
+function LogDisputeSection() {
+  const [description, setDescription] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!description.trim()) return;
+    setSubmitting(true);
+    setError(null);
+    const res = await fetch("/api/disputes", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ description: description.trim() }),
+    });
+    setSubmitting(false);
+    if (!res.ok) {
+      setError("Failed to submit dispute. Please try again.");
+    } else {
+      setSubmitted(true);
+      setDescription("");
+    }
+  }
+
+  return (
+    <section className="rounded-xl border border-rose-200 bg-rose-50/50 p-6 dark:border-rose-900 dark:bg-rose-950/20">
+      <div className="flex items-center gap-2">
+        <AlertTriangle className="h-5 w-5 text-rose-600" />
+        <h2 className="text-base font-semibold">Log a dispute</h2>
+      </div>
+      <p className="mt-0.5 text-sm text-muted-foreground">
+        Had an issue with a job or artisan? Let us know and our team will investigate.
+      </p>
+      {submitted ? (
+        <div className="mt-4 flex items-center gap-2 text-sm text-emerald-700">
+          <CheckCircle2 className="h-4 w-4" />
+          Dispute submitted — our team will be in touch.
+        </div>
+      ) : (
+        <form onSubmit={handleSubmit} className="mt-4 flex flex-col gap-3">
+          <textarea
+            className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-rose-300"
+            rows={3}
+            placeholder="Describe the issue in detail…"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            required
+          />
+          {error && <p className="text-sm text-destructive">{error}</p>}
+          <div>
+            <Button type="submit" disabled={submitting} className="bg-rose-600 hover:bg-rose-700">
+              {submitting ? "Submitting…" : "Submit dispute"}
+            </Button>
+          </div>
+        </form>
+      )}
+    </section>
+  );
 }
 
 export function SettingsForm({ email, fullName, initial }: SettingsFormProps) {
@@ -126,6 +187,9 @@ export function SettingsForm({ email, fullName, initial }: SettingsFormProps) {
           </div>
         </section>
       </form>
+
+      {/* Log a dispute */}
+      <LogDisputeSection />
 
       {/* Appearance */}
       <section className="rounded-xl border bg-card p-6">

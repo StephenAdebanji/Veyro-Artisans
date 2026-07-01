@@ -13,8 +13,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const password = typeof credentials?.password === "string" ? credentials.password : undefined;
         if (!email || !password) return null;
 
-        const user = await authService.verifyCredentials(email, password);
-        return user ? { id: user.id, email: user.email, name: user.name ?? null, role: user.role } : null;
+        try {
+          const user = await authService.verifyCredentials(email, password);
+          return user ? { id: user.id, email: user.email, name: user.name ?? null, role: user.role } : null;
+        } catch (err) {
+          if (err instanceof Error && err.message === "SUSPENDED") {
+            throw new Error("SUSPENDED");
+          }
+          return null;
+        }
       },
     }),
   ],

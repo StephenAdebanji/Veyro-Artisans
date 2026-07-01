@@ -52,6 +52,9 @@ function HomeownerActionRow({ row }: { row: HomeownerRow }) {
       <td className="py-3 pl-4 font-medium">{row.fullName ?? "—"}</td>
       <td className="py-3 text-sm text-muted-foreground">{row.user.email}</td>
       <td className="py-3">
+        <Badge className="bg-sky-100 text-sky-700">Homeowner</Badge>
+      </td>
+      <td className="py-3">
         <Badge className={STATUS_STYLE[status] ?? ""}>{status}</Badge>
       </td>
       <td className="py-3 text-sm text-muted-foreground">{location}</td>
@@ -97,6 +100,7 @@ export function HomeownersTable({ initialRows }: { initialRows: HomeownerRow[] }
           <tr className="border-b text-left text-xs uppercase text-muted-foreground">
             <th className="py-3 pl-4 font-medium">Name</th>
             <th className="py-3 font-medium">Email</th>
+            <th className="py-3 font-medium">Role</th>
             <th className="py-3 font-medium">Status</th>
             <th className="py-3 font-medium">Location</th>
             <th className="py-3 pr-4 text-right font-medium">Actions</th>

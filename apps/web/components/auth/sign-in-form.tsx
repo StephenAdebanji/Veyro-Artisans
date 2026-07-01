@@ -29,7 +29,11 @@ export function SignInForm() {
     const result = await signIn("credentials", { email, password, redirect: false });
 
     if (result?.error) {
-      setError("Invalid email or password.");
+      if (result.error.includes("SUSPENDED")) {
+        setError("Your account has been suspended. Please contact support at support@veyro.app.");
+      } else {
+        setError("Invalid email or password.");
+      }
       setLoading(false);
       return;
     }

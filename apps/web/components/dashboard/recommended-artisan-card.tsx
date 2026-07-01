@@ -50,7 +50,7 @@ export function RecommendedArtisanCard({ artisan }: { artisan: RecommendedArtisa
 
   return (
     <Link
-      href={`/artisans/${artisan.artisanId}`}
+      href={`/homeowner/requests/new?artisan=${artisan.artisanId}`}
       className="flex flex-col gap-3 rounded-xl border bg-card p-4 transition-shadow hover:shadow-md"
     >
       <div className="flex items-start gap-3">

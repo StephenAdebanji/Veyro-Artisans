@@ -6,14 +6,14 @@ export default async function AdminReportsPage() {
 
   const items = disputes.map((d: (typeof disputes)[number]) => ({
     id: d.id,
-    jobId: d.jobId,
+    jobId: d.jobId ?? "",
     raisedBy: d.raisedBy,
     reason: d.reason,
     status: d.status as "OPEN" | "RESOLVED" | "ESCALATED",
     createdAt: d.createdAt.toISOString(),
-    artisanId: d.job.artisanId,
-    homeownerId: d.job.homeownerId,
-    agreedPrice: d.job.agreedPrice ? Number(d.job.agreedPrice) : null,
+    artisanId: d.job?.artisanId ?? null,
+    homeownerId: d.job?.homeownerId ?? null,
+    agreedPrice: d.job?.agreedPrice ? Number(d.job.agreedPrice) : null,
   }));
 
   return (

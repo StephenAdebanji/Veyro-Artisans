@@ -12,8 +12,8 @@ export interface DisputeItem {
   reason: string;
   status: "OPEN" | "RESOLVED" | "ESCALATED";
   createdAt: string;
-  artisanId: string;
-  homeownerId: string;
+  artisanId: string | null;
+  homeownerId: string | null;
   agreedPrice: number | null;
 }
 
@@ -58,7 +58,11 @@ function DisputeRow({
           </div>
           <p className="mt-1 text-sm font-medium line-clamp-2">{item.reason}</p>
           <p className="mt-0.5 text-xs text-muted-foreground">
-            Job <span className="font-mono">{item.jobId.slice(0, 10)}…</span>
+            {item.jobId ? (
+              <>Job <span className="font-mono">{item.jobId.slice(0, 10)}…</span></>
+            ) : (
+              <span className="italic">General dispute (no job)</span>
+            )}
             {item.agreedPrice !== null && (
               <> &mdash; ₦{item.agreedPrice.toLocaleString()}</>
             )}

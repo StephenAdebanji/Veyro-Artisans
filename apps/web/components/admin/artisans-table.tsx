@@ -57,6 +57,9 @@ function ArtisanActionRow({ row }: { row: ArtisanRow }) {
       <td className="py-3 pl-4 font-medium">{name}</td>
       <td className="py-3 text-sm text-muted-foreground">{row.user.email}</td>
       <td className="py-3">
+        <Badge className="bg-violet-100 text-violet-700">Artisan</Badge>
+      </td>
+      <td className="py-3">
         <Badge className={VERIFICATION_STYLE[row.verificationStatus] ?? ""}>
           {row.verificationStatus}
         </Badge>
@@ -111,6 +114,7 @@ export function ArtisansTable({ initialRows }: { initialRows: ArtisanRow[] }) {
           <tr className="border-b text-left text-xs uppercase text-muted-foreground">
             <th className="py-3 pl-4 font-medium">Name</th>
             <th className="py-3 font-medium">Email</th>
+            <th className="py-3 font-medium">Role</th>
             <th className="py-3 font-medium">Status</th>
             <th className="py-3 font-medium">Category</th>
             <th className="py-3 pr-4 text-right font-medium">Actions</th>

@@ -371,8 +371,8 @@ model Review {
 
 model Dispute {
   id         String        @id @default(uuid())
-  jobId      String
-  job        Job           @relation(fields: [jobId], references: [id])
+  jobId      String?
+  job        Job?          @relation(fields: [jobId], references: [id])
   raisedBy   String
   reason     String
   status     DisputeStatus @default(OPEN)

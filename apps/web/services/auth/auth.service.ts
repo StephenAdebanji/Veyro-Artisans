@@ -43,7 +43,14 @@ class AuthService implements AuthServicePort {
     if (!row) return null;
 
     const valid = await bcrypt.compare(password, row.passwordHash);
-    return valid ? toAuthenticatedUser(row) : null;
+    if (!valid) return null;
+
+    if (row.status === "SUSPENDED") {
+      // Return a sentinel object the sign-in handler can detect without exposing internals.
+      throw new Error("SUSPENDED");
+    }
+
+    return toAuthenticatedUser(row);
   }
 
   async getUserById(userId: string): Promise<AuthenticatedUser | null> {

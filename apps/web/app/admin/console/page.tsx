@@ -1,38 +1,48 @@
 import Link from "next/link";
-import { Users, ShieldCheck, Briefcase, AlertTriangle, Clock } from "lucide-react";
+import { Users, ShieldCheck, Briefcase, AlertTriangle, Clock, Hammer, Home } from "lucide-react";
 import { authRepository } from "@/services/auth/auth.repository";
 import { userRepository } from "@/services/user/user.repository";
 import { matchingRepository } from "@/services/matching/matching.repository";
 import { trustService } from "@/services/trust/trust.service";
+
+type TileColor = "blue" | "violet" | "emerald" | "amber" | "rose" | "sky";
+
+const COLOR_CLASSES: Record<TileColor, { border: string; bg: string; icon: string; text: string; badge?: string }> = {
+  blue:    { border: "border-blue-200",   bg: "bg-blue-50 dark:bg-blue-950/30",    icon: "text-blue-600",   text: "text-blue-700" },
+  violet:  { border: "border-violet-200", bg: "bg-violet-50 dark:bg-violet-950/30", icon: "text-violet-600", text: "text-violet-700" },
+  emerald: { border: "border-emerald-200",bg: "bg-emerald-50 dark:bg-emerald-950/30",icon:"text-emerald-600",text: "text-emerald-700" },
+  sky:     { border: "border-sky-200",    bg: "bg-sky-50 dark:bg-sky-950/30",      icon: "text-sky-600",    text: "text-sky-700" },
+  amber:   { border: "border-amber-300",  bg: "bg-amber-50 dark:bg-amber-950/30",  icon: "text-amber-600",  text: "text-amber-700", badge: "bg-amber-500" },
+  rose:    { border: "border-rose-300",   bg: "bg-rose-50 dark:bg-rose-950/30",    icon: "text-rose-600",   text: "text-rose-700",  badge: "bg-rose-500" },
+};
 
 function StatTile({
   icon: Icon,
   value,
   label,
   href,
-  urgent,
+  color = "blue",
+  actionLabel,
 }: {
   icon: React.ElementType;
   value: number;
   label: string;
   href?: string;
-  urgent?: boolean;
+  color?: TileColor;
+  actionLabel?: string;
 }) {
+  const c = COLOR_CLASSES[color];
   const inner = (
-    <div
-      className={`flex flex-col gap-1 rounded-xl border p-5 ${
-        urgent && value > 0 ? "border-amber-300 bg-amber-50" : "bg-card"
-      }`}
-    >
+    <div className={`flex flex-col gap-1 rounded-xl border p-5 transition-shadow hover:shadow-sm ${c.border} ${c.bg}`}>
       <div className="flex items-center justify-between">
-        <Icon className={`h-5 w-5 ${urgent && value > 0 ? "text-amber-600" : "text-muted-foreground"}`} />
-        {urgent && value > 0 && (
-          <span className="rounded-full bg-amber-500 px-1.5 py-0.5 text-[10px] font-bold text-white">
-            Action needed
+        <Icon className={`h-5 w-5 ${c.icon}`} />
+        {actionLabel && value > 0 && (
+          <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold text-white ${c.badge ?? "bg-primary"}`}>
+            {actionLabel}
           </span>
         )}
       </div>
-      <p className={`text-3xl font-bold ${urgent && value > 0 ? "text-amber-700" : ""}`}>{value}</p>
+      <p className={`text-3xl font-bold ${c.text}`}>{value}</p>
       <p className="text-sm text-muted-foreground">{label}</p>
     </div>
   );
@@ -57,24 +67,12 @@ export default async function AdminConsolePage() {
       <p className="mt-1 text-sm text-muted-foreground">Platform overview — live data from all services.</p>
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <StatTile icon={Users} value={totalUsers} label="Total users" href="/admin/artisans" />
-        <StatTile icon={ShieldCheck} value={totalArtisans} label="Total artisans" href="/admin/artisans" />
-        <StatTile icon={Users} value={totalHomeowners} label="Total homeowners" href="/admin/homeowners" />
-        <StatTile icon={Briefcase} value={activeRequests} label="Active requests" />
-        <StatTile
-          icon={Clock}
-          value={pending.length}
-          label="Pending verifications"
-          href="/admin/verifications"
-          urgent
-        />
-        <StatTile
-          icon={AlertTriangle}
-          value={openDisputes}
-          label="Open disputes"
-          href="/admin/reports"
-          urgent
-        />
+        <StatTile icon={Users}       value={totalUsers}      label="Total users"            href="/admin/artisans"      color="blue" />
+        <StatTile icon={Hammer}      value={totalArtisans}   label="Total artisans"         href="/admin/artisans"      color="violet" />
+        <StatTile icon={Home}        value={totalHomeowners} label="Total homeowners"        href="/admin/homeowners"    color="sky" />
+        <StatTile icon={Briefcase}   value={activeRequests}  label="Active requests"                                   color="emerald" />
+        <StatTile icon={Clock}       value={pending.length}  label="Pending verifications"  href="/admin/verifications" color="amber" actionLabel="Action needed" />
+        <StatTile icon={AlertTriangle} value={openDisputes}  label="Open disputes"          href="/admin/reports"       color="rose"  actionLabel="Action needed" />
       </div>
 
       <div className="mt-10">
