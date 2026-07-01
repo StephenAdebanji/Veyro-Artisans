@@ -7,6 +7,8 @@ import { userRepository } from "@/services/user/user.repository";
 import { prisma } from "@/platform/prisma";
 import { Badge } from "@/components/ui/badge";
 import { SKILL_LABELS } from "@/components/shared/skill-labels";
+import { CredentialsReviewer } from "@/components/admin/credentials-reviewer";
+import { VerificationDecision } from "@/components/admin/verification-decision";
 import type { SkillCategory } from "@veyro/contracts";
 
 const VERIFICATION_STYLE: Record<string, string> = {
@@ -194,47 +196,15 @@ export default async function AdminArtisanDetailPage({
         </div>
       )}
 
-      {/* Credentials */}
-      {credentials.length > 0 && (
-        <div className="mt-5 rounded-2xl border bg-card p-5">
-          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-            Credentials ({credentials.length})
-          </h2>
-          <ul className="space-y-3">
-            {credentials.map((cred) => (
-              <li key={cred.id} className="flex items-center justify-between gap-4 rounded-lg border p-3">
-                <div>
-                  <p className="text-sm font-medium">{cred.type.replace(/_/g, " ")}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {new Date(cred.createdAt).toLocaleDateString()}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Badge
-                    className={
-                      cred.status === "APPROVED"
-                        ? "bg-emerald-100 text-emerald-700"
-                        : cred.status === "REJECTED"
-                        ? "bg-red-100 text-red-700"
-                        : "bg-amber-100 text-amber-700"
-                    }
-                  >
-                    {cred.status}
-                  </Badge>
-                  <a
-                    href={cred.fileUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-xs text-primary hover:underline"
-                  >
-                    View file
-                  </a>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+      <CredentialsReviewer
+        initialCredentials={credentials.map((c) => ({
+          id: c.id,
+          type: c.type,
+          fileUrl: c.fileUrl,
+          status: c.status,
+          createdAt: c.createdAt.toISOString(),
+        }))}
+      />
 
       {/* Portfolio */}
       {artisan.portfolio.length > 0 && (
@@ -262,6 +232,11 @@ export default async function AdminArtisanDetailPage({
           </div>
         </div>
       )}
+
+      <VerificationDecision
+        artisanId={artisan.id}
+        currentStatus={artisan.verificationStatus as "UNVERIFIED" | "PENDING" | "VERIFIED" | "REJECTED"}
+      />
     </main>
   );
 }

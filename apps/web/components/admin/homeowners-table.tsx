@@ -88,15 +88,17 @@ function HomeownerActionRow({ row, index }: { row: HomeownerRow; index: number }
               <><ShieldOff className="h-3.5 w-3.5" /> Suspend</>
             )}
           </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-7 gap-1 text-xs text-destructive hover:text-destructive"
-            disabled={pending}
-            onClick={handleDelete}
-          >
-            <Trash2 className="h-3.5 w-3.5" /> Delete
-          </Button>
+          {row.user.role !== "ADMIN" && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 gap-1 text-xs text-destructive hover:text-destructive"
+              disabled={pending}
+              onClick={handleDelete}
+            >
+              <Trash2 className="h-3.5 w-3.5" /> Delete
+            </Button>
+          )}
         </div>
       </td>
     </tr>

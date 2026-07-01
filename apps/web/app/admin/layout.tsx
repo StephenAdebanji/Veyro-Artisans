@@ -20,7 +20,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   return (
     <div className="flex min-h-screen">
-      <aside className="flex w-56 shrink-0 flex-col border-r bg-muted/30 px-3 py-6">
+      <aside className="fixed left-0 top-0 flex h-screen w-56 flex-col border-r bg-muted/30 px-3 py-6">
         <p className="mb-4 px-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
           Admin
         </p>
@@ -37,7 +37,6 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           ))}
         </nav>
 
-        {/* Logout at the bottom */}
         <form
           action={async () => {
             "use server";
@@ -53,7 +52,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           </button>
         </form>
       </aside>
-      <div className="flex flex-1 flex-col">{children}</div>
+      <div className="ml-56 flex flex-1 flex-col">{children}</div>
     </div>
   );
 }

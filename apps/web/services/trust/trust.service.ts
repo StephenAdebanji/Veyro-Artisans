@@ -76,6 +76,12 @@ class TrustService implements TrustServicePort {
     await this.recalculateTrustScore(artisanId);
   }
 
+  async rejectIdentity(artisanId: string, reviewedBy: string): Promise<void> {
+    await trustRepository.getOrCreateTrustProfile(artisanId);
+    await trustRepository.updateTrustProfile(artisanId, { verificationStatus: "REJECTED" });
+    await this.recalculateTrustScore(artisanId);
+  }
+
   async recalculateTrustScore(
     artisanId: string,
   ): Promise<{ score: number; breakdown: TrustScoreBreakdown }> {
