@@ -103,7 +103,7 @@ export default async function ArtisanDashboardPage() {
 
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold">Good morning, {profile.firstName ?? "there"}</h1>
+          <h1 className="text-2xl font-bold">{(() => { const h = new Date().getHours(); return h < 12 ? "Good morning" : h < 17 ? "Good afternoon" : "Good evening"; })()}, {profile.firstName ?? "there"}</h1>
           <p className="text-muted-foreground">
             You have {availableJobs.length} new request{availableJobs.length === 1 ? "" : "s"} within{" "}
             {profile.serviceRadiusKm} km.
