@@ -10,6 +10,7 @@ export interface RegisterUserInput {
 export interface AuthenticatedUser {
   id: string;
   email: string;
+  name?: string | null;
   role: Role;
   status: "ACTIVE" | "SUSPENDED";
 }

@@ -7,7 +7,7 @@ import type { User as UserRow } from "@prisma/client";
 const PASSWORD_SALT_ROUNDS = 10;
 
 function toAuthenticatedUser(row: UserRow): AuthenticatedUser {
-  return { id: row.id, email: row.email, role: row.role, status: row.status };
+  return { id: row.id, email: row.email, name: (row as { name?: string | null }).name ?? null, role: row.role, status: row.status };
 }
 
 /** Owns: credentials, sessions, role assignment. Does NOT own profile data —

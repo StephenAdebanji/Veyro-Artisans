@@ -14,7 +14,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (!email || !password) return null;
 
         const user = await authService.verifyCredentials(email, password);
-        return user ? { id: user.id, email: user.email, role: user.role } : null;
+        return user ? { id: user.id, email: user.email, name: user.name ?? null, role: user.role } : null;
       },
     }),
   ],
@@ -22,6 +22,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     jwt: async ({ token, user }) => {
       if (user) {
         token.role = (user as { role?: string }).role;
+        token.name = (user as { name?: string | null }).name ?? token.name;
       }
       return token;
     },
@@ -29,6 +30,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (session.user) {
         (session.user as { role?: string }).role = token.role as string | undefined;
         (session.user as { id?: string }).id = token.sub;
+        session.user.name = (token.name as string | null | undefined) ?? session.user.name;
       }
       return session;
     },
