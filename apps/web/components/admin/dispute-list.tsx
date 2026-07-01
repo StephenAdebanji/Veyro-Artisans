@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { AlertTriangle, CheckCircle2, Loader2 } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Loader2, Mail, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
@@ -9,6 +9,9 @@ export interface DisputeItem {
   id: string;
   jobId: string;
   raisedBy: string;
+  raisedByName: string | null;
+  raisedByEmail: string | null;
+  raisedByRole: string | null;
   reason: string;
   status: "OPEN" | "RESOLVED" | "ESCALATED";
   createdAt: string;
@@ -17,13 +20,22 @@ export interface DisputeItem {
   agreedPrice: number | null;
 }
 
-function relativeTime(iso: string) {
-  const diff = Date.now() - new Date(iso).getTime();
-  const d = Math.floor(diff / 86_400_000);
-  const h = Math.floor(diff / 3_600_000);
-  if (d > 0) return `${d}d ago`;
-  if (h > 0) return `${h}h ago`;
-  return "just now";
+const ROLE_STYLE: Record<string, string> = {
+  ADMIN:     "bg-rose-100 text-rose-700",
+  ARTISAN:   "bg-violet-100 text-violet-700",
+  HOMEOWNER: "bg-sky-100 text-sky-700",
+};
+
+function formatDateTime(iso: string) {
+  const d = new Date(iso);
+  return d.toLocaleString("en-NG", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  });
 }
 
 function DisputeRow({
@@ -40,6 +52,9 @@ function DisputeRow({
 
   if (done) return null;
 
+  const displayName = item.raisedByName ?? `User ${item.raisedBy.slice(0, 8)}…`;
+  const role = item.raisedByRole;
+
   return (
     <li className="rounded-xl border bg-card">
       <div
@@ -50,32 +65,55 @@ function DisputeRow({
         onKeyDown={(e) => e.key === "Enter" && setExpanded((v) => !v)}
       >
         <div className="min-w-0 flex-1">
+          {/* Name + role category + status */}
           <div className="flex flex-wrap items-center gap-2">
+            <div className="flex items-center gap-1.5">
+              <User className="h-3.5 w-3.5 text-muted-foreground" />
+              <span className="text-sm font-semibold">{displayName}</span>
+            </div>
+            {role && (
+              <Badge className={`text-[10px] ${ROLE_STYLE[role] ?? "bg-muted text-muted-foreground"}`}>
+                {role.charAt(0) + role.slice(1).toLowerCase()}
+              </Badge>
+            )}
             <Badge variant="destructive" className="text-[10px]">
               {item.status}
             </Badge>
-            <span className="text-xs text-muted-foreground">{relativeTime(item.createdAt)}</span>
           </div>
-          <p className="mt-1 text-sm font-medium line-clamp-2">{item.reason}</p>
-          <p className="mt-0.5 text-xs text-muted-foreground">
+
+          {/* Email — clickable mailto */}
+          {item.raisedByEmail && (
+            <a
+              href={`mailto:${item.raisedByEmail}`}
+              className="mt-0.5 flex items-center gap-1 text-xs text-primary hover:underline"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <Mail className="h-3 w-3" />
+              {item.raisedByEmail}
+            </a>
+          )}
+
+          {/* Dispute reason */}
+          <p className="mt-2 text-sm font-medium line-clamp-2">{item.reason}</p>
+
+          {/* Job info + accurate date/time */}
+          <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
             {item.jobId ? (
-              <>Job <span className="font-mono">{item.jobId.slice(0, 10)}…</span></>
+              <span>Job <span className="font-mono">{item.jobId.slice(0, 10)}…</span></span>
             ) : (
               <span className="italic">General dispute (no job)</span>
             )}
             {item.agreedPrice !== null && (
-              <> &mdash; ₦{item.agreedPrice.toLocaleString()}</>
+              <span>₦{item.agreedPrice.toLocaleString()}</span>
             )}
-          </p>
+            <span>{formatDateTime(item.createdAt)}</span>
+          </div>
         </div>
-        <span className="text-xs text-primary">{expanded ? "▲ Collapse" : "▼ Resolve"}</span>
+        <span className="shrink-0 text-xs text-primary">{expanded ? "▲ Collapse" : "▼ Resolve"}</span>
       </div>
 
       {expanded && (
         <div className="border-t px-4 pb-4 pt-3">
-          <p className="mb-2 text-xs text-muted-foreground">
-            Raised by <span className="font-mono">{item.raisedBy.slice(0, 12)}…</span>
-          </p>
           <textarea
             className="w-full rounded-md border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
             rows={3}

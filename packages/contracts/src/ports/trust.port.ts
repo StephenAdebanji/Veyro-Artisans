@@ -27,6 +27,8 @@ export interface TrustProfileSnapshot {
 export interface PendingCredentialSummary {
   id: string;
   artisanId: string;
+  artisanName: string | null;
+  artisanEmail: string | null;
   type: CredentialType;
   createdAt: string;
 }

@@ -154,11 +154,23 @@ export const matchingRepository = {
   },
 
   async listOpenDisputes() {
-    return prisma.dispute.findMany({
+    const disputes = await prisma.dispute.findMany({
       where: { status: "OPEN" },
       include: { job: { select: { artisanId: true, homeownerId: true, agreedPrice: true } } },
       orderBy: { createdAt: "desc" },
     });
+
+    const userIds = [...new Set(disputes.map((d) => d.raisedBy))];
+    const users = await prisma.user.findMany({
+      where: { id: { in: userIds } },
+      select: { id: true, name: true, email: true, role: true },
+    });
+    const userMap = new Map(users.map((u) => [u.id, u]));
+
+    return disputes.map((d) => ({
+      ...d,
+      raisedByUser: userMap.get(d.raisedBy) ?? null,
+    }));
   },
 
   async resolveDispute(id: string, resolution: string) {

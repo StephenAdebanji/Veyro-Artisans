@@ -4,10 +4,13 @@ import { DisputeList } from "@/components/admin/dispute-list";
 export default async function AdminReportsPage() {
   const disputes = await matchingRepository.listOpenDisputes();
 
-  const items = disputes.map((d: (typeof disputes)[number]) => ({
+  const items = disputes.map((d) => ({
     id: d.id,
     jobId: d.jobId ?? "",
     raisedBy: d.raisedBy,
+    raisedByName: d.raisedByUser?.name ?? null,
+    raisedByEmail: d.raisedByUser?.email ?? null,
+    raisedByRole: d.raisedByUser?.role ?? null,
     reason: d.reason,
     status: d.status as "OPEN" | "RESOLVED" | "ESCALATED",
     createdAt: d.createdAt.toISOString(),

@@ -137,6 +137,10 @@ class TrustService implements TrustServicePort {
     return pending.map((credential) => ({
       id: credential.id,
       artisanId: credential.artisanId,
+      artisanName: credential.artisan
+        ? [credential.artisan.firstName, credential.artisan.lastName].filter(Boolean).join(" ") || null
+        : null,
+      artisanEmail: credential.artisan?.user?.email ?? null,
       type: credential.type,
       createdAt: credential.createdAt.toISOString(),
     }));

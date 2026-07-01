@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
-import { CheckCircle2, XCircle, ExternalLink, Loader2 } from "lucide-react";
+import { CheckCircle2, XCircle, ExternalLink, Loader2, User, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import type { PendingCredentialSummary } from "@veyro/contracts";
@@ -13,13 +13,15 @@ const CREDENTIAL_LABELS: Record<string, string> = {
   TRADE_CERTIFICATE: "Trade Certificate",
 };
 
-function relativeTime(iso: string) {
-  const diff = Date.now() - new Date(iso).getTime();
-  const d = Math.floor(diff / 86_400_000);
-  const h = Math.floor(diff / 3_600_000);
-  if (d > 0) return `${d}d ago`;
-  if (h > 0) return `${h}h ago`;
-  return "just now";
+function formatDateTime(iso: string) {
+  return new Date(iso).toLocaleString("en-NG", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  });
 }
 
 function CredentialRow({
@@ -46,16 +48,32 @@ function CredentialRow({
     });
   }
 
+  const displayName = item.artisanName ?? `Artisan ${item.artisanId.slice(0, 8)}…`;
+
   return (
     <li className="flex flex-wrap items-start justify-between gap-4 rounded-xl border bg-card p-4">
       <div className="min-w-0 flex-1">
+        {/* Name + credential category */}
         <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-1.5">
+            <User className="h-3.5 w-3.5 text-muted-foreground" />
+            <span className="text-sm font-semibold">{displayName}</span>
+          </div>
           <Badge variant="outline">{CREDENTIAL_LABELS[item.type] ?? item.type}</Badge>
-          <span className="text-xs text-muted-foreground">{relativeTime(item.createdAt)}</span>
         </div>
-        <p className="mt-1 text-sm">
-          Artisan <span className="font-mono text-xs">{item.artisanId.slice(0, 12)}…</span>
-        </p>
+
+        {/* Email — clickable mailto */}
+        {item.artisanEmail && (
+          <a
+            href={`mailto:${item.artisanEmail}`}
+            className="mt-0.5 flex items-center gap-1 text-xs text-primary hover:underline"
+          >
+            <Mail className="h-3 w-3" />
+            {item.artisanEmail}
+          </a>
+        )}
+
+        <p className="mt-1 text-xs text-muted-foreground">{formatDateTime(item.createdAt)}</p>
       </div>
 
       <div className="flex flex-wrap items-center gap-2">

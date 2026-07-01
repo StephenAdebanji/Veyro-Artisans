@@ -23,7 +23,22 @@ export const trustRepository = {
   },
 
   async listPending() {
-    return prisma.credential.findMany({ where: { status: "PENDING" }, orderBy: { createdAt: "asc" } });
+    const credentials = await prisma.credential.findMany({
+      where: { status: "PENDING" },
+      orderBy: { createdAt: "asc" },
+    });
+
+    const artisanIds = [...new Set(credentials.map((c) => c.artisanId))];
+    const artisans = await prisma.artisanProfile.findMany({
+      where: { id: { in: artisanIds } },
+      select: { id: true, firstName: true, lastName: true, user: { select: { email: true } } },
+    });
+    const artisanMap = new Map(artisans.map((a) => [a.id, a]));
+
+    return credentials.map((c) => ({
+      ...c,
+      artisan: artisanMap.get(c.artisanId) ?? null,
+    }));
   },
 
   async countPending(): Promise<number> {
