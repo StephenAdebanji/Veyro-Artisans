@@ -14,7 +14,9 @@ import {
   CheckCircle2,
   Loader2,
   AlertTriangle,
+  ArrowLeft,
 } from "lucide-react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -254,8 +256,27 @@ export function ArtisanAccount({
 
   const fullName = `${initialData.firstName} ${initialData.lastName}`.trim() || "—";
 
+  const isProfileDirty =
+    bio !== initialData.bio ||
+    city !== initialData.city ||
+    stateVal !== initialData.state ||
+    serviceRadiusKm !== (initialData.serviceRadiusKm?.toString() ?? "");
+
+  const isKycDirty = Object.keys(kycStaged).length > 0;
+
+  const showSaveCancel = tab === "profile" || tab === "kyc";
+  const showCancel = (tab === "profile" && isProfileDirty) || (tab === "kyc" && isKycDirty);
+
   return (
-    <div className="mx-auto max-w-2xl flex-1 px-6 pb-16 pt-10">
+    <div className="mx-auto w-full max-w-2xl flex-1 px-6 pb-16 pt-10">
+      <Link
+        href="/artisan/dashboard"
+        className="mb-6 flex items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        Back to dashboard
+      </Link>
+
       <div>
         <h1 className="text-2xl font-bold">Account</h1>
         <p className="mt-1 text-sm text-muted-foreground">Manage your profile and preferences.</p>
@@ -379,32 +400,28 @@ export function ArtisanAccount({
         {tab === "settings" && <AppearanceSection />}
       </div>
 
-      {/* Global Save / Cancel — always visible */}
-      <div className="mt-6 border-t pt-6">
-        {saveError && <p className="mb-3 text-sm text-destructive">{saveError}</p>}
-        <div className="flex items-center gap-3">
-          <Button
-            onClick={handleSave}
-            disabled={saving || tab === "disputes" || tab === "settings"}
-            className="min-w-[100px]"
-          >
-            {saving && <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />}
-            Save
-          </Button>
-          <Button
-            variant="outline"
-            onClick={handleCancel}
-            disabled={saving || tab === "disputes" || tab === "settings"}
-          >
-            Cancel
-          </Button>
-          {saved && (
-            <span className="flex items-center gap-1.5 text-sm text-emerald-600">
-              <CheckCircle2 className="h-4 w-4" /> Saved
-            </span>
-          )}
+      {/* Save / Cancel — only on Profile and KYC tabs */}
+      {showSaveCancel && (
+        <div className="mt-6 border-t pt-6">
+          {saveError && <p className="mb-3 text-sm text-destructive">{saveError}</p>}
+          <div className="flex items-center gap-3">
+            <Button onClick={handleSave} disabled={saving} className="min-w-[100px]">
+              {saving && <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />}
+              Save
+            </Button>
+            {showCancel && (
+              <Button variant="outline" onClick={handleCancel} disabled={saving}>
+                Cancel
+              </Button>
+            )}
+            {saved && (
+              <span className="flex items-center gap-1.5 text-sm text-emerald-600">
+                <CheckCircle2 className="h-4 w-4" /> Saved
+              </span>
+            )}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
