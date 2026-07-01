@@ -8,6 +8,7 @@ const updateSchema = z.object({
   address: z.string().optional(),
   city: z.string().optional(),
   state: z.string().optional(),
+  profilePhotoUrl: z.string().url().optional(),
 });
 
 export async function PATCH(request: Request) {

@@ -16,7 +16,7 @@ export const userRepository = {
 
   async updateHomeownerProfile(
     userId: string,
-    data: { fullName?: string; phone?: string; address?: string; city?: string; state?: string },
+    data: { fullName?: string; phone?: string; address?: string; city?: string; state?: string; profilePhotoUrl?: string },
   ) {
     return prisma.homeownerProfile.update({ where: { userId }, data });
   },

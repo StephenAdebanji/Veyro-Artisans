@@ -9,6 +9,7 @@ const editSchema = z.object({
   serviceRadiusKm: z.number().positive().optional(),
   city: z.string().optional(),
   state: z.string().optional(),
+  profilePhotoUrl: z.string().url().optional(),
 });
 
 /** Public artisan profile. residentialAddress/gps are stripped unless the

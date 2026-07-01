@@ -26,17 +26,17 @@ class UserService implements UserServicePort {
 
   async getHomeownerProfileByUserId(userId: string): Promise<HomeownerProfileSummary | null> {
     const profile = await userRepository.findHomeownerProfileByUserId(userId);
-    return profile ? { id: profile.id, userId: profile.userId, fullName: profile.fullName, phone: profile.phone ?? null } : null;
+    return profile ? { id: profile.id, userId: profile.userId, fullName: profile.fullName, phone: profile.phone ?? null, profilePhotoUrl: profile.profilePhotoUrl ?? null } : null;
   }
 
   async getHomeownerProfile(homeownerId: string): Promise<HomeownerProfileSummary | null> {
     const profile = await userRepository.findHomeownerProfile(homeownerId);
-    return profile ? { id: profile.id, userId: profile.userId, fullName: profile.fullName, phone: profile.phone ?? null } : null;
+    return profile ? { id: profile.id, userId: profile.userId, fullName: profile.fullName, phone: profile.phone ?? null, profilePhotoUrl: profile.profilePhotoUrl ?? null } : null;
   }
 
   async updateHomeownerProfile(
     userId: string,
-    data: { phone?: string; address?: string; city?: string; state?: string },
+    data: { phone?: string; address?: string; city?: string; state?: string; profilePhotoUrl?: string },
   ) {
     return userRepository.updateHomeownerProfile(userId, data);
   }
@@ -59,6 +59,7 @@ class UserService implements UserServicePort {
       serviceRadiusKm: profile.serviceRadiusKm,
       location: profile.gpsLat !== null && profile.gpsLng !== null ? { lat: profile.gpsLat, lng: profile.gpsLng } : null,
       verificationStatus: (profile.verificationStatus ?? "UNVERIFIED") as "UNVERIFIED" | "VERIFIED" | "REJECTED",
+      profilePhotoUrl: profile.profilePhotoUrl ?? null,
     };
   }
 
@@ -136,6 +137,7 @@ class UserService implements UserServicePort {
       state?: string;
       gpsLat?: number;
       gpsLng?: number;
+      profilePhotoUrl?: string;
     },
   ): Promise<void> {
     await userRepository.updateArtisanProfile(artisanId, {
@@ -145,6 +147,7 @@ class UserService implements UserServicePort {
       state: data.state ?? undefined,
       gpsLat: data.gpsLat,
       gpsLng: data.gpsLng,
+      profilePhotoUrl: data.profilePhotoUrl ?? undefined,
     });
   }
 

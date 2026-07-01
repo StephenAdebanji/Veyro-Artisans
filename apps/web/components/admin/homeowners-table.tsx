@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Eye, Pencil, Trash2, ShieldOff, ShieldCheck } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Avatar } from "@/components/shared/avatar";
 import { EditHomeownerModal, type EditHomeownerData } from "./edit-user-modal";
 
 type HomeownerRow = {
@@ -12,6 +13,7 @@ type HomeownerRow = {
   fullName: string | null;
   city: string | null;
   state: string | null;
+  profilePhotoUrl: string | null;
   user: { email: string; status: string; role: string };
 };
 
@@ -80,7 +82,12 @@ function HomeownerActionRow({ row, index }: { row: HomeownerRow; index: number }
     <>
       <tr className="border-b last:border-b-0 hover:bg-muted/30">
         <td className="py-3 pl-4 text-sm text-muted-foreground">{index}</td>
-        <td className="py-3 font-medium">{data.fullName ?? "—"}</td>
+        <td className="py-3">
+          <div className="flex items-center gap-2">
+            <Avatar src={data.profilePhotoUrl} name={data.fullName ?? ""} size={28} />
+            <span className="font-medium">{data.fullName ?? "—"}</span>
+          </div>
+        </td>
         <td className="py-3 text-sm text-muted-foreground">{data.user.email}</td>
         <td className="py-3">
           <Badge className={ROLE_STYLE[data.user.role] ?? "bg-muted text-muted-foreground"}>

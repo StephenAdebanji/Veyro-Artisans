@@ -33,6 +33,7 @@ export default async function ArtisanAccountPage() {
           | "VERIFIED"
           | "REJECTED"
       }
+      profilePhotoUrl={(profile.profilePhotoUrl as string | null | undefined) ?? null}
       initialData={{
         firstName: (profile.firstName as string | null) ?? "",
         lastName: (profile.lastName as string | null) ?? "",

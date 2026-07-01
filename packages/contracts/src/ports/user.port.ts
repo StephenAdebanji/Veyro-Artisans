@@ -31,6 +31,7 @@ export interface HomeownerProfileSummary {
   userId: string;
   fullName: string | null;
   phone: string | null;
+  profilePhotoUrl: string | null;
 }
 
 export interface ArtisanProfileSummary {
@@ -42,6 +43,7 @@ export interface ArtisanProfileSummary {
   serviceRadiusKm: number;
   location: GeoPoint | null;
   verificationStatus: "UNVERIFIED" | "VERIFIED" | "REJECTED";
+  profilePhotoUrl: string | null;
 }
 
 export interface FeaturedArtisan {

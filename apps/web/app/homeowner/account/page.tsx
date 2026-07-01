@@ -22,6 +22,7 @@ export default async function HomeownerAccountPage() {
     <HomeownerAccount
       email={user.email}
       fullName={homeowner.fullName ?? ""}
+      profilePhotoUrl={profile?.profilePhotoUrl ?? null}
       initial={{
         phone: profile?.phone ?? "",
         address: profile?.address ?? "",

@@ -16,7 +16,7 @@ export default async function AdminArtisansPage() {
         All registered artisans — {artisans.length} total
       </p>
       <div className="mt-6 rounded-xl border bg-card">
-        <ArtisansTable initialRows={artisans} />
+        <ArtisansTable initialRows={artisans.map((a) => ({ ...a, profilePhotoUrl: a.profilePhotoUrl ?? null }))} />
       </div>
     </main>
   );

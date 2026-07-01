@@ -12,6 +12,7 @@ import {
   CheckCircle2,
   AlertTriangle,
 } from "lucide-react";
+import { ProfilePhotoUpload } from "@/components/shared/profile-photo-upload";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,6 +22,7 @@ type Tab = "profile" | "disputes" | "settings";
 interface HomeownerAccountProps {
   email: string;
   fullName: string;
+  profilePhotoUrl: string | null;
   initial: { phone: string; address: string; city: string; state: string };
 }
 
@@ -105,7 +107,7 @@ function AppearanceSection() {
   );
 }
 
-export function HomeownerAccount({ email, fullName, initial }: HomeownerAccountProps) {
+export function HomeownerAccount({ email, fullName, profilePhotoUrl, initial }: HomeownerAccountProps) {
   const [tab, setTab] = useState<Tab>("profile");
   const [form, setForm] = useState(initial);
   const [saving, setSaving] = useState(false);
@@ -160,6 +162,21 @@ export function HomeownerAccount({ email, fullName, initial }: HomeownerAccountP
       <div className="mt-6 flex flex-col gap-6">
         {tab === "profile" && (
           <>
+            {/* Profile photo */}
+            <section className="flex items-center gap-5 rounded-xl border bg-card p-6">
+              <ProfilePhotoUpload
+                currentUrl={profilePhotoUrl}
+                name={fullName}
+                endpoint="/api/homeowners/profile"
+                size={80}
+              />
+              <div>
+                <p className="font-semibold">{fullName || "—"}</p>
+                <p className="text-sm text-muted-foreground">{email}</p>
+                <p className="mt-1 text-xs text-muted-foreground">Click the camera icon to update your photo</p>
+              </div>
+            </section>
+
             <section className="rounded-xl border bg-card p-6">
               <h2 className="text-base font-semibold">Account information</h2>
               <p className="mt-0.5 text-sm text-muted-foreground">Your name and email cannot be changed.</p>

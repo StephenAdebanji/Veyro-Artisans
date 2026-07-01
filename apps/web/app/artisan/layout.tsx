@@ -13,7 +13,7 @@ export default async function ArtisanLayout({ children }: { children: React.Reac
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <DashboardNavbar role="artisan" userName={firstName} />
+      <DashboardNavbar role="artisan" userName={firstName} profilePhotoUrl={profile?.profilePhotoUrl} />
       <div className="flex min-h-0 flex-1 flex-col">{children}</div>
     </div>
   );

@@ -181,13 +181,14 @@ model HomeownerProfile {
   /// email/passwordHash/role belong to Auth Service. On physical split this FK is
   /// replaced by a local denormalized {userId, role} copy synced via UserRegistered.
   user      User     @relation(fields: [userId], references: [id])
-  fullName  String?
-  phone     String?
-  address   String?
-  city      String?
-  state     String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  fullName        String?
+  phone           String?
+  address         String?
+  city            String?
+  state           String?
+  profilePhotoUrl String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   @@schema("user")
 }

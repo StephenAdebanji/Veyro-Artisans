@@ -20,6 +20,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { KycSection } from "./kyc-section";
+import { ProfilePhotoUpload } from "@/components/shared/profile-photo-upload";
 
 type Tab = "profile" | "kyc" | "disputes" | "settings";
 
@@ -27,6 +28,7 @@ interface ArtisanAccountProps {
   artisanId: string;
   email: string;
   verificationStatus: "UNVERIFIED" | "VERIFIED" | "REJECTED";
+  profilePhotoUrl: string | null;
   initialData: {
     firstName: string;
     lastName: string;
@@ -125,7 +127,7 @@ function AppearanceSection() {
   );
 }
 
-export function ArtisanAccount({ artisanId, email, verificationStatus, initialData, credentials }: ArtisanAccountProps) {
+export function ArtisanAccount({ artisanId, email, verificationStatus, profilePhotoUrl, initialData, credentials }: ArtisanAccountProps) {
   const router = useRouter();
   const [tab, setTab] = useState<Tab>("profile");
   const [pending, startTransition] = useTransition();
@@ -184,6 +186,21 @@ export function ArtisanAccount({ artisanId, email, verificationStatus, initialDa
       <div className="mt-6 flex flex-col gap-6">
         {tab === "profile" && (
           <>
+            {/* Profile photo */}
+            <section className="flex items-center gap-5 rounded-xl border bg-card p-6">
+              <ProfilePhotoUpload
+                currentUrl={profilePhotoUrl}
+                name={fullName}
+                endpoint={`/api/artisans/${artisanId}`}
+                size={80}
+              />
+              <div>
+                <p className="font-semibold">{fullName}</p>
+                <p className="text-sm text-muted-foreground">{email}</p>
+                <p className="mt-1 text-xs text-muted-foreground">Click the camera icon to update your photo</p>
+              </div>
+            </section>
+
             {/* Read-only account info */}
             <section className="rounded-xl border bg-card p-6">
               <h2 className="text-base font-semibold">Account information</h2>

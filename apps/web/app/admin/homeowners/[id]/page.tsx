@@ -1,5 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { ArrowLeft, MapPin, Mail, Calendar, Shield } from "lucide-react";
 import { auth } from "@/platform/auth-session";
 import { userRepository } from "@/services/user/user.repository";
@@ -42,9 +43,19 @@ export default async function AdminHomeownerDetailPage({
 
       {/* Header */}
       <div className="flex items-start gap-5 rounded-2xl border bg-card p-6">
-        <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-sky-100 text-2xl font-bold text-sky-700">
-          {(homeowner.fullName?.[0] ?? "?").toUpperCase()}
-        </div>
+        {homeowner.profilePhotoUrl ? (
+          <Image
+            src={homeowner.profilePhotoUrl}
+            alt={homeowner.fullName ?? "Homeowner"}
+            width={64}
+            height={64}
+            className="h-16 w-16 shrink-0 rounded-full object-cover"
+          />
+        ) : (
+          <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-sky-100 text-2xl font-bold text-sky-700">
+            {(homeowner.fullName?.[0] ?? "?").toUpperCase()}
+          </div>
+        )}
         <div className="flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <h1 className="text-2xl font-bold">{homeowner.fullName ?? "No name"}</h1>

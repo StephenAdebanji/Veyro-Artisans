@@ -16,7 +16,7 @@ export default async function AdminHomeownersPage() {
         All registered homeowners — {homeowners.length} total
       </p>
       <div className="mt-6 rounded-xl border bg-card">
-        <HomeownersTable initialRows={homeowners} />
+        <HomeownersTable initialRows={homeowners.map((h) => ({ ...h, profilePhotoUrl: h.profilePhotoUrl ?? null }))} />
       </div>
     </main>
   );
