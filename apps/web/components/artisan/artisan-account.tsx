@@ -5,8 +5,9 @@ import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import {
   UserCircle,
-  Settings2,
+  ShieldCheck,
   AlertOctagon,
+  Settings2,
   Sun,
   Moon,
   Monitor,
@@ -20,7 +21,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { KycSection } from "./kyc-section";
 
-type Tab = "profile" | "disputes" | "settings";
+type Tab = "profile" | "kyc" | "disputes" | "settings";
 
 interface ArtisanAccountProps {
   artisanId: string;
@@ -164,6 +165,7 @@ export function ArtisanAccount({ artisanId, email, verificationStatus, initialDa
       <div className="mt-6 flex gap-1 rounded-xl border bg-muted/40 p-1">
         {([
           { id: "profile" as Tab, icon: UserCircle, label: "Profile" },
+          { id: "kyc" as Tab, icon: ShieldCheck, label: "KYC" },
           { id: "disputes" as Tab, icon: AlertOctagon, label: "Disputes" },
           { id: "settings" as Tab, icon: Settings2, label: "Settings" },
         ]).map(({ id, icon: Icon, label }) => (
@@ -252,9 +254,11 @@ export function ArtisanAccount({ artisanId, email, verificationStatus, initialDa
               </section>
             </form>
 
-            {/* KYC */}
-            <KycSection initialCredentials={credentials} verificationStatus={verificationStatus} />
           </>
+        )}
+
+        {tab === "kyc" && (
+          <KycSection initialCredentials={credentials} verificationStatus={verificationStatus} />
         )}
 
         {tab === "disputes" && <LogDisputeSection />}
