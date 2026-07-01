@@ -18,6 +18,13 @@ export const trustRepository = {
     });
   },
 
+  async resetCredentialsForArtisan(artisanId: string) {
+    return prisma.credential.updateMany({
+      where: { artisanId },
+      data: { status: "PENDING", reviewedBy: null, reviewedAt: null },
+    });
+  },
+
   async countApprovedCredentials(artisanId: string): Promise<number> {
     return prisma.credential.count({ where: { artisanId, status: "APPROVED" } });
   },

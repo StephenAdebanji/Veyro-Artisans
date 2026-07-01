@@ -159,9 +159,11 @@ export function ArtisanAccount({ artisanId, email, verificationStatus, profilePh
   const fullName = `${initialData.firstName} ${initialData.lastName}`.trim() || "—";
 
   return (
-    <div className="mx-auto max-w-2xl flex-1 px-6 py-10">
-      <h1 className="text-2xl font-bold">Account</h1>
-      <p className="mt-1 text-sm text-muted-foreground">Manage your profile and preferences.</p>
+    <div className="mx-auto max-w-2xl flex-1 px-6 pb-16 pt-10">
+      <div>
+        <h1 className="text-2xl font-bold">Account</h1>
+        <p className="mt-1 text-sm text-muted-foreground">Manage your profile and preferences.</p>
+      </div>
 
       {/* Tabs */}
       <div className="mt-6 flex gap-1 rounded-xl border bg-muted/40 p-1">
@@ -183,7 +185,7 @@ export function ArtisanAccount({ artisanId, email, verificationStatus, profilePh
         ))}
       </div>
 
-      <div className="mt-6 flex flex-col gap-6">
+      <div className="mt-6 flex min-h-[640px] flex-col gap-6">
         {tab === "profile" && (
           <>
             {/* Profile photo */}

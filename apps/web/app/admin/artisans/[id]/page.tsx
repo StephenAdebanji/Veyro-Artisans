@@ -7,8 +7,7 @@ import { userRepository } from "@/services/user/user.repository";
 import { prisma } from "@/platform/prisma";
 import { Badge } from "@/components/ui/badge";
 import { SKILL_LABELS } from "@/components/shared/skill-labels";
-import { CredentialsReviewer } from "@/components/admin/credentials-reviewer";
-import { VerificationDecision } from "@/components/admin/verification-decision";
+import { VerificationPanel } from "@/components/admin/verification-panel";
 import type { SkillCategory } from "@veyro/contracts";
 
 const VERIFICATION_STYLE: Record<string, string> = {
@@ -196,16 +195,6 @@ export default async function AdminArtisanDetailPage({
         </div>
       )}
 
-      <CredentialsReviewer
-        initialCredentials={credentials.map((c) => ({
-          id: c.id,
-          type: c.type,
-          fileUrl: c.fileUrl,
-          status: c.status,
-          createdAt: c.createdAt.toISOString(),
-        }))}
-      />
-
       {/* Portfolio */}
       {artisan.portfolio.length > 0 && (
         <div className="mt-5 rounded-2xl border bg-card p-5">
@@ -233,9 +222,16 @@ export default async function AdminArtisanDetailPage({
         </div>
       )}
 
-      <VerificationDecision
+      <VerificationPanel
         artisanId={artisan.id}
-        currentStatus={artisan.verificationStatus as "UNVERIFIED" | "PENDING" | "VERIFIED" | "REJECTED"}
+        initialVerificationStatus={artisan.verificationStatus as "UNVERIFIED" | "PENDING" | "VERIFIED" | "REJECTED"}
+        initialCredentials={credentials.map((c) => ({
+          id: c.id,
+          type: c.type,
+          fileUrl: c.fileUrl,
+          status: c.status,
+          createdAt: c.createdAt.toISOString(),
+        }))}
       />
     </main>
   );

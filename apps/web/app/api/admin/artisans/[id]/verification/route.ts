@@ -26,8 +26,14 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   } else if (body.decision === "REJECTED") {
     await trustService.rejectIdentity(artisanId, admin.id ?? "admin");
     await userRepository.updateArtisanProfile(artisanId, { verificationStatus: "REJECTED" });
+  } else if (body.decision === "REVOKED") {
+    await trustService.revokeDecision(artisanId);
+    await userRepository.updateArtisanProfile(artisanId, {
+      verificationStatus: "UNVERIFIED",
+      onboardingStatus: "PENDING_REVIEW",
+    });
   } else {
-    return NextResponse.json({ error: "decision must be APPROVED or REJECTED" }, { status: 400 });
+    return NextResponse.json({ error: "decision must be APPROVED, REJECTED, or REVOKED" }, { status: 400 });
   }
 
   return NextResponse.json({ ok: true });

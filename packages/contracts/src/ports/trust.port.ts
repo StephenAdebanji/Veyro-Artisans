@@ -47,6 +47,8 @@ export interface TrustServicePort {
     reason?: string,
   ): Promise<void>;
   verifyIdentity(artisanId: string, reviewedBy: string): Promise<void>;
+  rejectIdentity(artisanId: string, reviewedBy: string): Promise<void>;
+  revokeDecision(artisanId: string): Promise<void>;
   recalculateTrustScore(
     artisanId: string,
   ): Promise<{ score: number; breakdown: TrustScoreBreakdown }>;
