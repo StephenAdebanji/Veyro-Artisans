@@ -127,6 +127,24 @@ export const matchingRepository = {
     });
   },
 
+  async findPendingMatchForArtisan(matchId: string, artisanId: string) {
+    return prisma.match.findFirst({
+      where: { id: matchId, artisanId, status: "PENDING" },
+      include: { serviceRequest: true },
+    });
+  },
+
+  async findJobForArtisan(jobId: string, artisanId: string) {
+    return prisma.job.findFirst({
+      where: { id: jobId, artisanId },
+      include: { serviceRequest: true },
+    });
+  },
+
+  async findConversationByJob(jobId: string) {
+    return prisma.conversation.findFirst({ where: { jobId } });
+  },
+
   async countActiveJobsForArtisan(artisanId: string) {
     return prisma.job.count({ where: { artisanId, status: "ACTIVE" } });
   },

@@ -269,6 +269,38 @@ class MatchingService implements MatchingServicePort {
     return [...pendingItems, ...jobItems];
   }
 
+  async getJobFeedItem(
+    jobId: string,
+    artisanId: string,
+  ): Promise<(JobFeedItem & { conversationId: string | null }) | null> {
+    // Check pending matches first (PENDING state)
+    const match = await matchingRepository.findPendingMatchForArtisan(jobId, artisanId);
+    if (match) {
+      return {
+        id: match.id,
+        category: match.serviceRequest.category,
+        description: match.serviceRequest.description,
+        homeownerId: match.serviceRequest.homeownerId,
+        status: "PENDING",
+        price: match.proposedPrice,
+        conversationId: null,
+      };
+    }
+    // Otherwise look up a real Job row
+    const job = await matchingRepository.findJobForArtisan(jobId, artisanId);
+    if (!job) return null;
+    const conv = await matchingRepository.findConversationByJob(jobId);
+    return {
+      id: job.id,
+      category: job.serviceRequest.category,
+      description: job.serviceRequest.description,
+      homeownerId: job.homeownerId,
+      status: job.status,
+      price: job.agreedPrice,
+      conversationId: conv?.id ?? null,
+    };
+  }
+
   async countActiveJobsForArtisan(artisanId: string): Promise<number> {
     return matchingRepository.countActiveJobsForArtisan(artisanId);
   }

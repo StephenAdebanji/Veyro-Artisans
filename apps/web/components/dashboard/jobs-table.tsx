@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import type { JobFeedItem, JobFeedStatus } from "@veyro/contracts";
 
@@ -30,8 +31,12 @@ export function JobsTable({ rows }: { rows: JobsTableRow[] }) {
       </thead>
       <tbody>
         {rows.map((row) => (
-          <tr key={row.id} className="border-b last:border-b-0">
-            <td className="py-3">{row.description}</td>
+          <tr key={row.id} className="border-b last:border-b-0 transition-colors hover:bg-muted/40">
+            <td className="py-3">
+              <Link href={`/artisan/jobs/${row.id}`} className="line-clamp-1 font-medium hover:underline">
+                {row.description}
+              </Link>
+            </td>
             <td className="py-3 text-muted-foreground">{row.customerName}</td>
             <td className="py-3">
               <Badge className={STATUS_STYLE[row.status]}>

@@ -30,6 +30,7 @@ export interface HomeownerProfileSummary {
   id: string;
   userId: string;
   fullName: string | null;
+  phone: string | null;
 }
 
 export interface ArtisanProfileSummary {

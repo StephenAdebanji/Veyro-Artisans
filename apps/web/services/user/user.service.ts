@@ -26,12 +26,12 @@ class UserService implements UserServicePort {
 
   async getHomeownerProfileByUserId(userId: string): Promise<HomeownerProfileSummary | null> {
     const profile = await userRepository.findHomeownerProfileByUserId(userId);
-    return profile ? { id: profile.id, userId: profile.userId, fullName: profile.fullName } : null;
+    return profile ? { id: profile.id, userId: profile.userId, fullName: profile.fullName, phone: profile.phone ?? null } : null;
   }
 
   async getHomeownerProfile(homeownerId: string): Promise<HomeownerProfileSummary | null> {
     const profile = await userRepository.findHomeownerProfile(homeownerId);
-    return profile ? { id: profile.id, userId: profile.userId, fullName: profile.fullName } : null;
+    return profile ? { id: profile.id, userId: profile.userId, fullName: profile.fullName, phone: profile.phone ?? null } : null;
   }
 
   async updateHomeownerProfile(

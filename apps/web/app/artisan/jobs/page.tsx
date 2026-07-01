@@ -1,16 +1,34 @@
 import { redirect } from "next/navigation";
+import { Clock } from "lucide-react";
 import { auth } from "@/platform/auth-session";
 import { matchingService } from "@/services/matching/matching.service";
 import { userService } from "@/services/user/user.service";
 import { JobsTable, type JobsTableRow } from "@/components/dashboard/jobs-table";
+import { prisma } from "@/platform/prisma";
 
 export default async function ArtisanJobsPage() {
   const session = await auth();
   const userId = (session?.user as { id?: string } | undefined)?.id;
   if (!userId) redirect("/sign-in");
 
-  const artisan = await userService.getArtisanProfileByUserId(userId);
+  const artisan = await prisma.artisanProfile.findUnique({ where: { userId } });
   if (!artisan) redirect("/sign-in");
+
+  // Only VERIFIED artisans can see jobs.
+  if (artisan.verificationStatus !== "VERIFIED") {
+    return (
+      <main className="flex flex-1 flex-col items-center justify-center gap-4 px-6 py-20 text-center">
+        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-950">
+          <Clock className="h-8 w-8 text-amber-600 dark:text-amber-400" />
+        </div>
+        <h1 className="text-xl font-semibold">Application under review</h1>
+        <p className="max-w-sm text-sm text-muted-foreground">
+          Your application is being reviewed by our team. Once approved, your jobs and offers will appear here.
+          This usually takes 1–2 business days.
+        </p>
+      </main>
+    );
+  }
 
   const jobs = await matchingService.listJobsFeedForArtisan(artisan.id);
 
@@ -19,10 +37,7 @@ export default async function ArtisanJobsPage() {
       let customerName = "Homeowner";
       try {
         const homeowner = await userService.getHomeownerProfile(job.homeownerId);
-        if (homeowner) {
-          const p = homeowner as { fullName?: string | null };
-          customerName = p.fullName ?? "Homeowner";
-        }
+        if (homeowner) customerName = homeowner.fullName ?? "Homeowner";
       } catch {
         // keep default
       }
