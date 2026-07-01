@@ -11,6 +11,8 @@ import {
   AlertTriangle,
   PartyPopper,
   X,
+  Loader2,
+  FilePlus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -24,6 +26,13 @@ type CredentialRecord = {
   fileUrl: string;
   status: CredentialStatus;
   createdAt: string;
+};
+
+type StagedItem = {
+  type: string;
+  fileUrl: string;
+  uploadType: UploadType;
+  fileName: string;
 };
 
 type UploadType = "id-document" | "proof-of-address" | "credential";
@@ -102,10 +111,19 @@ async function uploadToCloudinary(file: File, uploadType: UploadType): Promise<s
 function StatusBadge({
   status,
   verificationStatus,
+  staged,
 }: {
   status: CredentialStatus | "NOT_UPLOADED";
   verificationStatus: VerificationStatus;
+  staged: boolean;
 }) {
+  if (staged)
+    return (
+      <Badge className="gap-1 bg-blue-100 text-blue-700">
+        <FilePlus className="h-3 w-3" /> Ready to save
+      </Badge>
+    );
+
   if (status === "NOT_UPLOADED")
     return (
       <Badge className="gap-1 bg-muted text-muted-foreground">
@@ -113,7 +131,6 @@ function StatusBadge({
       </Badge>
     );
 
-  // Before final decision, mask individual status as "Under review"
   if (verificationStatus === "UNVERIFIED")
     return (
       <Badge className="gap-1 bg-amber-100 text-amber-700">
@@ -144,25 +161,24 @@ function CategoryRow({
   category,
   credential,
   verificationStatus,
-  onUploaded,
+  staged,
+  onStaged,
 }: {
   category: (typeof REQUIRED_CATEGORIES)[number];
   credential: CredentialRecord | undefined;
   verificationStatus: VerificationStatus;
-  onUploaded: (type: string, fileUrl: string) => void;
+  staged: StagedItem | null;
+  onStaged: (categoryId: string, item: StagedItem) => void;
 }) {
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
-  const [pending, startTransition] = useTransition();
 
   const rawStatus = credential?.status ?? "NOT_UPLOADED";
 
-  // Can upload: not uploaded yet, OR doc was rejected and admin made final rejection decision
   const canUpload =
     rawStatus === "NOT_UPLOADED" ||
     (rawStatus === "REJECTED" && verificationStatus === "REJECTED");
 
-  // Don't show upload option if already verified
   const showUpload = canUpload && verificationStatus !== "VERIFIED";
 
   async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
@@ -174,16 +190,15 @@ function CategoryRow({
     }
     setUploading(true);
     setUploadError(null);
+    // Reset input so the same file can be re-selected if user wants to change
+    e.target.value = "";
     try {
       const url = await uploadToCloudinary(file, category.uploadType);
-      startTransition(async () => {
-        const res = await fetch("/api/artisans/credentials", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ type: category.defaultType, fileUrl: url }),
-        });
-        if (!res.ok) throw new Error("Submit failed");
-        onUploaded(category.defaultType, url);
+      onStaged(category.id, {
+        type: category.defaultType,
+        fileUrl: url,
+        uploadType: category.uploadType,
+        fileName: file.name,
       });
     } catch (err) {
       setUploadError(err instanceof Error ? err.message : "Upload failed");
@@ -192,8 +207,11 @@ function CategoryRow({
     }
   }
 
+  const displayFileUrl = staged?.fileUrl ?? credential?.fileUrl;
+  const isStaged = staged !== null;
+
   return (
-    <div className="rounded-xl border bg-card p-4">
+    <div className={`rounded-xl border bg-card p-4 ${isStaged ? "border-blue-200 bg-blue-50/30 dark:border-blue-900 dark:bg-blue-950/10" : ""}`}>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
@@ -203,22 +221,27 @@ function CategoryRow({
             </span>
           </div>
           <p className="mt-0.5 text-xs text-muted-foreground">{category.hint}</p>
-          {credential && (
+          {isStaged ? (
+            <p className="mt-1 text-xs text-blue-600">
+              {staged.fileName} — staged, not yet saved
+            </p>
+          ) : credential ? (
             <p className="mt-1 text-xs text-muted-foreground">
               {TYPE_LABELS[credential.type] ?? credential.type} ·{" "}
               {new Date(credential.createdAt).toLocaleDateString()}
             </p>
-          )}
+          ) : null}
         </div>
 
         <div className="flex shrink-0 flex-col items-end gap-2">
           <StatusBadge
             status={rawStatus as CredentialStatus | "NOT_UPLOADED"}
             verificationStatus={verificationStatus}
+            staged={isStaged}
           />
-          {credential && (
+          {displayFileUrl && (
             <a
-              href={credential.fileUrl}
+              href={displayFileUrl}
               target="_blank"
               rel="noreferrer"
               className="flex items-center gap-1 text-xs text-primary hover:underline"
@@ -231,15 +254,21 @@ function CategoryRow({
 
       {showUpload && (
         <div className="mt-3 border-t pt-3">
-          {rawStatus === "REJECTED" && (
+          {rawStatus === "REJECTED" && !isStaged && (
             <p className="mb-2 flex items-center gap-1.5 text-xs text-red-600">
               <AlertTriangle className="h-3.5 w-3.5" />
               This document was rejected. Please upload a clearer copy.
             </p>
           )}
+          {isStaged && (
+            <p className="mb-2 flex items-center gap-1.5 text-xs text-blue-600">
+              <CheckCircle2 className="h-3.5 w-3.5" />
+              File staged. Click Save below to submit, or choose a different file.
+            </p>
+          )}
           <label
             className={`inline-flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition-colors hover:bg-muted ${
-              uploading || pending ? "pointer-events-none opacity-50" : ""
+              uploading ? "pointer-events-none opacity-50" : ""
             }`}
           >
             <input
@@ -247,16 +276,18 @@ function CategoryRow({
               accept="image/*,application/pdf"
               className="hidden"
               onChange={handleFile}
-              disabled={uploading || pending}
+              disabled={uploading}
             />
-            <Upload className="h-4 w-4" />
-            {uploading
-              ? "Uploading…"
-              : pending
-              ? "Submitting…"
-              : rawStatus === "REJECTED"
-              ? "Re-upload document"
-              : "Upload document"}
+            {uploading ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" /> Uploading…
+              </>
+            ) : (
+              <>
+                <Upload className="h-4 w-4" />
+                {isStaged ? "Choose different file" : rawStatus === "REJECTED" ? "Re-upload document" : "Upload document"}
+              </>
+            )}
           </label>
           {uploadError && <p className="mt-1 text-xs text-destructive">{uploadError}</p>}
         </div>
@@ -276,6 +307,11 @@ export function KycSection({
   const [currentVerificationStatus, setCurrentVerificationStatus] =
     useState<VerificationStatus>(verificationStatus);
   const [verifiedBannerDismissed, setVerifiedBannerDismissed] = useState(false);
+  const [staged, setStaged] = useState<Record<string, StagedItem>>({});
+  const [saving, startSave] = useTransition();
+  const [saveError, setSaveError] = useState<string | null>(null);
+
+  const hasStaged = Object.keys(staged).length > 0;
 
   function getLatestForCategory(types: readonly string[]): CredentialRecord | undefined {
     return credentials
@@ -283,25 +319,77 @@ export function KycSection({
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0];
   }
 
-  function handleUploaded(type: string, fileUrl: string) {
-    setCredentials((prev) => [
-      ...prev,
-      {
-        id: `local-${Date.now()}`,
-        type,
-        fileUrl,
-        status: "PENDING",
-        createdAt: new Date().toISOString(),
-      },
-    ]);
-    // If re-uploading after rejection, reset to pending review
-    if (currentVerificationStatus === "REJECTED") {
-      setCurrentVerificationStatus("UNVERIFIED");
-    }
+  function handleStaged(categoryId: string, item: StagedItem) {
+    setStaged((prev) => ({ ...prev, [categoryId]: item }));
   }
 
-  const submittedCount = REQUIRED_CATEGORIES.filter((cat) =>
-    getLatestForCategory(cat.types),
+  function handleCancel() {
+    setStaged({});
+  }
+
+  function handleSave() {
+    setSaveError(null);
+    startSave(async () => {
+      const items = Object.values(staged);
+      const results = await Promise.allSettled(
+        items.map((item) =>
+          fetch("/api/artisans/credentials", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ type: item.type, fileUrl: item.fileUrl }),
+          }).then((res) => {
+            if (!res.ok) throw new Error(`Failed to submit ${item.type}`);
+            return item;
+          }),
+        ),
+      );
+
+      const succeeded = results
+        .filter((r): r is PromiseFulfilledResult<StagedItem> => r.status === "fulfilled")
+        .map((r) => r.value);
+
+      const failed = results.filter((r) => r.status === "rejected");
+
+      if (succeeded.length > 0) {
+        setCredentials((prev) => [
+          ...prev,
+          ...succeeded.map((item) => ({
+            id: `local-${Date.now()}-${item.type}`,
+            type: item.type,
+            fileUrl: item.fileUrl,
+            status: "PENDING" as CredentialStatus,
+            createdAt: new Date().toISOString(),
+          })),
+        ]);
+
+        // Remove saved items from staged
+        setStaged((prev) => {
+          const next = { ...prev };
+          for (const item of succeeded) {
+            for (const [catId, s] of Object.entries(next)) {
+              if (s.type === item.type && s.fileUrl === item.fileUrl) {
+                delete next[catId];
+              }
+            }
+          }
+          return next;
+        });
+
+        if (currentVerificationStatus === "REJECTED") {
+          setCurrentVerificationStatus("UNVERIFIED");
+        }
+      }
+
+      if (failed.length > 0) {
+        setSaveError(
+          `${failed.length} document(s) failed to submit. Please try saving again.`,
+        );
+      }
+    });
+  }
+
+  const submittedCount = REQUIRED_CATEGORIES.filter(
+    (cat) => getLatestForCategory(cat.types) || staged[cat.id],
   ).length;
 
   const total = REQUIRED_CATEGORIES.length;
@@ -363,15 +451,14 @@ export function KycSection({
               Your application was rejected
             </p>
             <p className="mt-1 text-sm text-red-700 dark:text-red-400">
-              One or more of your documents could not be verified. Please check the documents below
-              and re-upload clearer copies. Once you re-upload, your application will automatically
-              re-enter the review queue.
+              One or more of your documents could not be verified. Please re-upload clearer
+              copies below, then click <strong>Save</strong> to re-submit for review.
             </p>
           </div>
         </div>
       )}
 
-      {/* Progress bar — only show when pending */}
+      {/* Progress bar */}
       {currentVerificationStatus === "UNVERIFIED" && (
         <div className="mb-5">
           <div className="mb-1 flex justify-between text-xs text-muted-foreground">
@@ -387,8 +474,10 @@ export function KycSection({
             />
           </div>
           <p className="mt-1.5 text-xs text-muted-foreground">
-            {submittedCount === total
+            {submittedCount === total && !hasStaged
               ? "All documents submitted — our team will review and get back to you shortly."
+              : hasStaged
+              ? "Files staged. Click Save to submit them for review."
               : "Upload all required documents to complete your submission."}
           </p>
         </div>
@@ -401,10 +490,27 @@ export function KycSection({
             category={cat}
             credential={getLatestForCategory(cat.types)}
             verificationStatus={currentVerificationStatus}
-            onUploaded={handleUploaded}
+            staged={staged[cat.id] ?? null}
+            onStaged={handleStaged}
           />
         ))}
       </div>
+
+      {/* Save / Cancel — only visible when something is staged */}
+      {hasStaged && (
+        <div className="mt-5 border-t pt-5">
+          {saveError && <p className="mb-3 text-sm text-destructive">{saveError}</p>}
+          <div className="flex items-center gap-3">
+            <Button onClick={handleSave} disabled={saving} className="gap-2">
+              {saving && <Loader2 className="h-4 w-4 animate-spin" />}
+              {saving ? "Saving…" : `Save ${Object.keys(staged).length} document${Object.keys(staged).length > 1 ? "s" : ""}`}
+            </Button>
+            <Button variant="outline" onClick={handleCancel} disabled={saving}>
+              Cancel
+            </Button>
+          </div>
+        </div>
+      )}
     </section>
   );
 }
