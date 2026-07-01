@@ -307,7 +307,7 @@ export function ArtisanAccount({
       </div>
 
       {/* Tab content */}
-      <div className="mt-6 flex min-h-[640px] flex-col gap-6">
+      <div className="mt-6 flex flex-col gap-6">
         {tab === "profile" && (
           <>
             <section className="flex items-center gap-5 rounded-xl border bg-card p-6">

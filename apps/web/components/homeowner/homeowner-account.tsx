@@ -161,7 +161,7 @@ export function HomeownerAccount({ email, fullName, profilePhotoUrl, initial }: 
         ))}
       </div>
 
-      <div className="mt-6 flex min-h-[640px] flex-col gap-6">
+      <div className="mt-6 flex flex-col gap-6">
         {tab === "profile" && (
           <>
             {/* Profile photo */}
