@@ -134,7 +134,14 @@ export const userRepository = {
   async findArtisanProfileFull(artisanId: string) {
     return prisma.artisanProfile.findUnique({
       where: { id: artisanId },
-      include: { availability: true, portfolio: true, user: { select: { email: true, status: true, createdAt: true } } },
+      include: { availability: true, portfolio: true, user: { select: { email: true, status: true, role: true, createdAt: true } } },
+    });
+  },
+
+  async findHomeownerProfileFull(homeownerId: string) {
+    return prisma.homeownerProfile.findUnique({
+      where: { id: homeownerId },
+      include: { user: { select: { email: true, status: true, role: true, createdAt: true } } },
     });
   },
 

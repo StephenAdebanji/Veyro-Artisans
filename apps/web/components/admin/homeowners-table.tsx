@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Trash2, ShieldOff, ShieldCheck } from "lucide-react";
+import Link from "next/link";
+import { Eye, Trash2, ShieldOff, ShieldCheck } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
@@ -24,7 +25,7 @@ const ROLE_STYLE: Record<string, string> = {
   HOMEOWNER: "bg-sky-100 text-sky-700",
 };
 
-function HomeownerActionRow({ row }: { row: HomeownerRow }) {
+function HomeownerActionRow({ row, index }: { row: HomeownerRow; index: number }) {
   const [status, setStatus] = useState(row.user.status);
   const [removed, setRemoved] = useState(false);
   const [pending, startTransition] = useTransition();
@@ -55,7 +56,8 @@ function HomeownerActionRow({ row }: { row: HomeownerRow }) {
 
   return (
     <tr className="border-b last:border-b-0 hover:bg-muted/30">
-      <td className="py-3 pl-4 font-medium">{row.fullName ?? "—"}</td>
+      <td className="py-3 pl-4 text-sm text-muted-foreground">{index}</td>
+      <td className="py-3 font-medium">{row.fullName ?? "—"}</td>
       <td className="py-3 text-sm text-muted-foreground">{row.user.email}</td>
       <td className="py-3">
         <Badge className={ROLE_STYLE[row.user.role] ?? "bg-muted text-muted-foreground"}>
@@ -68,6 +70,11 @@ function HomeownerActionRow({ row }: { row: HomeownerRow }) {
       <td className="py-3 text-sm text-muted-foreground">{location}</td>
       <td className="py-3 pr-4">
         <div className="flex items-center justify-end gap-1.5">
+          <Link href={`/admin/homeowners/${row.id}`}>
+            <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs">
+              <Eye className="h-3.5 w-3.5" /> View
+            </Button>
+          </Link>
           <Button
             variant="ghost"
             size="sm"
@@ -106,7 +113,8 @@ export function HomeownersTable({ initialRows }: { initialRows: HomeownerRow[] }
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b text-left text-xs uppercase text-muted-foreground">
-            <th className="py-3 pl-4 font-medium">Name</th>
+            <th className="py-3 pl-4 font-medium">#</th>
+            <th className="py-3 font-medium">Name</th>
             <th className="py-3 font-medium">Email</th>
             <th className="py-3 font-medium">Role</th>
             <th className="py-3 font-medium">Status</th>
@@ -115,8 +123,8 @@ export function HomeownersTable({ initialRows }: { initialRows: HomeownerRow[] }
           </tr>
         </thead>
         <tbody>
-          {initialRows.map((row) => (
-            <HomeownerActionRow key={row.id} row={row} />
+          {initialRows.map((row, i) => (
+            <HomeownerActionRow key={row.id} row={row} index={i + 1} />
           ))}
         </tbody>
       </table>

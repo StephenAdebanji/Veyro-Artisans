@@ -29,7 +29,7 @@ const VERIFICATION_STYLE: Record<string, string> = {
   REJECTED: "bg-red-100 text-red-700",
 };
 
-function ArtisanActionRow({ row }: { row: ArtisanRow }) {
+function ArtisanActionRow({ row, index }: { row: ArtisanRow; index: number }) {
   const [status, setStatus] = useState(row.user.status);
   const [removed, setRemoved] = useState(false);
   const [pending, startTransition] = useTransition();
@@ -60,7 +60,8 @@ function ArtisanActionRow({ row }: { row: ArtisanRow }) {
 
   return (
     <tr className="border-b last:border-b-0 hover:bg-muted/30">
-      <td className="py-3 pl-4 font-medium">{name}</td>
+      <td className="py-3 pl-4 text-sm text-muted-foreground">{index}</td>
+      <td className="py-3 font-medium">{name}</td>
       <td className="py-3 text-sm text-muted-foreground">{row.user.email}</td>
       <td className="py-3">
         <Badge className={ROLE_STYLE[row.user.role] ?? "bg-muted text-muted-foreground"}>
@@ -120,7 +121,8 @@ export function ArtisansTable({ initialRows }: { initialRows: ArtisanRow[] }) {
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b text-left text-xs uppercase text-muted-foreground">
-            <th className="py-3 pl-4 font-medium">Name</th>
+            <th className="py-3 pl-4 font-medium">#</th>
+            <th className="py-3 font-medium">Name</th>
             <th className="py-3 font-medium">Email</th>
             <th className="py-3 font-medium">Role</th>
             <th className="py-3 font-medium">Status</th>
@@ -129,8 +131,8 @@ export function ArtisansTable({ initialRows }: { initialRows: ArtisanRow[] }) {
           </tr>
         </thead>
         <tbody>
-          {initialRows.map((row) => (
-            <ArtisanActionRow key={row.id} row={row} />
+          {initialRows.map((row, i) => (
+            <ArtisanActionRow key={row.id} row={row} index={i + 1} />
           ))}
         </tbody>
       </table>
