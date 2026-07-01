@@ -6,6 +6,9 @@ export interface RecommendationInput {
   category: SkillCategory;
   location: GeoPoint;
   candidates: ArtisanCandidate[];
+  description?: string;
+  artisanBios?: Record<string, string>;
+  artisanNames?: Record<string, string>;
 }
 
 export interface RecommendationBreakdown {
@@ -17,8 +20,11 @@ export interface RecommendationBreakdown {
 
 export interface RankedArtisan {
   artisanId: string;
+  artisanName?: string;
   score: number;
   breakdown: RecommendationBreakdown;
+  semanticScore?: number;
+  semanticReason?: string;
 }
 
 /**

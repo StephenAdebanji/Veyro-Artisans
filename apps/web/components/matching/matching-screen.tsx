@@ -2,9 +2,9 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { CheckCircle2, Loader2 } from "lucide-react";
+import { CheckCircle2, Loader2, Sparkles } from "lucide-react";
 import { OfferCard, type OfferData } from "./offer-card";
-import type { SkillCategory } from "@veyro/contracts";
+import type { RankedArtisan, SkillCategory } from "@veyro/contracts";
 import { SKILL_LABELS } from "@/components/shared/skill-labels";
 
 const MATCH_WINDOW_SECONDS = 10 * 60; // 10 minutes
@@ -40,6 +40,8 @@ export function MatchingScreen({
     const elapsed = Math.floor((Date.now() - new Date(createdAt).getTime()) / 1000);
     return Math.max(0, MATCH_WINDOW_SECONDS - elapsed);
   });
+  const [aiCandidates, setAiCandidates] = useState<RankedArtisan[]>([]);
+  const [aiLoading, setAiLoading] = useState(true);
   const socketRef = useRef<import("socket.io-client").Socket | null>(null);
 
   // Countdown tick.
@@ -48,6 +50,17 @@ export function MatchingScreen({
     const id = setInterval(() => setSecondsLeft((s) => Math.max(0, s - 1)), 1000);
     return () => clearInterval(id);
   }, [secondsLeft, acceptedMatchId]);
+
+  // Fetch AI recommendation scores on mount.
+  useEffect(() => {
+    fetch(`/api/ai/recommendations?serviceRequestId=${serviceRequestId}`)
+      .then((r) => r.json())
+      .then((data: { ranked?: RankedArtisan[] }) => {
+        if (data.ranked) setAiCandidates(data.ranked);
+      })
+      .catch(() => {})
+      .finally(() => setAiLoading(false));
+  }, [serviceRequestId]);
 
   // Connect to Socket.io /matching namespace.
   useEffect(() => {
@@ -72,7 +85,17 @@ export function MatchingScreen({
         if (!mounted) return;
         setOffers((prev) => {
           const exists = prev.some((o) => o.matchId === offer.matchId);
-          return exists ? prev : [offer, ...prev];
+          if (exists) return prev;
+          // Attach AI score from already-fetched candidates list.
+          setAiCandidates((candidates) => {
+            const ai = candidates.find((c) => c.artisanId === offer.artisanId);
+            if (ai) {
+              offer.aiScore = ai.semanticScore;
+              offer.aiReason = ai.semanticReason;
+            }
+            return candidates;
+          });
+          return [offer, ...prev];
         });
       });
 
@@ -194,6 +217,51 @@ export function MatchingScreen({
           </div>
         ) : (
           <>
+            {/* AI Selecting panel — shown while waiting for offers */}
+            {offers.length === 0 && !acceptedMatchId && secondsLeft > 0 && (
+              <div className="mb-5 rounded-xl border border-violet-200 bg-violet-50 p-5 dark:border-violet-900 dark:bg-violet-950/30">
+                <div className="mb-3 flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 text-violet-600 dark:text-violet-400" />
+                  <span className="text-sm font-semibold text-violet-800 dark:text-violet-300">
+                    VEYRO AI is finding your best match
+                  </span>
+                  {aiLoading && <Loader2 className="h-3.5 w-3.5 animate-spin text-violet-500" />}
+                </div>
+
+                {!aiLoading && aiCandidates.length > 0 ? (
+                  <div className="space-y-2.5">
+                    {aiCandidates.slice(0, 3).map((c, idx) => (
+                      <div key={c.artisanId} className="flex items-center gap-3">
+                        <span className="w-4 text-xs font-bold text-violet-500">#{idx + 1}</span>
+                        <span className="min-w-0 flex-1 truncate text-sm font-medium text-violet-900 dark:text-violet-200">
+                          {c.artisanName ?? "Artisan"}
+                        </span>
+                        <div className="flex items-center gap-2">
+                          <div className="h-1.5 w-20 overflow-hidden rounded-full bg-violet-200 dark:bg-violet-800">
+                            <div
+                              className="h-full rounded-full bg-violet-600 dark:bg-violet-400 transition-all duration-500"
+                              style={{ width: `${c.semanticScore ?? Math.round(c.score * 100)}%` }}
+                            />
+                          </div>
+                          <span className="w-8 text-right text-xs font-semibold text-violet-700 dark:text-violet-300">
+                            {c.semanticScore ?? Math.round(c.score * 100)}%
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : aiLoading ? (
+                  <p className="text-xs text-violet-600 dark:text-violet-400">
+                    Analysing nearby artisans…
+                  </p>
+                ) : (
+                  <p className="text-xs text-violet-600 dark:text-violet-400">
+                    Notifying artisans in your area…
+                  </p>
+                )}
+              </div>
+            )}
+
             <h2 className="mb-3 text-lg font-semibold">
               {offers.length === 0
                 ? "Waiting for artisans…"
@@ -201,22 +269,39 @@ export function MatchingScreen({
             </h2>
 
             {offers.length === 0 && !acceptedMatchId && (
-              <div className="flex flex-col items-center gap-3 py-12 text-center text-muted-foreground">
+              <div className="flex flex-col items-center gap-3 py-8 text-center text-muted-foreground">
                 <Loader2 className="h-8 w-8 animate-spin" />
                 <p className="text-sm">Nearby artisans are being notified. Offers appear here live.</p>
               </div>
             )}
 
-            <div className="space-y-3">
-              {offers.map((offer) => (
-                <OfferCard
-                  key={offer.matchId}
-                  offer={offer}
-                  onAccept={handleAccept}
-                  disabled={!!acceptedMatchId}
-                />
-              ))}
-            </div>
+            {offers.length > 0 && (() => {
+              const aiMap = Object.fromEntries(aiCandidates.map((a) => [a.artisanId, a]));
+              const sortedOffers = [...offers].sort(
+                (a, b) => (aiMap[b.artisanId]?.score ?? 0) - (aiMap[a.artisanId]?.score ?? 0),
+              );
+              const topArtisanId = sortedOffers[0]?.artisanId;
+              return (
+                <div className="space-y-3">
+                  {sortedOffers.map((offer) => {
+                    const ai = aiMap[offer.artisanId];
+                    return (
+                      <OfferCard
+                        key={offer.matchId}
+                        offer={{
+                          ...offer,
+                          aiScore: ai?.semanticScore ?? offer.aiScore,
+                          aiReason: ai?.semanticReason ?? offer.aiReason,
+                        }}
+                        onAccept={handleAccept}
+                        disabled={!!acceptedMatchId}
+                        isTopRecommendation={offer.artisanId === topArtisanId && !!ai}
+                      />
+                    );
+                  })}
+                </div>
+              );
+            })()}
           </>
         )}
       </div>
