@@ -78,6 +78,7 @@ export default async function HomeownerDashboardPage() {
             {requestsWithArtisanNames.map(({ request, artisanName }) => (
               <ActiveRequestCard
                 key={request.id}
+                requestId={request.id}
                 category={request.category}
                 description={request.description}
                 status={request.status}
