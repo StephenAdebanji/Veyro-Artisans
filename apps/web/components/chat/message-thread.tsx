@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Send, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -50,21 +50,11 @@ export function MessageThread({
   const socketRef = useRef<import("socket.io-client").Socket | null>(null);
   const conversationIdRef = useRef(conversationId);
   conversationIdRef.current = conversationId;
-  const pendingTempIds = useRef<string[]>([]);
 
-  const addMessages = useCallback((incoming: MessageRecord[]) => {
-    setMessages((prev) => {
-      const ids = new Set(prev.map((m) => m.id));
-      const fresh = incoming.filter((m) => !ids.has(m.id));
-      if (fresh.length === 0) return prev;
-      return [...prev, ...fresh];
-    });
-  }, []);
 
   // Load messages + mark read when conversation changes.
   useEffect(() => {
     setMessages([]);
-    pendingTempIds.current = [];
 
     async function init() {
       const [msgsRes] = await Promise.all([
@@ -105,17 +95,9 @@ export function MessageThread({
 
       socket.on("message-created", (msg: MessageRecord) => {
         if (!mounted || msg.conversationId !== conversationIdRef.current) return;
-
+        if (msg.senderId === currentProfileId) return; // we already added it via HTTP
         setMessages((prev) => {
           if (prev.some((m) => m.id === msg.id)) return prev;
-
-          // Replace the oldest optimistic temp message if this is from us
-          if (msg.senderId === currentProfileId && pendingTempIds.current.length > 0) {
-            const tempId = pendingTempIds.current.shift()!;
-            return prev.map((m) => (m.id === tempId ? msg : m));
-          }
-
-          // Incoming from the other side — mark as read
           fetch(`/api/conversations/${msg.conversationId}/read`, { method: "POST" }).catch(() => {});
           return [...prev, msg];
         });
@@ -176,36 +158,33 @@ export function MessageThread({
     setInput("");
 
     const tempId = `temp:${Date.now()}`;
-    const optimistic: MessageRecord = {
-      id: tempId,
-      conversationId,
-      senderId: currentProfileId,
-      type: "TEXT",
-      content: text,
-      readAt: null,
-      createdAt: new Date().toISOString(),
-    };
-    setMessages((prev) => [...prev, optimistic]);
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: tempId,
+        conversationId,
+        senderId: currentProfileId,
+        type: "TEXT",
+        content: text,
+        readAt: null,
+        createdAt: new Date().toISOString(),
+      },
+    ]);
 
-    if (socketRef.current?.connected) {
-      pendingTempIds.current.push(tempId);
-      socketRef.current.emit("send-message", { conversationId, type: "TEXT", content: text });
-      setSending(false);
-    } else {
-      fetch(`/api/conversations/${conversationId}/messages`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ senderId: currentProfileId, type: "TEXT", content: text }),
+    // Always persist via HTTP — never depend on socket for own messages.
+    fetch(`/api/conversations/${conversationId}/messages`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ senderId: currentProfileId, type: "TEXT", content: text }),
+    })
+      .then((r) => r.json())
+      .then(({ message }: { message: MessageRecord }) => {
+        setMessages((prev) => prev.map((m) => (m.id === tempId ? message : m)));
       })
-        .then((r) => r.json())
-        .then(({ message }: { message: MessageRecord }) => {
-          setMessages((prev) => prev.map((m) => (m.id === tempId ? message : m)));
-        })
-        .catch(() => {
-          setMessages((prev) => prev.filter((m) => m.id !== tempId));
-        })
-        .finally(() => setSending(false));
-    }
+      .catch(() => {
+        setMessages((prev) => prev.filter((m) => m.id !== tempId));
+      })
+      .finally(() => setSending(false));
   }
 
   // Group messages by day for date separators.

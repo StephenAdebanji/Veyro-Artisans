@@ -50,11 +50,12 @@ export function MessagesLayout({ conversations, currentProfileId, backHref }: Me
   }, []);
 
   return (
-    <div className="flex flex-1 overflow-hidden border-t">
+    <div className="flex flex-1 items-stretch justify-center overflow-hidden border-t bg-muted/20 p-0 md:p-6">
+      <div className="flex w-full max-w-4xl overflow-hidden md:rounded-xl md:border md:shadow-sm">
       {/* Sidebar */}
       <aside
         className={`flex flex-col overflow-hidden border-r bg-background
-          ${selected ? "hidden md:flex md:w-80 md:shrink-0" : "flex w-full md:w-80 md:shrink-0"}
+          ${selected ? "hidden md:flex md:w-72 md:shrink-0" : "flex w-full md:w-72 md:shrink-0"}
         `}
       >
         <div className="flex items-center gap-3 border-b px-4 py-3">
@@ -120,6 +121,7 @@ export function MessagesLayout({ conversations, currentProfileId, backHref }: Me
           </div>
         )}
       </main>
+      </div>
     </div>
   );
 }
