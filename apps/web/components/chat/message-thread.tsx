@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { Send } from "lucide-react";
+import { useEffect, useRef, useState, useCallback } from "react";
+import { Send, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import type { MessageRecord } from "@veyro/contracts";
@@ -11,6 +11,7 @@ interface MessageThreadProps {
   currentProfileId: string;
   counterpartName: string;
   hideHeader?: boolean;
+  onRead?: (conversationId: string) => void;
 }
 
 function formatTime(iso: string): string {
@@ -24,21 +25,46 @@ function formatDay(iso: string): string {
   const yesterday = new Date(today);
   yesterday.setDate(today.getDate() - 1);
   if (d.toDateString() === yesterday.toDateString()) return "Yesterday";
-  return d.toLocaleDateString([], { month: "short", day: "numeric" });
+  return d.toLocaleDateString([], { weekday: "short", month: "short", day: "numeric" });
 }
 
-export function MessageThread({ conversationId, currentProfileId, counterpartName, hideHeader }: MessageThreadProps) {
+function ReadTick({ readAt }: { readAt: string | null }) {
+  if (readAt) {
+    return <span className="text-[10px] font-bold text-blue-300">✓✓</span>;
+  }
+  return <span className="text-[10px] text-primary-foreground/50">✓</span>;
+}
+
+export function MessageThread({
+  conversationId,
+  currentProfileId,
+  counterpartName,
+  hideHeader,
+  onRead,
+}: MessageThreadProps) {
   const [messages, setMessages] = useState<MessageRecord[]>([]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
+  const [socketConnected, setSocketConnected] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const socketRef = useRef<import("socket.io-client").Socket | null>(null);
   const conversationIdRef = useRef(conversationId);
   conversationIdRef.current = conversationId;
+  const pendingTempIds = useRef<string[]>([]);
 
-  // Load messages + mark read + connect socket when conversation changes.
+  const addMessages = useCallback((incoming: MessageRecord[]) => {
+    setMessages((prev) => {
+      const ids = new Set(prev.map((m) => m.id));
+      const fresh = incoming.filter((m) => !ids.has(m.id));
+      if (fresh.length === 0) return prev;
+      return [...prev, ...fresh];
+    });
+  }, []);
+
+  // Load messages + mark read when conversation changes.
   useEffect(() => {
     setMessages([]);
+    pendingTempIds.current = [];
 
     async function init() {
       const [msgsRes] = await Promise.all([
@@ -48,12 +74,13 @@ export function MessageThread({ conversationId, currentProfileId, counterpartNam
       if (msgsRes.ok) {
         const { messages: loaded } = (await msgsRes.json()) as { messages: MessageRecord[] };
         setMessages(loaded);
+        onRead?.(conversationId);
       }
     }
     init().catch(console.error);
-  }, [conversationId]);
+  }, [conversationId, onRead]);
 
-  // Socket connection — created once, room changes when conversation changes.
+  // Socket connection (created once, room switched on conversationId change).
   useEffect(() => {
     let mounted = true;
 
@@ -66,17 +93,29 @@ export function MessageThread({ conversationId, currentProfileId, counterpartNam
       const { io } = await import("socket.io-client");
       const socket = io(
         `${process.env.NEXT_PUBLIC_SOCKET_URL ?? "http://localhost:4001"}/chat`,
-        { auth: { token }, transports: ["websocket"] },
+        { auth: { token }, transports: ["websocket"], reconnectionAttempts: 3 },
       );
       socketRef.current = socket;
 
-      socket.emit("join-conversation", { conversationId });
+      socket.on("connect", () => { if (mounted) setSocketConnected(true); });
+      socket.on("disconnect", () => { if (mounted) setSocketConnected(false); });
+      socket.on("connect_error", () => { if (mounted) setSocketConnected(false); });
+
+      socket.emit("join-conversation", { conversationId: conversationIdRef.current });
 
       socket.on("message-created", (msg: MessageRecord) => {
         if (!mounted || msg.conversationId !== conversationIdRef.current) return;
+
         setMessages((prev) => {
           if (prev.some((m) => m.id === msg.id)) return prev;
-          // Mark incoming as read if we're viewing the conversation.
+
+          // Replace the oldest optimistic temp message if this is from us
+          if (msg.senderId === currentProfileId && pendingTempIds.current.length > 0) {
+            const tempId = pendingTempIds.current.shift()!;
+            return prev.map((m) => (m.id === tempId ? msg : m));
+          }
+
+          // Incoming from the other side — mark as read
           fetch(`/api/conversations/${msg.conversationId}/read`, { method: "POST" }).catch(() => {});
           return [...prev, msg];
         });
@@ -86,18 +125,37 @@ export function MessageThread({ conversationId, currentProfileId, counterpartNam
     connectSocket().catch(console.error);
     return () => {
       mounted = false;
+      setSocketConnected(false);
       socketRef.current?.disconnect();
       socketRef.current = null;
     };
-  // Only reconnect if socket URL changes — conversation room switch is handled separately.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Switch room when conversation changes (socket already connected).
+  // Switch room when conversation changes.
   useEffect(() => {
     if (!socketRef.current) return;
     socketRef.current.emit("join-conversation", { conversationId });
   }, [conversationId]);
+
+  // Polling fallback — runs when socket is not connected.
+  useEffect(() => {
+    if (socketConnected) return;
+
+    const interval = setInterval(async () => {
+      const res = await fetch(`/api/conversations/${conversationIdRef.current}/messages`);
+      if (!res.ok) return;
+      const { messages: fresh } = (await res.json()) as { messages: MessageRecord[] };
+      setMessages((prev) => {
+        const ids = new Set(prev.filter((m) => !m.id.startsWith("temp:")).map((m) => m.id));
+        const incoming = fresh.filter((m) => !ids.has(m.id));
+        if (incoming.length === 0) return prev;
+        return [...prev.filter((m) => !m.id.startsWith("temp:")), ...fresh];
+      });
+    }, 8000);
+
+    return () => clearInterval(interval);
+  }, [socketConnected]);
 
   // Auto-scroll to bottom.
   useEffect(() => {
@@ -113,15 +171,41 @@ export function MessageThread({ conversationId, currentProfileId, counterpartNam
 
   function send() {
     const text = input.trim();
-    if (!text || sending || !socketRef.current) return;
+    if (!text || sending) return;
     setSending(true);
-    socketRef.current.emit("send-message", {
+    setInput("");
+
+    const tempId = `temp:${Date.now()}`;
+    const optimistic: MessageRecord = {
+      id: tempId,
       conversationId,
+      senderId: currentProfileId,
       type: "TEXT",
       content: text,
-    });
-    setInput("");
-    setSending(false);
+      readAt: null,
+      createdAt: new Date().toISOString(),
+    };
+    setMessages((prev) => [...prev, optimistic]);
+
+    if (socketRef.current?.connected) {
+      pendingTempIds.current.push(tempId);
+      socketRef.current.emit("send-message", { conversationId, type: "TEXT", content: text });
+      setSending(false);
+    } else {
+      fetch(`/api/conversations/${conversationId}/messages`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ senderId: currentProfileId, type: "TEXT", content: text }),
+      })
+        .then((r) => r.json())
+        .then(({ message }: { message: MessageRecord }) => {
+          setMessages((prev) => prev.map((m) => (m.id === tempId ? message : m)));
+        })
+        .catch(() => {
+          setMessages((prev) => prev.filter((m) => m.id !== tempId));
+        })
+        .finally(() => setSending(false));
+    }
   }
 
   // Group messages by day for date separators.
@@ -138,7 +222,7 @@ export function MessageThread({ conversationId, currentProfileId, counterpartNam
 
   return (
     <div className="flex h-full flex-col">
-      {/* Header — hidden on mobile when parent already shows back+name row */}
+      {/* Header */}
       {!hideHeader && (
         <div className="border-b px-5 py-3">
           <p className="font-semibold">{counterpartName}</p>
@@ -161,27 +245,34 @@ export function MessageThread({ conversationId, currentProfileId, counterpartNam
               <div className="h-px flex-1 bg-border" />
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               {msgs.map((msg) => {
                 const isMine = msg.senderId === currentProfileId;
+                const isPending = msg.id.startsWith("temp:");
                 return (
-                  <div key={msg.id} className={`flex ${isMine ? "justify-end" : "justify-start"}`}>
+                  <div
+                    key={msg.id}
+                    className={`flex ${isMine ? "justify-end" : "justify-start"}`}
+                  >
                     <div
-                      className={`max-w-[70%] rounded-2xl px-4 py-2 text-sm ${
+                      className={`max-w-[72%] rounded-2xl px-4 py-2 text-sm shadow-sm ${
                         isMine
                           ? "rounded-br-sm bg-primary text-primary-foreground"
                           : "rounded-bl-sm bg-muted text-foreground"
-                      }`}
+                      } ${isPending ? "opacity-60" : ""}`}
                     >
-                      <p className="whitespace-pre-wrap break-words">{msg.content}</p>
-                      <p
-                        className={`mt-0.5 text-right text-[10px] ${
-                          isMine ? "text-primary-foreground/70" : "text-muted-foreground"
+                      <p className="whitespace-pre-wrap break-words leading-snug">{msg.content}</p>
+                      <div
+                        className={`mt-1 flex items-center justify-end gap-1 ${
+                          isMine ? "text-primary-foreground/60" : "text-muted-foreground"
                         }`}
                       >
-                        {formatTime(msg.createdAt)}
-                        {isMine && msg.readAt && " ✓"}
-                      </p>
+                        <span className="text-[10px]">{formatTime(msg.createdAt)}</span>
+                        {isMine && !isPending && <ReadTick readAt={msg.readAt} />}
+                        {isMine && isPending && (
+                          <Loader2 className="h-2.5 w-2.5 animate-spin opacity-50" />
+                        )}
+                      </div>
                     </div>
                   </div>
                 );

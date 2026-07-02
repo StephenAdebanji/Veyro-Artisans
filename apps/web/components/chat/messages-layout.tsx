@@ -1,5 +1,6 @@
 "use client";
 
+import { useCallback, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, MessageSquare } from "lucide-react";
 import { ConversationRow } from "./conversation-row";
@@ -21,8 +22,12 @@ interface MessagesLayoutProps {
 export function MessagesLayout({ conversations, currentProfileId }: MessagesLayoutProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  // On mobile, don't auto-select first — show the list first so user can choose
   const selectedId = searchParams.get("c") ?? null;
+
+  // Local unread counts so sidebar updates without a page reload.
+  const [unreadMap, setUnreadMap] = useState<Record<string, number>>(
+    () => Object.fromEntries(conversations.map((c) => [c.id, c.unreadCount])),
+  );
 
   const selected = conversations.find((c) => c.id === selectedId) ?? null;
 
@@ -38,9 +43,13 @@ export function MessagesLayout({ conversations, currentProfileId }: MessagesLayo
     router.push(`?${params.toString()}`, { scroll: false });
   }
 
+  const handleRead = useCallback((conversationId: string) => {
+    setUnreadMap((prev) => ({ ...prev, [conversationId]: 0 }));
+  }, []);
+
   return (
     <div className="flex flex-1 overflow-hidden border-t">
-      {/* Sidebar — full width on mobile when no conversation selected, 320px sidebar on md+ */}
+      {/* Sidebar */}
       <aside
         className={`flex flex-col overflow-hidden border-r bg-background
           ${selected ? "hidden md:flex md:w-80 md:shrink-0" : "flex w-full md:w-80 md:shrink-0"}
@@ -61,7 +70,7 @@ export function MessagesLayout({ conversations, currentProfileId }: MessagesLayo
               id={convo.id}
               counterpartName={convo.counterpartName}
               lastMessageAt={convo.lastMessageAt}
-              unreadCount={convo.unreadCount}
+              unreadCount={unreadMap[convo.id] ?? convo.unreadCount}
               selected={convo.id === selectedId}
               onClick={() => select(convo.id)}
             />
@@ -69,7 +78,7 @@ export function MessagesLayout({ conversations, currentProfileId }: MessagesLayo
         </div>
       </aside>
 
-      {/* Thread — full width on mobile when conversation selected, fills remaining on md+ */}
+      {/* Thread */}
       <main
         className={`flex flex-col overflow-hidden bg-background
           ${selected ? "flex w-full md:flex-1" : "hidden md:flex md:flex-1"}
@@ -77,7 +86,6 @@ export function MessagesLayout({ conversations, currentProfileId }: MessagesLayo
       >
         {selected ? (
           <>
-            {/* Mobile back button injected above the thread header */}
             <div className="flex items-center gap-2 border-b px-4 py-3 md:hidden">
               <button
                 onClick={back}
@@ -94,6 +102,7 @@ export function MessagesLayout({ conversations, currentProfileId }: MessagesLayo
               currentProfileId={currentProfileId}
               counterpartName={selected.counterpartName}
               hideHeader
+              onRead={handleRead}
             />
           </>
         ) : (
