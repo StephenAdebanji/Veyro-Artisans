@@ -32,6 +32,7 @@ const STATUS_CONFIG: Record<
 
 export function ActiveRequestCard({
   requestId,
+  jobId,
   category,
   description,
   status,
@@ -39,6 +40,7 @@ export function ActiveRequestCard({
   etaMinutes,
 }: {
   requestId: string;
+  jobId?: string;
   category: SkillCategory;
   description: string;
   status: string;
@@ -47,7 +49,9 @@ export function ActiveRequestCard({
 }) {
   const cfg = STATUS_CONFIG[status] ?? STATUS_CONFIG.SEARCHING;
   const href =
-    status === "IN_PROGRESS"
+    status === "IN_PROGRESS" && jobId
+      ? `/homeowner/jobs/${jobId}`
+      : status === "IN_PROGRESS"
       ? "/homeowner/messages"
       : `/homeowner/requests/${requestId}/matching`;
 
@@ -91,7 +95,7 @@ export function ActiveRequestCard({
 
       {status === "IN_PROGRESS" && (
         <div className="flex items-center gap-1.5 text-xs font-medium text-emerald-700 dark:text-emerald-300">
-          Open chat
+          View job
           <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
         </div>
       )}

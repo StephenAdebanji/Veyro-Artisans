@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Briefcase, CheckCircle2, MessageSquare, Plus } from "lucide-react";
+import { Briefcase, CheckCircle2, MessageSquare, Plus, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ActiveRequestCard } from "@/components/dashboard/active-request-card";
 import { StatCard } from "@/components/dashboard/stat-card";
@@ -25,9 +25,9 @@ export default async function HomeownerDashboardPage() {
   const homeowner = await userService.getHomeownerProfileByUserId(userId);
   if (!homeowner) redirect("/sign-in");
 
-  const [activeRequests, completedCount, unreadCount] = await Promise.all([
+  const [activeRequests, completedJobs, unreadCount] = await Promise.all([
     matchingService.listActiveRequestsForHomeowner(homeowner.id),
-    matchingService.countCompletedRequestsForHomeowner(homeowner.id),
+    matchingService.listCompletedJobsForHomeowner(homeowner.id),
     chatService.countUnreadForUser(userId),
   ]);
 
@@ -42,6 +42,8 @@ export default async function HomeownerDashboardPage() {
   );
 
   const activeJobsCount = activeRequests.filter((r) => r.status === "IN_PROGRESS").length;
+  const completedCount = completedJobs.length;
+  const pendingReviewCount = completedJobs.filter((j) => !j.hasReview).length;
 
   return (
     <main className="flex-1 px-6 py-10">
@@ -79,6 +81,7 @@ export default async function HomeownerDashboardPage() {
               <ActiveRequestCard
                 key={request.id}
                 requestId={request.id}
+                jobId={request.jobId ?? undefined}
                 category={request.category}
                 description={request.description}
                 status={request.status}
@@ -89,6 +92,46 @@ export default async function HomeownerDashboardPage() {
           </div>
         )}
       </section>
+
+      {/* Completed jobs */}
+      {completedJobs.length > 0 && (
+        <section className="mt-8">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold">Completed jobs</h2>
+            {pendingReviewCount > 0 && (
+              <span className="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-700">
+                {pendingReviewCount} awaiting review
+              </span>
+            )}
+          </div>
+          <div className="mt-3 flex flex-col gap-3">
+            {completedJobs.map((job) => (
+              <Link
+                key={job.jobId}
+                href={`/homeowner/jobs/${job.jobId}`}
+                className="flex items-center justify-between rounded-xl border bg-card p-4 transition-shadow hover:shadow-sm"
+              >
+                <div className="min-w-0">
+                  <p className="truncate font-medium">{job.description}</p>
+                  <p className="text-sm text-muted-foreground">
+                    ₦{job.agreedPrice.toLocaleString()}
+                    {job.completedAt ? ` · ${new Date(job.completedAt).toLocaleDateString("en-NG", { day: "numeric", month: "short" })}` : ""}
+                  </p>
+                </div>
+                {job.hasReview ? (
+                  <span className="ml-4 flex shrink-0 items-center gap-1 text-xs text-emerald-600">
+                    <CheckCircle2 className="h-4 w-4" /> Reviewed
+                  </span>
+                ) : (
+                  <span className="ml-4 flex shrink-0 items-center gap-1 rounded-full bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-700">
+                    <Star className="h-3 w-3" /> Leave review
+                  </span>
+                )}
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
     </main>
   );
 }

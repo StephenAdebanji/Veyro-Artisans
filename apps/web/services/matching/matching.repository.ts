@@ -70,10 +70,35 @@ export const matchingRepository = {
     return prisma.job.findUnique({ where: { id } });
   },
 
+  async updateJobStatus(id: string, status: "IN_PROGRESS" | "COMPLETED") {
+    return prisma.job.update({
+      where: { id },
+      data: {
+        status,
+        ...(status === "COMPLETED" ? { completedAt: new Date() } : {}),
+      },
+    });
+  },
+
   async completeJob(id: string) {
     return prisma.job.update({
       where: { id },
       data: { status: "COMPLETED", completedAt: new Date() },
+    });
+  },
+
+  async findJobByIdForHomeowner(jobId: string, homeownerId: string) {
+    return prisma.job.findFirst({
+      where: { id: jobId, homeownerId },
+      include: { serviceRequest: true, review: true },
+    });
+  },
+
+  async listCompletedJobsForHomeowner(homeownerId: string) {
+    return prisma.job.findMany({
+      where: { homeownerId, status: "COMPLETED" },
+      include: { serviceRequest: true, review: { select: { id: true, rating: true } } },
+      orderBy: { completedAt: "desc" },
     });
   },
 
@@ -91,7 +116,10 @@ export const matchingRepository = {
   async listActiveRequestsForHomeowner(homeownerId: string) {
     return prisma.serviceRequest.findMany({
       where: { homeownerId, status: { in: ["SEARCHING", "MATCHED", "IN_PROGRESS"] } },
-      include: { matches: { where: { status: "ACCEPTED" }, take: 1 } },
+      include: {
+        matches: { where: { status: "ACCEPTED" }, take: 1 },
+        job: { select: { id: true } },
+      },
       orderBy: { createdAt: "desc" },
     });
   },
@@ -146,7 +174,7 @@ export const matchingRepository = {
   },
 
   async countActiveJobsForArtisan(artisanId: string) {
-    return prisma.job.count({ where: { artisanId, status: "ACTIVE" } });
+    return prisma.job.count({ where: { artisanId, status: { in: ["ACTIVE", "IN_PROGRESS"] } } });
   },
 
   async countDisputesForArtisan(artisanId: string) {

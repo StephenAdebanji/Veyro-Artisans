@@ -10,13 +10,24 @@ import { SKILL_LABELS } from "@/components/shared/skill-labels";
 import type { SkillCategory } from "@veyro/contracts";
 import { CallButton } from "@/components/artisan/call-button";
 import { StartChatButton } from "@/components/artisan/start-chat-button";
+import { JobStatusStepper } from "@/components/artisan/job-status-stepper";
 
 const STATUS_STYLE: Record<string, string> = {
   PENDING: "bg-amber-100 text-amber-700",
   ACTIVE: "bg-primary/10 text-primary",
+  IN_PROGRESS: "bg-blue-100 text-blue-700",
   COMPLETED: "bg-emerald-100 text-emerald-700",
   DISPUTED: "bg-destructive/10 text-destructive",
   CANCELLED: "bg-muted text-muted-foreground",
+};
+
+const STATUS_LABEL: Record<string, string> = {
+  PENDING: "Pending",
+  ACTIVE: "Accepted",
+  IN_PROGRESS: "In Progress",
+  COMPLETED: "Completed",
+  DISPUTED: "Disputed",
+  CANCELLED: "Cancelled",
 };
 
 export default async function JobDetailPage({
@@ -60,7 +71,7 @@ export default async function JobDetailPage({
             <h1 className="mt-1 text-lg font-semibold">{job.description}</h1>
           </div>
           <Badge className={STATUS_STYLE[job.status] ?? ""}>
-            {job.status.charAt(0) + job.status.slice(1).toLowerCase()}
+            {STATUS_LABEL[job.status] ?? job.status}
           </Badge>
         </div>
         <p className="mt-3 text-xl font-bold">₦{job.price.toLocaleString()}</p>
@@ -99,6 +110,11 @@ export default async function JobDetailPage({
           <CallButton phone={homeowner.phone} />
         </div>
       </div>
+
+      {/* Status stepper — only for real jobs (not PENDING offers) */}
+      {job.status !== "PENDING" && (
+        <JobStatusStepper jobId={jobId} currentStatus={job.status} />
+      )}
     </main>
   );
 }

@@ -49,6 +49,18 @@ export interface ActiveRequestSummary {
   description: string;
   status: ServiceRequestStatus;
   acceptedMatch: { artisanId: string; etaMinutes: number } | null;
+  jobId: string | null;
+}
+
+export interface CompletedJobSummary {
+  jobId: string;
+  serviceRequestId: string;
+  category: SkillCategory;
+  description: string;
+  artisanId: string;
+  agreedPrice: number;
+  completedAt: string | null;
+  hasReview: boolean;
 }
 
 export interface ReviewSummary {
@@ -70,7 +82,7 @@ export interface AvailableRequestSummary {
   createdAt: string;
 }
 
-export type JobFeedStatus = "PENDING" | "ACTIVE" | "COMPLETED" | "DISPUTED" | "CANCELLED";
+export type JobFeedStatus = "PENDING" | "ACTIVE" | "IN_PROGRESS" | "COMPLETED" | "DISPUTED" | "CANCELLED";
 
 export interface JobFeedItem {
   id: string;
@@ -93,8 +105,15 @@ export interface MatchingServicePort {
   listOffers(serviceRequestId: string): Promise<MatchOfferSummary[]>;
   /** The homeowner accepts or declines one specific offer card. ACCEPT creates the Job and expires every other pending offer for that request; DECLINE only removes this one card. */
   respondToOffer(matchId: string, decision: MatchDecision): Promise<{ jobId: string | null }>;
+  updateJobStatus(jobId: string, artisanId: string, status: "IN_PROGRESS" | "COMPLETED"): Promise<void>;
   completeJob(jobId: string): Promise<void>;
   submitReview(jobId: string, rating: number, comment?: string): Promise<string>;
+  listCompletedJobsForHomeowner(homeownerId: string): Promise<CompletedJobSummary[]>;
+  findJobForHomeowner(jobId: string, homeownerId: string): Promise<{
+    jobId: string; artisanId: string; homeownerId: string; agreedPrice: number;
+    status: string; completedAt: string | null; category: string; description: string;
+    hasReview: boolean; review: { rating: number; comment: string | null } | null;
+  } | null>;
   /** Backs the homeowner dashboard's "Active requests" cards. */
   listActiveRequestsForHomeowner(homeownerId: string): Promise<ActiveRequestSummary[]>;
   /** Backs the artisan public profile's "Reviews" section. */

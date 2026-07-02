@@ -3,6 +3,7 @@ import type { SkillCategory as DbSkillCategory } from "@prisma/client";
 import type {
   ActiveRequestSummary,
   AvailableRequestSummary,
+  CompletedJobSummary,
   CreateServiceRequestInput,
   GeoPoint,
   JobFeedItem,
@@ -141,6 +142,18 @@ class MatchingService implements MatchingServicePort {
     return { jobId: job.id };
   }
 
+  async updateJobStatus(jobId: string, artisanId: string, status: "IN_PROGRESS" | "COMPLETED"): Promise<void> {
+    const job = await matchingRepository.findJob(jobId);
+    if (!job || job.artisanId !== artisanId) throw new Error("Job not found");
+    if (job.status === "COMPLETED") throw new Error("Job is already completed");
+
+    if (status === "COMPLETED") {
+      await this.completeJob(jobId);
+    } else {
+      await matchingRepository.updateJobStatus(jobId, "IN_PROGRESS");
+    }
+  }
+
   async completeJob(jobId: string): Promise<void> {
     const job = await matchingRepository.completeJob(jobId);
     await matchingRepository.updateServiceRequestStatus(job.serviceRequestId, "COMPLETED");
@@ -197,8 +210,40 @@ class MatchingService implements MatchingServicePort {
         acceptedMatch: accepted
           ? { artisanId: accepted.artisanId, etaMinutes: accepted.etaMinutes }
           : null,
+        jobId: request.job?.id ?? null,
       };
     });
+  }
+
+  async listCompletedJobsForHomeowner(homeownerId: string): Promise<CompletedJobSummary[]> {
+    const jobs = await matchingRepository.listCompletedJobsForHomeowner(homeownerId);
+    return jobs.map((job) => ({
+      jobId: job.id,
+      serviceRequestId: job.serviceRequestId,
+      category: job.serviceRequest.category,
+      description: job.serviceRequest.description,
+      artisanId: job.artisanId,
+      agreedPrice: job.agreedPrice,
+      completedAt: job.completedAt?.toISOString() ?? null,
+      hasReview: job.review !== null,
+    }));
+  }
+
+  async findJobForHomeowner(jobId: string, homeownerId: string) {
+    const job = await matchingRepository.findJobByIdForHomeowner(jobId, homeownerId);
+    if (!job) return null;
+    return {
+      jobId: job.id,
+      artisanId: job.artisanId,
+      homeownerId: job.homeownerId,
+      agreedPrice: job.agreedPrice,
+      status: job.status,
+      completedAt: job.completedAt?.toISOString() ?? null,
+      category: job.serviceRequest.category,
+      description: job.serviceRequest.description,
+      hasReview: job.review !== null,
+      review: job.review ? { rating: job.review.rating, comment: job.review.comment } : null,
+    };
   }
 
   async listReviewsForArtisan(artisanId: string): Promise<ReviewSummary[]> {

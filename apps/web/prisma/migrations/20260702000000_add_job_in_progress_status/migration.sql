@@ -1,0 +1,1 @@
+ALTER TYPE "matching"."JobStatus" ADD VALUE 'IN_PROGRESS' AFTER 'ACTIVE';

@@ -7,9 +7,19 @@ import type { JobFeedItem, JobFeedStatus } from "@veyro/contracts";
 const STATUS_STYLE: Record<JobFeedStatus, string> = {
   PENDING: "bg-amber-100 text-amber-700",
   ACTIVE: "bg-primary/10 text-primary",
+  IN_PROGRESS: "bg-blue-100 text-blue-700",
   COMPLETED: "bg-emerald-100 text-emerald-700",
   DISPUTED: "bg-destructive/10 text-destructive",
   CANCELLED: "bg-muted text-muted-foreground",
+};
+
+const STATUS_LABEL: Record<JobFeedStatus, string> = {
+  PENDING: "Pending",
+  ACTIVE: "Accepted",
+  IN_PROGRESS: "In Progress",
+  COMPLETED: "Completed",
+  DISPUTED: "Disputed",
+  CANCELLED: "Cancelled",
 };
 
 export interface JobsTableRow extends JobFeedItem {
@@ -41,7 +51,7 @@ export function JobsTable({ rows }: { rows: JobsTableRow[] }) {
             <td className="py-3 text-muted-foreground">{row.customerName}</td>
             <td className="py-3">
               <Badge className={STATUS_STYLE[row.status]}>
-                {row.status.charAt(0) + row.status.slice(1).toLowerCase()}
+                {STATUS_LABEL[row.status] ?? row.status}
               </Badge>
             </td>
             <td className="py-3 text-right font-medium">₦{row.price.toLocaleString()}</td>

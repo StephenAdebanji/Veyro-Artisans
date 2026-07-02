@@ -284,6 +284,7 @@ enum MatchStatus {
 
 enum JobStatus {
   ACTIVE
+  IN_PROGRESS
   COMPLETED
   DISPUTED
   CANCELLED
