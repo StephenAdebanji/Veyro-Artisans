@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { SKILL_LABELS } from "@/components/shared/skill-labels";
 import type { SkillCategory } from "@veyro/contracts";
 import { CallButton } from "@/components/artisan/call-button";
+import { StartChatButton } from "@/components/artisan/start-chat-button";
 
 const STATUS_STYLE: Record<string, string> = {
   PENDING: "bg-amber-100 text-amber-700",
@@ -92,13 +93,7 @@ export default async function JobDetailPage({
               Chat
             </Link>
           ) : (
-            <span
-              title="Chat opens once the homeowner accepts your offer"
-              className="flex items-center justify-center gap-2 rounded-xl border bg-muted px-4 py-3 text-sm font-medium text-muted-foreground"
-            >
-              <MessageCircle className="h-4 w-4" />
-              Chat unavailable
-            </span>
+            <StartChatButton homeownerId={job.homeownerId} jobId={jobId} />
           )}
 
           <CallButton phone={homeowner.phone} />
