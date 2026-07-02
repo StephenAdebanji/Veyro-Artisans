@@ -33,7 +33,7 @@ export default async function HomeownerMessagesPage() {
 
   return (
     <Suspense>
-      <MessagesLayout conversations={conversations} currentProfileId={homeowner.id} />
+      <MessagesLayout conversations={conversations} currentProfileId={homeowner.id} backHref="/homeowner/dashboard" />
     </Suspense>
   );
 }

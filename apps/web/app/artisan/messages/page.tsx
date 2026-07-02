@@ -31,7 +31,7 @@ export default async function ArtisanMessagesPage() {
 
   return (
     <Suspense>
-      <MessagesLayout conversations={conversations} currentProfileId={artisanRef.id} />
+      <MessagesLayout conversations={conversations} currentProfileId={artisanRef.id} backHref="/artisan/dashboard" />
     </Suspense>
   );
 }

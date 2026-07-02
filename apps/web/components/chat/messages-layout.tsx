@@ -3,6 +3,7 @@
 import { useCallback, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, MessageSquare } from "lucide-react";
+import Link from "next/link";
 import { ConversationRow } from "./conversation-row";
 import { MessageThread } from "./message-thread";
 
@@ -17,9 +18,10 @@ export interface EnrichedConversation {
 interface MessagesLayoutProps {
   conversations: EnrichedConversation[];
   currentProfileId: string;
+  backHref: string;
 }
 
-export function MessagesLayout({ conversations, currentProfileId }: MessagesLayoutProps) {
+export function MessagesLayout({ conversations, currentProfileId, backHref }: MessagesLayoutProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const selectedId = searchParams.get("c") ?? null;
@@ -55,7 +57,13 @@ export function MessagesLayout({ conversations, currentProfileId }: MessagesLayo
           ${selected ? "hidden md:flex md:w-80 md:shrink-0" : "flex w-full md:w-80 md:shrink-0"}
         `}
       >
-        <div className="border-b px-4 py-3">
+        <div className="flex items-center gap-3 border-b px-4 py-3">
+          <Link
+            href={backHref}
+            className="flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-foreground"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Link>
           <h1 className="font-semibold">Messages</h1>
         </div>
 
