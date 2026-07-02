@@ -21,15 +21,24 @@ const STATUS_STYLE: Record<string, string> = {
   SUSPENDED: "bg-red-100 text-red-700",
 };
 
+const EXPERIENCE_LABELS: Record<string, string> = {
+  ZERO_TO_TWO:    "0-2 years",
+  THREE_TO_FIVE:  "3-5 years",
+  SIX_TO_TEN:     "6-10 years",
+  TEN_PLUS:       "10+ years",
+};
+
 export default async function AdminArtisanDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ from?: string }>;
 }) {
   const session = await auth();
   if ((session?.user as { role?: string } | undefined)?.role !== "ADMIN") redirect("/sign-in");
 
-  const { id } = await params;
+  const [{ id }, { from }] = await Promise.all([params, searchParams]);
   const artisan = await userRepository.findArtisanProfileFull(id);
   if (!artisan) notFound();
 
@@ -45,11 +54,11 @@ export default async function AdminArtisanDetailPage({
   return (
     <main className="mx-auto max-w-3xl flex-1 px-6 py-10">
       <Link
-        href="/admin/artisans"
+        href={from === "verifications" ? "/admin/verifications" : "/admin/artisans"}
         className="mb-6 flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground"
       >
         <ArrowLeft className="h-4 w-4" />
-        Back to artisans
+        {from === "verifications" ? "Back to verification queue" : "Back to artisans"}
       </Link>
 
       {/* Header */}
@@ -103,7 +112,9 @@ export default async function AdminArtisanDetailPage({
             </div>
             <div className="flex justify-between">
               <dt className="text-muted-foreground">Experience</dt>
-              <dd className="font-medium">{artisan.experienceLevel ?? "—"}</dd>
+              <dd className="font-medium">
+                {artisan.experienceLevel ? (EXPERIENCE_LABELS[artisan.experienceLevel] ?? artisan.experienceLevel) : "—"}
+              </dd>
             </div>
             <div className="flex justify-between">
               <dt className="text-muted-foreground">Service radius</dt>

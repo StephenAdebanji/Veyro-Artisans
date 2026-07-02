@@ -6,6 +6,7 @@ import { Eye, Pencil, Trash2, ShieldOff, ShieldCheck } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { EditHomeownerModal, type EditHomeownerData } from "./edit-user-modal";
+import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 
 type HomeownerRow = {
   id: string;
@@ -31,6 +32,7 @@ function HomeownerActionRow({ row, index }: { row: HomeownerRow; index: number }
   const [data, setData] = useState(row);
   const [removed, setRemoved] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const [pending, startTransition] = useTransition();
 
   if (removed) return null;
@@ -52,10 +54,10 @@ function HomeownerActionRow({ row, index }: { row: HomeownerRow; index: number }
     });
   }
 
-  async function handleDelete() {
-    if (!confirm(`Delete homeowner ${data.fullName ?? data.id}? This cannot be undone.`)) return;
+  function handleDelete() {
     startTransition(async () => {
       await fetch(`/api/admin/homeowners/${data.id}`, { method: "DELETE" });
+      setConfirmDelete(false);
       setRemoved(true);
     });
   }
@@ -79,6 +81,16 @@ function HomeownerActionRow({ row, index }: { row: HomeownerRow; index: number }
 
   return (
     <>
+      <ConfirmDialog
+        open={confirmDelete}
+        title="Delete homeowner"
+        description={`Delete ${data.fullName ?? "this homeowner"}? Their account will be suspended and this cannot be undone.`}
+        confirmLabel="Delete"
+        destructive
+        loading={pending}
+        onConfirm={handleDelete}
+        onCancel={() => setConfirmDelete(false)}
+      />
       <tr className="border-b last:border-b-0 hover:bg-muted/30">
         <td className="py-3 pl-4 text-sm text-muted-foreground">{index}</td>
         <td className="py-3 font-medium">{data.fullName ?? "—"}</td>
@@ -128,7 +140,7 @@ function HomeownerActionRow({ row, index }: { row: HomeownerRow; index: number }
                 size="sm"
                 className="h-7 gap-1 text-xs text-destructive hover:text-destructive"
                 disabled={pending}
-                onClick={handleDelete}
+                onClick={() => setConfirmDelete(true)}
               >
                 <Trash2 className="h-3.5 w-3.5" /> Delete
               </Button>

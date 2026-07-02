@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/platform/auth-session";
 import { trustService } from "@/services/trust/trust.service";
+import { prisma } from "@/platform/prisma";
 
 async function requireAdmin() {
   const session = await auth();
@@ -20,5 +21,14 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   }
 
   await trustService.reviewCredential(id, body.decision, admin.id ?? "admin");
+  return NextResponse.json({ ok: true });
+}
+
+export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const admin = await requireAdmin();
+  if (!admin) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+
+  const { id } = await params;
+  await prisma.credential.delete({ where: { id } });
   return NextResponse.json({ ok: true });
 }

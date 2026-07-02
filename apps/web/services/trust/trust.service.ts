@@ -149,6 +149,7 @@ class TrustService implements TrustServicePort {
         : null,
       artisanEmail: credential.artisan?.user?.email ?? null,
       type: credential.type,
+      fileUrl: credential.fileUrl,
       createdAt: credential.createdAt.toISOString(),
     }));
   }

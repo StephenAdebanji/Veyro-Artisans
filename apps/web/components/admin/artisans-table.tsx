@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { SKILL_LABELS } from "@/components/shared/skill-labels";
 import { EditArtisanModal, type EditArtisanData } from "./edit-user-modal";
+import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import type { SkillCategory } from "@veyro/contracts";
 
 type ArtisanRow = {
@@ -40,6 +41,7 @@ function ArtisanActionRow({ row, index }: { row: ArtisanRow; index: number }) {
   const [data, setData] = useState(row);
   const [removed, setRemoved] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const [pending, startTransition] = useTransition();
 
   if (removed) return null;
@@ -61,10 +63,10 @@ function ArtisanActionRow({ row, index }: { row: ArtisanRow; index: number }) {
     });
   }
 
-  async function handleDelete() {
-    if (!confirm(`Delete artisan ${data.firstName ?? data.id}? This cannot be undone.`)) return;
+  function handleDelete() {
     startTransition(async () => {
       await fetch(`/api/admin/artisans/${data.id}`, { method: "DELETE" });
+      setConfirmDelete(false);
       setRemoved(true);
     });
   }
@@ -92,6 +94,16 @@ function ArtisanActionRow({ row, index }: { row: ArtisanRow; index: number }) {
 
   return (
     <>
+      <ConfirmDialog
+        open={confirmDelete}
+        title="Delete artisan"
+        description={`Delete ${name}? Their account will be suspended and this cannot be undone.`}
+        confirmLabel="Delete"
+        destructive
+        loading={pending}
+        onConfirm={handleDelete}
+        onCancel={() => setConfirmDelete(false)}
+      />
       <tr className="border-b last:border-b-0 hover:bg-muted/30">
         <td className="py-3 pl-4 text-sm text-muted-foreground">{index}</td>
         <td className="py-3 font-medium">{name}</td>
@@ -143,7 +155,7 @@ function ArtisanActionRow({ row, index }: { row: ArtisanRow; index: number }) {
                 size="sm"
                 className="h-7 gap-1 text-xs text-destructive hover:text-destructive"
                 disabled={pending}
-                onClick={handleDelete}
+                onClick={() => setConfirmDelete(true)}
               >
                 <Trash2 className="h-3.5 w-3.5" /> Delete
               </Button>

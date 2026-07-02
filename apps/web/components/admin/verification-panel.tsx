@@ -9,9 +9,12 @@ import {
   Lock,
   Loader2,
   RotateCcw,
+  Trash2,
+  Eye,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 
 type CredentialItem = {
   id: string;
@@ -38,12 +41,15 @@ function CredentialRow({
   cred,
   locked,
   onReviewed,
+  onDeleted,
 }: {
   cred: CredentialItem;
   locked: boolean;
   onReviewed: (id: string, decision: "APPROVED" | "REJECTED") => void;
+  onDeleted: (id: string) => void;
 }) {
   const [pending, startTransition] = useTransition();
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   function decide(decision: "APPROVED" | "REJECTED") {
     startTransition(async () => {
@@ -56,7 +62,26 @@ function CredentialRow({
     });
   }
 
+  function handleDelete() {
+    startTransition(async () => {
+      await fetch(`/api/admin/credentials/${cred.id}`, { method: "DELETE" });
+      setConfirmDelete(false);
+      onDeleted(cred.id);
+    });
+  }
+
   return (
+    <>
+      <ConfirmDialog
+        open={confirmDelete}
+        title="Delete credential"
+        description={`Delete this ${cred.type.replace(/_/g, " ")} document? This cannot be undone.`}
+        confirmLabel="Delete"
+        destructive
+        loading={pending}
+        onConfirm={handleDelete}
+        onCancel={() => setConfirmDelete(false)}
+      />
     <li className="flex items-center justify-between gap-4 rounded-lg border p-3">
       <div className="flex min-w-0 items-center gap-2">
         <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
@@ -75,10 +100,20 @@ function CredentialRow({
           href={cred.fileUrl}
           target="_blank"
           rel="noreferrer"
-          className="whitespace-nowrap text-xs text-primary hover:underline"
+          className="flex items-center gap-1 whitespace-nowrap text-xs text-primary hover:underline"
         >
-          View file
+          <Eye className="h-3 w-3" /> View
         </a>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-7 w-7 p-0 text-red-500 hover:bg-red-50 hover:text-red-600"
+          title="Delete credential"
+          disabled={pending}
+          onClick={() => setConfirmDelete(true)}
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+        </Button>
         {locked ? (
           <span
             title="Final decision taken — revoke to re-enable"
@@ -113,6 +148,7 @@ function CredentialRow({
         )}
       </div>
     </li>
+    </>
   );
 }
 
@@ -138,6 +174,10 @@ export function VerificationPanel({
 
   function handleCredentialReviewed(id: string, decision: "APPROVED" | "REJECTED") {
     setCredentials((prev) => prev.map((c) => (c.id === id ? { ...c, status: decision } : c)));
+  }
+
+  function handleCredentialDeleted(id: string) {
+    setCredentials((prev) => prev.filter((c) => c.id !== id));
   }
 
   function submitDecision(decision: "APPROVED" | "REJECTED" | "REVOKED") {
@@ -193,6 +233,7 @@ export function VerificationPanel({
                 cred={cred}
                 locked={decided}
                 onReviewed={handleCredentialReviewed}
+                onDeleted={handleCredentialDeleted}
               />
             ))}
           </ul>

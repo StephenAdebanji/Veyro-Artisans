@@ -154,10 +154,14 @@ export const userRepository = {
   },
 
   async deleteArtisan(artisanId: string) {
+    const profile = await prisma.artisanProfile.findUnique({ where: { id: artisanId }, select: { userId: true } });
+    if (profile) await prisma.user.update({ where: { id: profile.userId }, data: { status: "SUSPENDED" } });
     await prisma.artisanProfile.delete({ where: { id: artisanId } });
   },
 
   async deleteHomeowner(homeownerId: string) {
+    const profile = await prisma.homeownerProfile.findUnique({ where: { id: homeownerId }, select: { userId: true } });
+    if (profile) await prisma.user.update({ where: { id: profile.userId }, data: { status: "SUSPENDED" } });
     await prisma.homeownerProfile.delete({ where: { id: homeownerId } });
   },
 };

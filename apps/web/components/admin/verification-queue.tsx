@@ -12,6 +12,7 @@ import {
   ChevronDown,
   ChevronUp,
   FileText,
+  Eye,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -102,6 +103,14 @@ function CredentialLine({
         <span className="text-xs text-muted-foreground">{formatDateTime(credential.createdAt)}</span>
       </div>
       <div className="flex items-center gap-2">
+        <a
+          href={credential.fileUrl}
+          target="_blank"
+          rel="noreferrer"
+          className="flex h-7 items-center gap-1 rounded-md border px-2 text-xs text-primary hover:bg-muted"
+        >
+          <Eye className="h-3 w-3" /> View
+        </a>
         <Button
           variant="outline"
           size="sm"
@@ -172,7 +181,7 @@ function ArtisanCard({
         </div>
 
         <div className="flex shrink-0 items-center gap-2">
-          <Link href={`/admin/artisans/${group.artisanId}`} onClick={(e) => e.stopPropagation()}>
+          <Link href={`/admin/artisans/${group.artisanId}?from=verifications`} onClick={(e) => e.stopPropagation()}>
             <Button variant="outline" size="sm" className="gap-1">
               <ExternalLink className="h-3 w-3" />
               View profile
