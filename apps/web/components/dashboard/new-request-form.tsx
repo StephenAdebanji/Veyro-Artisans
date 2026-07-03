@@ -31,10 +31,20 @@ export function NewRequestForm() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  const todayISO = new Date().toISOString().split("T")[0];
+
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
     if (!category) {
       setError("Choose a category.");
+      return;
+    }
+    if (budgetMin && Number(budgetMin) < 500) {
+      setError("Minimum budget cannot be less than ₦500.");
+      return;
+    }
+    if (preferredDate && preferredDate < todayISO) {
+      setError("Preferred date cannot be in the past.");
       return;
     }
     setError(null);
@@ -110,7 +120,7 @@ export function NewRequestForm() {
           <Input
             id="budgetMin"
             type="number"
-            min={0}
+            min={500}
             value={budgetMin}
             onChange={(event) => setBudgetMin(event.target.value)}
           />
@@ -132,6 +142,7 @@ export function NewRequestForm() {
         <Input
           id="preferredDate"
           type="date"
+          min={todayISO}
           value={preferredDate}
           onChange={(event) => setPreferredDate(event.target.value)}
         />
