@@ -43,6 +43,7 @@ export function MatchingScreen({
   const [aiCandidates, setAiCandidates] = useState<RankedArtisan[]>([]);
   const [aiLoading, setAiLoading] = useState(true);
   const [cancelling, setCancelling] = useState(false);
+  const [cancelled, setCancelled] = useState(false);
   const socketRef = useRef<import("socket.io-client").Socket | null>(null);
 
   // Countdown tick.
@@ -137,14 +138,47 @@ export function MatchingScreen({
   }
 
   async function handleCancel() {
-    if (!confirm("Cancel this request? It will be removed from your dashboard.")) return;
+    if (!confirm("Cancel this request?")) return;
     setCancelling(true);
     await fetch(`/api/service-requests/${serviceRequestId}/cancel`, { method: "POST" });
-    router.push("/homeowner/dashboard");
+    setCancelling(false);
+    setCancelled(true);
   }
 
   const mm = String(Math.floor(secondsLeft / 60)).padStart(2, "0");
   const ss = String(secondsLeft % 60).padStart(2, "0");
+
+  if (cancelled) {
+    return (
+      <div className="mx-auto max-w-2xl px-6 py-10">
+        <div className="flex flex-col items-center gap-6 rounded-xl border bg-card py-16 text-center">
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted text-3xl">
+            ✕
+          </div>
+          <div>
+            <h2 className="text-xl font-semibold">Request cancelled</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Your request has been removed. Ready to post again?
+            </p>
+          </div>
+          <div className="flex flex-col items-center gap-3">
+            <button
+              onClick={() => router.push("/homeowner/requests/new")}
+              className="rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
+            >
+              Post a new request
+            </button>
+            <button
+              onClick={() => router.push("/homeowner/dashboard")}
+              className="text-sm text-muted-foreground hover:text-foreground"
+            >
+              Back to dashboard
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-2xl px-6 py-10">
