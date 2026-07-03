@@ -28,7 +28,7 @@ export default async function HomeownerDashboardPage() {
   const [activeRequests, completedJobs, unreadCount] = await Promise.all([
     matchingService.listActiveRequestsForHomeowner(homeowner.id),
     matchingService.listCompletedJobsForHomeowner(homeowner.id),
-    chatService.countUnreadForUser(userId),
+    chatService.countUnreadForUser(homeowner.id),
   ]);
 
   const requestsWithArtisanNames = await Promise.all(
@@ -64,9 +64,9 @@ export default async function HomeownerDashboardPage() {
       </div>
 
       <div className="mt-6 grid gap-4 sm:grid-cols-3">
-        <StatCard icon={Briefcase} value={activeJobsCount} label="Active jobs" />
-        <StatCard icon={CheckCircle2} value={completedCount} label="Completed" />
-        <StatCard icon={MessageSquare} value={unreadCount} label="Unread messages" />
+        <StatCard icon={Briefcase} value={activeJobsCount} label="Active jobs" href="/homeowner/history?tab=active" />
+        <StatCard icon={CheckCircle2} value={completedCount} label="Completed" href="/homeowner/history?tab=completed" />
+        <StatCard icon={MessageSquare} value={unreadCount} label="Unread messages" href="/homeowner/messages" />
       </div>
 
       <section className="mt-8">
@@ -93,19 +93,27 @@ export default async function HomeownerDashboardPage() {
         )}
       </section>
 
-      {/* Completed jobs */}
+      {/* Completed jobs — show 3 latest */}
       {completedJobs.length > 0 && (
         <section className="mt-8">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold">Completed jobs</h2>
-            {pendingReviewCount > 0 && (
-              <span className="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-700">
-                {pendingReviewCount} awaiting review
-              </span>
-            )}
+            <h2 className="text-lg font-semibold">Recent completed jobs</h2>
+            <div className="flex items-center gap-3">
+              {pendingReviewCount > 0 && (
+                <span className="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-700">
+                  {pendingReviewCount} awaiting review
+                </span>
+              )}
+              <Link
+                href="/homeowner/history?tab=completed"
+                className="text-xs font-medium text-primary hover:underline"
+              >
+                View all →
+              </Link>
+            </div>
           </div>
           <div className="mt-3 flex flex-col gap-3">
-            {completedJobs.map((job) => (
+            {completedJobs.slice(0, 3).map((job) => (
               <Link
                 key={job.jobId}
                 href={`/homeowner/jobs/${job.jobId}`}

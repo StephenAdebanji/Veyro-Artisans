@@ -82,6 +82,21 @@ export interface AvailableRequestSummary {
   createdAt: string;
 }
 
+export interface JobHistoryItem {
+  jobId: string;
+  serviceRequestId: string;
+  category: SkillCategory;
+  description: string;
+  address: string;
+  artisanId: string;
+  homeownerId: string;
+  agreedPrice: number;
+  status: JobFeedStatus;
+  startedAt: string;
+  inProgressAt: string | null;
+  completedAt: string | null;
+}
+
 export type JobFeedStatus = "PENDING" | "ACTIVE" | "IN_PROGRESS" | "COMPLETED" | "DISPUTED" | "CANCELLED";
 
 export interface JobFeedItem {
@@ -133,4 +148,7 @@ export interface MatchingServicePort {
   countActiveJobsForArtisan(artisanId: string): Promise<number>;
   /** Backs the artisan dashboard's Reputation panel. */
   countDisputesForArtisan(artisanId: string): Promise<number>;
+  listJobsHistoryForArtisan(artisanId: string): Promise<JobHistoryItem[]>;
+  listJobsHistoryForHomeowner(homeownerId: string): Promise<JobHistoryItem[]>;
+  listAllJobsHistory(): Promise<JobHistoryItem[]>;
 }

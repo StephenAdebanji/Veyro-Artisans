@@ -77,9 +77,9 @@ export const matchingRepository = {
         data: { status: "COMPLETED", completedAt: new Date() },
       });
     }
-    // IN_PROGRESS: use raw SQL so it works even before the enum migration is applied.
     await prisma.$executeRaw`
-      UPDATE "matching"."Job" SET "status" = 'IN_PROGRESS'
+      UPDATE "matching"."Job"
+      SET "status" = 'IN_PROGRESS', "inProgressAt" = NOW()
       WHERE "id" = ${id}
     `;
     return prisma.job.findUniqueOrThrow({ where: { id } });
@@ -239,5 +239,29 @@ export const matchingRepository = {
 
   async countAllServiceRequests() {
     return prisma.serviceRequest.count({ where: { status: { in: ["SEARCHING", "MATCHED"] } } });
+  },
+
+  async listJobsHistoryForArtisan(artisanId: string) {
+    return prisma.job.findMany({
+      where: { artisanId, status: { in: ["ACTIVE", "IN_PROGRESS", "COMPLETED", "DISPUTED"] } },
+      include: { serviceRequest: true },
+      orderBy: { startedAt: "desc" },
+    });
+  },
+
+  async listJobsHistoryForHomeowner(homeownerId: string) {
+    return prisma.job.findMany({
+      where: { homeownerId, status: { in: ["ACTIVE", "IN_PROGRESS", "COMPLETED", "DISPUTED"] } },
+      include: { serviceRequest: true },
+      orderBy: { startedAt: "desc" },
+    });
+  },
+
+  async listAllJobsHistory() {
+    return prisma.job.findMany({
+      where: { status: { in: ["ACTIVE", "IN_PROGRESS", "COMPLETED", "DISPUTED"] } },
+      include: { serviceRequest: true },
+      orderBy: { startedAt: "desc" },
+    });
   },
 };

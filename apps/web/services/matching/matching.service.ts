@@ -7,6 +7,7 @@ import type {
   CreateServiceRequestInput,
   GeoPoint,
   JobFeedItem,
+  JobHistoryItem,
   MatchDecision,
   MatchOfferInput,
   MatchingServicePort,
@@ -352,6 +353,43 @@ class MatchingService implements MatchingServicePort {
 
   async countDisputesForArtisan(artisanId: string): Promise<number> {
     return matchingRepository.countDisputesForArtisan(artisanId);
+  }
+
+  private toHistoryItem(job: {
+    id: string; serviceRequestId: string; artisanId: string; homeownerId: string;
+    agreedPrice: number; status: string; startedAt: Date; inProgressAt?: Date | null;
+    completedAt: Date | null;
+    serviceRequest: { category: string; description: string; address: string };
+  }): JobHistoryItem {
+    return {
+      jobId: job.id,
+      serviceRequestId: job.serviceRequestId,
+      category: job.serviceRequest.category as import("@veyro/contracts").SkillCategory,
+      description: job.serviceRequest.description,
+      address: job.serviceRequest.address,
+      artisanId: job.artisanId,
+      homeownerId: job.homeownerId,
+      agreedPrice: job.agreedPrice,
+      status: job.status as import("@veyro/contracts").JobFeedStatus,
+      startedAt: job.startedAt.toISOString(),
+      inProgressAt: job.inProgressAt?.toISOString() ?? null,
+      completedAt: job.completedAt?.toISOString() ?? null,
+    };
+  }
+
+  async listJobsHistoryForArtisan(artisanId: string): Promise<JobHistoryItem[]> {
+    const jobs = await matchingRepository.listJobsHistoryForArtisan(artisanId);
+    return jobs.map((j) => this.toHistoryItem(j));
+  }
+
+  async listJobsHistoryForHomeowner(homeownerId: string): Promise<JobHistoryItem[]> {
+    const jobs = await matchingRepository.listJobsHistoryForHomeowner(homeownerId);
+    return jobs.map((j) => this.toHistoryItem(j));
+  }
+
+  async listAllJobsHistory(): Promise<JobHistoryItem[]> {
+    const jobs = await matchingRepository.listAllJobsHistory();
+    return jobs.map((j) => this.toHistoryItem(j));
   }
 }
 

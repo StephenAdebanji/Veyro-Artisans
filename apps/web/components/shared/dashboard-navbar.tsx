@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { signOut } from "next-auth/react";
-import { Briefcase, LogOut, MessageSquare, UserCircle } from "lucide-react";
+import { Briefcase, History, LogOut, MessageSquare, UserCircle } from "lucide-react";
 
 interface DashboardNavbarProps {
   role: "artisan" | "homeowner";
@@ -55,6 +55,8 @@ export function DashboardNavbar({ role, userName: _userName, profilePhotoUrl: _p
   const messagesHref = role === "artisan" ? "/artisan/messages" : "/homeowner/messages";
   const messagesActive = pathname === messagesHref || pathname.startsWith(messagesHref + "/");
 
+  const historyHref = role === "artisan" ? "/artisan/history" : "/homeowner/history";
+
   const primaryLinks =
     role === "artisan"
       ? [{ href: "/artisan/jobs", label: "Jobs", icon: Briefcase }]
@@ -89,6 +91,14 @@ export function DashboardNavbar({ role, userName: _userName, profilePhotoUrl: _p
                 <span className="hidden md:inline">{label}</span>
               </Link>
             ))}
+
+            <Link
+              href={historyHref}
+              className={linkClass(pathname === historyHref || pathname.startsWith(historyHref + "/"))}
+            >
+              <History className="h-4 w-4" />
+              <span className="hidden md:inline">History</span>
+            </Link>
 
             {/* Messages with unread badge */}
             <Link href={messagesHref} className={linkClass(messagesActive)}>
@@ -134,6 +144,18 @@ export function DashboardNavbar({ role, userName: _userName, profilePhotoUrl: _p
             {label}
           </Link>
         ))}
+
+        <Link
+          href={historyHref}
+          className={`flex shrink-0 items-center gap-1.5 rounded-md px-3 py-1 text-sm font-medium ${
+            pathname === historyHref || pathname.startsWith(historyHref + "/")
+              ? "bg-white/20 text-white"
+              : "text-blue-100 hover:bg-white/10"
+          }`}
+        >
+          <History className="h-4 w-4" />
+          History
+        </Link>
 
         {/* Mobile Messages */}
         <Link

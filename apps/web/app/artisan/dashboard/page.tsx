@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Briefcase, CheckCircle2, ListChecks, Star } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -121,8 +122,8 @@ export default async function ArtisanDashboardPage() {
 
       <div className="mt-6 grid gap-4 sm:grid-cols-4">
         <StatCard icon={ListChecks} value={availableJobs.length} label="Available jobs" />
-        <StatCard icon={Briefcase} value={activeJobsCount} label="Active jobs" />
-        <StatCard icon={CheckCircle2} value={profile.completedJobs} label="Completed" />
+        <StatCard icon={Briefcase} value={activeJobsCount} label="Active jobs" href="/artisan/history?tab=active" />
+        <StatCard icon={CheckCircle2} value={profile.completedJobs} label="Completed" href="/artisan/history?tab=completed" />
         <StatCard icon={Star} value={profile.ratingAvg.toFixed(1)} label="Rating" />
       </div>
 
@@ -145,9 +146,14 @@ export default async function ArtisanDashboardPage() {
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold">Jobs</h2>
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold">Recent jobs</h2>
+              <Link href="/artisan/history" className="text-xs font-medium text-primary hover:underline">
+                View all history →
+              </Link>
+            </div>
             <div className="mt-3 rounded-xl border bg-card p-4">
-              <JobsTable rows={jobRows} />
+              <JobsTable rows={jobRows.slice(0, 3)} />
             </div>
           </section>
         </div>

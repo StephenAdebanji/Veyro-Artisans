@@ -349,6 +349,7 @@ model Job {
   agreedPrice      Int
   status           JobStatus      @default(ACTIVE)
   startedAt        DateTime       @default(now())
+  inProgressAt     DateTime?
   completedAt      DateTime?
 
   review   Review?
