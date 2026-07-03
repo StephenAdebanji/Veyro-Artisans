@@ -106,7 +106,7 @@ export function HistoryClient({
                 <th className="hidden px-4 py-3 font-medium sm:table-cell">Date accepted</th>
                 <th className="hidden px-4 py-3 font-medium md:table-cell">Price</th>
                 <th className="px-4 py-3 font-medium">Status</th>
-                <th className="px-4 py-3 text-right font-medium">Timeline</th>
+                <th className="px-4 py-3 text-right font-medium">View</th>
               </tr>
             </thead>
             <tbody>
@@ -138,14 +138,13 @@ export function HistoryClient({
                     </Badge>
                   </td>
                   <td className="px-4 py-3 text-right">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-7 gap-1 text-xs"
+                    <button
                       onClick={() => setSelected(job)}
+                      title="View timeline"
+                      className="inline-flex h-8 w-8 items-center justify-center rounded-lg border bg-card text-muted-foreground transition-colors hover:border-primary hover:text-primary"
                     >
-                      <Eye className="h-3.5 w-3.5" /> View
-                    </Button>
+                      <Eye className="h-4 w-4" />
+                    </button>
                   </td>
                 </tr>
               ))}
