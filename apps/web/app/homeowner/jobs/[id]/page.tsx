@@ -58,6 +58,7 @@ export default async function HomeownerJobDetailPage({
   const artisan = (await userService.getArtisanProfile(job.artisanId)) as {
     firstName?: string | null;
     lastName?: string | null;
+    primarySkill?: string | null;
     ratingAvg?: number;
     ratingCount?: number;
   } | null;
@@ -109,6 +110,11 @@ export default async function HomeownerJobDetailPage({
           </div>
           <div>
             <p className="font-semibold">{artisanName}</p>
+            {artisan?.primarySkill && (
+              <p className="text-sm text-muted-foreground">
+                {SKILL_LABELS[artisan.primarySkill as SkillCategory] ?? artisan.primarySkill}
+              </p>
+            )}
             {artisan?.ratingAvg !== undefined && artisan.ratingCount ? (
               <div className="mt-0.5 flex items-center gap-1.5">
                 <StarDisplay rating={Math.round(artisan.ratingAvg)} />
