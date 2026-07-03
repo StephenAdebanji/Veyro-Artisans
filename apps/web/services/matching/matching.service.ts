@@ -347,6 +347,13 @@ class MatchingService implements MatchingServicePort {
     };
   }
 
+  async cancelServiceRequest(serviceRequestId: string, homeownerId: string): Promise<void> {
+    const request = await matchingRepository.findServiceRequest(serviceRequestId);
+    if (!request || request.homeownerId !== homeownerId) throw new Error("Not found");
+    if (!["SEARCHING", "MATCHED"].includes(request.status)) throw new Error("Cannot cancel at this stage");
+    await matchingRepository.cancelServiceRequest(serviceRequestId);
+  }
+
   async countActiveJobsForArtisan(artisanId: string): Promise<number> {
     return matchingRepository.countActiveJobsForArtisan(artisanId);
   }

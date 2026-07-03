@@ -137,6 +137,17 @@ export const matchingRepository = {
     return prisma.serviceRequest.count({ where: { homeownerId, status: "COMPLETED" } });
   },
 
+  async cancelServiceRequest(serviceRequestId: string) {
+    await prisma.match.updateMany({
+      where: { serviceRequestId, status: "PENDING" },
+      data: { status: "EXPIRED" },
+    });
+    return prisma.serviceRequest.update({
+      where: { id: serviceRequestId },
+      data: { status: "CANCELLED" },
+    });
+  },
+
   async listSearchingRequests(category: SkillCategory, excludeArtisanId: string) {
     return prisma.serviceRequest.findMany({
       where: { category, status: "SEARCHING", matches: { none: { artisanId: excludeArtisanId } } },

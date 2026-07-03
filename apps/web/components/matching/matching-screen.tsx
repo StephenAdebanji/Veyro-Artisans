@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, CheckCircle2, Loader2, Sparkles } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Loader2, Sparkles, XCircle } from "lucide-react";
 import { OfferCard, type OfferData } from "./offer-card";
 import type { RankedArtisan, SkillCategory } from "@veyro/contracts";
 import { SKILL_LABELS } from "@/components/shared/skill-labels";
@@ -42,6 +42,7 @@ export function MatchingScreen({
   });
   const [aiCandidates, setAiCandidates] = useState<RankedArtisan[]>([]);
   const [aiLoading, setAiLoading] = useState(true);
+  const [cancelling, setCancelling] = useState(false);
   const socketRef = useRef<import("socket.io-client").Socket | null>(null);
 
   // Countdown tick.
@@ -135,6 +136,13 @@ export function MatchingScreen({
     );
   }
 
+  async function handleCancel() {
+    if (!confirm("Cancel this request? It will be removed from your dashboard.")) return;
+    setCancelling(true);
+    await fetch(`/api/service-requests/${serviceRequestId}/cancel`, { method: "POST" });
+    router.push("/homeowner/dashboard");
+  }
+
   const mm = String(Math.floor(secondsLeft / 60)).padStart(2, "0");
   const ss = String(secondsLeft % 60).padStart(2, "0");
 
@@ -170,14 +178,30 @@ export function MatchingScreen({
             )}
           </div>
 
-          {!acceptedMatchId && secondsLeft > 0 && (
-            <div className="text-right">
-              <p className="text-xs text-muted-foreground">Offer window closes in</p>
-              <p
-                className={`text-2xl font-bold tabular-nums ${secondsLeft < 60 ? "text-destructive" : "text-primary"}`}
+          {!acceptedMatchId && (
+            <div className="flex flex-col items-end gap-2">
+              {secondsLeft > 0 && (
+                <div className="text-right">
+                  <p className="text-xs text-muted-foreground">Offer window closes in</p>
+                  <p
+                    className={`text-2xl font-bold tabular-nums ${secondsLeft < 60 ? "text-destructive" : "text-primary"}`}
+                  >
+                    {mm}:{ss}
+                  </p>
+                </div>
+              )}
+              <button
+                onClick={handleCancel}
+                disabled={cancelling}
+                className="flex items-center gap-1.5 rounded-lg border border-destructive/40 px-3 py-1.5 text-xs font-medium text-destructive transition-colors hover:bg-destructive/5 disabled:opacity-50"
               >
-                {mm}:{ss}
-              </p>
+                {cancelling ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <XCircle className="h-3.5 w-3.5" />
+                )}
+                Cancel request
+              </button>
             </div>
           )}
         </div>
@@ -222,6 +246,14 @@ export function MatchingScreen({
               className="rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
             >
               Post again
+            </button>
+            <button
+              onClick={handleCancel}
+              disabled={cancelling}
+              className="flex items-center gap-1.5 text-sm text-muted-foreground underline-offset-2 hover:text-destructive hover:underline disabled:opacity-50"
+            >
+              {cancelling ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
+              Dismiss request
             </button>
           </div>
         ) : (
