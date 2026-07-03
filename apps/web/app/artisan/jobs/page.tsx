@@ -3,8 +3,10 @@ import { Clock } from "lucide-react";
 import { auth } from "@/platform/auth-session";
 import { matchingService } from "@/services/matching/matching.service";
 import { userService } from "@/services/user/user.service";
+import { ArtisanJobFeed } from "@/components/dashboard/artisan-job-feed";
 import { JobsTable, type JobsTableRow } from "@/components/dashboard/jobs-table";
 import { prisma } from "@/platform/prisma";
+import type { SkillCategory } from "@veyro/contracts";
 
 export default async function ArtisanJobsPage() {
   const session = await auth();
@@ -30,7 +32,17 @@ export default async function ArtisanJobsPage() {
     );
   }
 
-  const jobs = await matchingService.listJobsFeedForArtisan(artisan.id);
+  const [availableJobs, jobs] = await Promise.all([
+    artisan.primarySkill && artisan.gpsLat !== null && artisan.gpsLng !== null
+      ? matchingService.listAvailableRequests({
+          artisanId: artisan.id,
+          category: artisan.primarySkill as SkillCategory,
+          near: { lat: artisan.gpsLat, lng: artisan.gpsLng },
+          radiusKm: artisan.serviceRadiusKm,
+        })
+      : Promise.resolve([]),
+    matchingService.listJobsFeedForArtisan(artisan.id),
+  ]);
 
   const rows: JobsTableRow[] = await Promise.all(
     jobs.map(async (job) => {
@@ -54,7 +66,7 @@ export default async function ArtisanJobsPage() {
         <div>
           <h1 className="text-2xl font-bold">Jobs</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            New offers to accept and jobs currently in progress.
+            Available requests nearby, your pending offers, and active work.
           </p>
         </div>
         <a href="/artisan/history" className="text-sm font-medium text-primary hover:underline">
@@ -62,21 +74,40 @@ export default async function ArtisanJobsPage() {
         </a>
       </div>
 
-      {pending.length === 0 && active.length === 0 && (
-        <p className="mt-8 text-sm text-muted-foreground">
-          No new offers or active jobs right now. Check back soon.
-        </p>
-      )}
+      {/* Available homeowner posts — the primary section artisans come here for */}
+      <section className="mt-8">
+        <h2 className="mb-3 text-base font-semibold">
+          Available jobs near you
+          {availableJobs.length > 0 && (
+            <span className="ml-2 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+              {availableJobs.length} new
+            </span>
+          )}
+        </h2>
+        {artisan.primarySkill && artisan.gpsLat !== null ? (
+          <ArtisanJobFeed
+            initialJobs={availableJobs}
+            artisanId={artisan.id}
+            category={artisan.primarySkill as SkillCategory}
+          />
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            Complete your profile (category + location) to see available jobs.
+          </p>
+        )}
+      </section>
 
+      {/* Pending offers the artisan has sent */}
       {pending.length > 0 && (
         <section className="mt-8">
-          <h2 className="mb-3 text-base font-semibold">New offers ({pending.length})</h2>
+          <h2 className="mb-3 text-base font-semibold">My pending offers ({pending.length})</h2>
           <div className="rounded-xl border bg-card p-4">
             <JobsTable rows={pending} />
           </div>
         </section>
       )}
 
+      {/* Active / in-progress jobs */}
       {active.length > 0 && (
         <section className="mt-6">
           <h2 className="mb-3 text-base font-semibold">In progress ({active.length})</h2>
@@ -84,6 +115,12 @@ export default async function ArtisanJobsPage() {
             <JobsTable rows={active} />
           </div>
         </section>
+      )}
+
+      {availableJobs.length === 0 && pending.length === 0 && active.length === 0 && (
+        <p className="mt-4 text-sm text-muted-foreground">
+          No jobs available near you right now. Check back soon.
+        </p>
       )}
     </main>
   );
