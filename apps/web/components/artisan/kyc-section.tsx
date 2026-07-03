@@ -302,13 +302,19 @@ export function KycSection({
   verificationStatus,
   staged,
   onStaged,
+  artisanId,
 }: {
   credentials: CredentialRecord[];
   verificationStatus: VerificationStatus;
   staged: Record<string, StagedItem>;
   onStaged: (categoryId: string, item: StagedItem) => void;
+  artisanId?: string;
 }) {
-  const [verifiedBannerDismissed, setVerifiedBannerDismissed] = useState(false);
+  const storageKey = artisanId ? `veyro:verified_dismissed:${artisanId}` : null;
+  const [verifiedBannerDismissed, setVerifiedBannerDismissed] = useState(() => {
+    if (typeof window === "undefined" || !storageKey) return false;
+    return !!localStorage.getItem(storageKey);
+  });
 
   function getLatestForCategory(types: readonly string[]): CredentialRecord | undefined {
     return credentials
@@ -345,30 +351,36 @@ export function KycSection({
         )}
       </div>
 
-      {verificationStatus === "VERIFIED" && !verifiedBannerDismissed && (
-        <div className="relative mb-5 flex items-start gap-3 rounded-lg border border-emerald-200 bg-emerald-50 p-4 pr-10 dark:border-emerald-900 dark:bg-emerald-950/30">
-          <PartyPopper className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" />
-          <div>
-            <p className="text-sm font-semibold text-emerald-800 dark:text-emerald-300">
-              Your application has been accepted!
-            </p>
-            <p className="mt-0.5 text-sm text-emerald-700 dark:text-emerald-400">
-              You are now fully verified. Go to the{" "}
-              <a href="/artisan/jobs" className="underline underline-offset-2">
-                Jobs
-              </a>{" "}
-              page to start viewing and accepting job requests.
-            </p>
+      {verificationStatus === "VERIFIED" && !verifiedBannerDismissed && (() => {
+        // Mark as seen when this renders so next login won't show it.
+        if (storageKey && typeof window !== "undefined" && !localStorage.getItem(storageKey)) {
+          localStorage.setItem(storageKey, "1");
+        }
+        return (
+          <div className="relative mb-5 flex items-start gap-3 rounded-lg border border-emerald-200 bg-emerald-50 p-4 pr-10 dark:border-emerald-900 dark:bg-emerald-950/30">
+            <PartyPopper className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" />
+            <div>
+              <p className="text-sm font-semibold text-emerald-800 dark:text-emerald-300">
+                Your application has been accepted!
+              </p>
+              <p className="mt-0.5 text-sm text-emerald-700 dark:text-emerald-400">
+                You are now fully verified. Go to the{" "}
+                <a href="/artisan/jobs" className="underline underline-offset-2">
+                  Jobs
+                </a>{" "}
+                page to start viewing and accepting job requests.
+              </p>
+            </div>
+            <button
+              onClick={() => setVerifiedBannerDismissed(true)}
+              aria-label="Dismiss"
+              className="absolute right-3 top-3 rounded p-0.5 text-emerald-600 hover:bg-emerald-100 dark:hover:bg-emerald-900"
+            >
+              <X className="h-4 w-4" />
+            </button>
           </div>
-          <button
-            onClick={() => setVerifiedBannerDismissed(true)}
-            aria-label="Dismiss"
-            className="absolute right-3 top-3 rounded p-0.5 text-emerald-600 hover:bg-emerald-100 dark:hover:bg-emerald-900"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-      )}
+        );
+      })()}
 
       {verificationStatus === "REJECTED" && (
         <div className="mb-5 flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-900 dark:bg-red-950/30">

@@ -392,6 +392,7 @@ export function ArtisanAccount({
             verificationStatus={kycStatus}
             staged={kycStaged}
             onStaged={handleKycStaged}
+            artisanId={artisanId}
           />
         )}
 

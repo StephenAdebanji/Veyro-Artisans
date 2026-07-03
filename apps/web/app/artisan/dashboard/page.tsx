@@ -70,10 +70,15 @@ export default async function ArtisanDashboardPage() {
   const homeownerIds = [...new Set(jobsFeed.map((job) => job.homeownerId))];
   const homeowners = await Promise.all(homeownerIds.map((id) => userService.getHomeownerProfile(id)));
   const nameById = new Map(homeowners.map((h, i) => [homeownerIds[i], h?.fullName ?? "Homeowner"]));
-  const jobRows: JobsTableRow[] = jobsFeed.map((job) => ({
+  // Pending + active first so they're never pushed off the 3-row preview.
+  const allJobRows: JobsTableRow[] = jobsFeed.map((job) => ({
     ...job,
     customerName: nameById.get(job.homeownerId) ?? "Homeowner",
   }));
+  const jobRows = [
+    ...allJobRows.filter((r) => r.status === "PENDING" || r.status === "ACTIVE" || r.status === "IN_PROGRESS"),
+    ...allJobRows.filter((r) => r.status === "COMPLETED"),
+  ];
 
   const completionRate =
     profile.totalJobsAccepted && profile.totalJobsAccepted > 0

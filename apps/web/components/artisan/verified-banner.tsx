@@ -8,12 +8,15 @@ export function VerifiedBanner({ artisanId }: { artisanId: string }) {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    const dismissed = localStorage.getItem(storageKey);
-    if (!dismissed) setVisible(true);
+    // Mark as seen on first mount so the next login won't show it, dismissed or not.
+    const alreadySeen = localStorage.getItem(storageKey);
+    if (!alreadySeen) {
+      localStorage.setItem(storageKey, "1");
+      setVisible(true);
+    }
   }, [storageKey]);
 
   function dismiss() {
-    localStorage.setItem(storageKey, "1");
     setVisible(false);
   }
 
