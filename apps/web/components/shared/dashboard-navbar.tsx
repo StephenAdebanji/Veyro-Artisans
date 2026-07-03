@@ -119,7 +119,7 @@ export function DashboardNavbar({ role, userName: _userName, profilePhotoUrl: _p
           </div>
 
           <button
-            onClick={() => signOut({ callbackUrl: "/" })}
+            onClick={() => signOut({ callbackUrl: "/sign-in" })}
             className="flex items-center gap-1.5 rounded-md px-2 py-1.5 text-sm text-blue-100 hover:bg-white/10 hover:text-white"
           >
             <LogOut className="h-4 w-4" />
