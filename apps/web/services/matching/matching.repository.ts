@@ -71,13 +71,18 @@ export const matchingRepository = {
   },
 
   async updateJobStatus(id: string, status: "IN_PROGRESS" | "COMPLETED") {
-    return prisma.job.update({
-      where: { id },
-      data: {
-        status,
-        ...(status === "COMPLETED" ? { completedAt: new Date() } : {}),
-      },
-    });
+    if (status === "COMPLETED") {
+      return prisma.job.update({
+        where: { id },
+        data: { status: "COMPLETED", completedAt: new Date() },
+      });
+    }
+    // IN_PROGRESS: use raw SQL so it works even before the enum migration is applied.
+    await prisma.$executeRaw`
+      UPDATE "matching"."Job" SET "status" = 'IN_PROGRESS'
+      WHERE "id" = ${id}
+    `;
+    return prisma.job.findUniqueOrThrow({ where: { id } });
   },
 
   async completeJob(id: string) {
@@ -174,7 +179,13 @@ export const matchingRepository = {
   },
 
   async countActiveJobsForArtisan(artisanId: string) {
-    return prisma.job.count({ where: { artisanId, status: { in: ["ACTIVE", "IN_PROGRESS"] } } });
+    // Use raw SQL so the count works both before and after the IN_PROGRESS migration.
+    const rows = await prisma.$queryRaw<[{ count: bigint }]>`
+      SELECT COUNT(*)::int AS count FROM "matching"."Job"
+      WHERE "artisanId" = ${artisanId}
+        AND "status"::text IN ('ACTIVE', 'IN_PROGRESS')
+    `;
+    return Number(rows[0]?.count ?? 0);
   },
 
   async countDisputesForArtisan(artisanId: string) {
