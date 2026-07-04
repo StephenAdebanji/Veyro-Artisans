@@ -2,15 +2,26 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { AvailableRequestSummary, SkillCategory } from "@veyro/contracts";
+import { haversineKm } from "@/platform/geo";
 import { AvailableJobRow } from "./available-job-row";
 
 interface ArtisanJobFeedProps {
   initialJobs: AvailableRequestSummary[];
   artisanId: string;
   category: SkillCategory;
+  artisanLat?: number;
+  artisanLng?: number;
+  serviceRadiusKm?: number;
 }
 
-export function ArtisanJobFeed({ initialJobs, artisanId, category }: ArtisanJobFeedProps) {
+export function ArtisanJobFeed({
+  initialJobs,
+  artisanId,
+  category,
+  artisanLat,
+  artisanLng,
+  serviceRadiusKm,
+}: ArtisanJobFeedProps) {
   const [jobs, setJobs] = useState<AvailableRequestSummary[]>(initialJobs);
   const socketRef = useRef<import("socket.io-client").Socket | null>(null);
 
@@ -34,8 +45,18 @@ export function ArtisanJobFeed({ initialJobs, artisanId, category }: ArtisanJobF
 
       socket.on(
         "job:new",
-        (job: { id: string; description: string; address: string; budgetMin: number | null; budgetMax: number | null; distanceKm?: number; createdAt: string; category: SkillCategory }) => {
+        (job: { id: string; description: string; address: string; budgetMin: number | null; budgetMax: number | null; lat?: number; lng?: number; distanceKm?: number; createdAt: string; category: SkillCategory }) => {
           if (!mounted) return;
+
+          // Compute distance from artisan's GPS to the job location.
+          let distanceKm =
+            artisanLat !== undefined && artisanLng !== undefined && job.lat !== undefined && job.lng !== undefined
+              ? haversineKm({ lat: artisanLat, lng: artisanLng }, { lat: job.lat, lng: job.lng })
+              : (job.distanceKm ?? 0);
+
+          // Drop jobs outside the artisan's service radius.
+          if (serviceRadiusKm !== undefined && distanceKm > serviceRadiusKm) return;
+
           setJobs((prev) => {
             if (prev.some((j) => j.id === job.id)) return prev;
             const newJob: AvailableRequestSummary = {
@@ -45,7 +66,7 @@ export function ArtisanJobFeed({ initialJobs, artisanId, category }: ArtisanJobF
               address: job.address,
               budgetMin: job.budgetMin,
               budgetMax: job.budgetMax,
-              distanceKm: job.distanceKm ?? 0,
+              distanceKm,
               createdAt: job.createdAt,
             };
             return [newJob, ...prev];
@@ -60,7 +81,7 @@ export function ArtisanJobFeed({ initialJobs, artisanId, category }: ArtisanJobF
       socketRef.current?.emit("leave-skill", { category });
       socketRef.current?.disconnect();
     };
-  }, [artisanId, category]);
+  }, [artisanId, category, artisanLat, artisanLng, serviceRadiusKm]);
 
   if (jobs.length === 0) {
     return <p className="text-sm text-muted-foreground">No new requests nearby right now.</p>;

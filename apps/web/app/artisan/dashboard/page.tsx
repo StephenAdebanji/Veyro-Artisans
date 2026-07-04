@@ -142,6 +142,9 @@ export default async function ArtisanDashboardPage() {
                   initialJobs={availableJobs}
                   artisanId={profile.id}
                   category={profile.primarySkill}
+                  artisanLat={profile.gpsLat ?? undefined}
+                  artisanLng={profile.gpsLng ?? undefined}
+                  serviceRadiusKm={profile.serviceRadiusKm}
                 />
               )}
               {!profile.primarySkill && (

@@ -89,6 +89,9 @@ export default async function ArtisanJobsPage() {
             initialJobs={availableJobs}
             artisanId={artisan.id}
             category={artisan.primarySkill as SkillCategory}
+            artisanLat={artisan.gpsLat ?? undefined}
+            artisanLng={artisan.gpsLng ?? undefined}
+            serviceRadiusKm={artisan.serviceRadiusKm}
           />
         ) : (
           <p className="text-sm text-muted-foreground">

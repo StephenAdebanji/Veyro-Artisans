@@ -8,7 +8,7 @@ interface AvailabilityRow {
 const DAY_NAMES = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
 
 export function isAvailableNow(availability: AvailabilityRow | null, now = new Date()): boolean {
-  if (!availability) return false;
+  if (!availability) return true;
   if (availability.emergencyAvailable) return true;
 
   const today = DAY_NAMES[now.getDay()];

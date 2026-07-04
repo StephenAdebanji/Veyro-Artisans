@@ -150,7 +150,7 @@ export const matchingRepository = {
 
   async listSearchingRequests(category: SkillCategory, excludeArtisanId: string) {
     return prisma.serviceRequest.findMany({
-      where: { category, status: "SEARCHING", matches: { none: { artisanId: excludeArtisanId } } },
+      where: { category, status: { in: ["SEARCHING", "MATCHED"] }, matches: { none: { artisanId: excludeArtisanId } } },
       orderBy: { createdAt: "desc" },
     });
   },
