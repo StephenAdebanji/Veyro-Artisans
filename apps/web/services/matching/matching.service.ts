@@ -265,7 +265,7 @@ class MatchingService implements MatchingServicePort {
   async listAvailableRequests(filter: {
     artisanId: string;
     category: SkillCategory;
-    near: GeoPoint;
+    near: GeoPoint | null;
     radiusKm: number;
   }): Promise<AvailableRequestSummary[]> {
     const requests = await matchingRepository.listSearchingRequests(
@@ -273,18 +273,24 @@ class MatchingService implements MatchingServicePort {
       filter.artisanId,
     );
 
-    return requests
-      .map((request) => ({
-        id: request.id,
-        category: request.category,
-        description: request.description,
-        address: request.address,
-        budgetMin: request.budgetMin,
-        budgetMax: request.budgetMax,
-        distanceKm: haversineKm(filter.near, { lat: request.lat, lng: request.lng }),
-        createdAt: request.createdAt.toISOString(),
-      }))
-      .filter((request) => request.distanceKm <= filter.radiusKm)
+    const mapped = requests.map((request) => ({
+      id: request.id,
+      category: request.category,
+      description: request.description,
+      address: request.address,
+      budgetMin: request.budgetMin,
+      budgetMax: request.budgetMax,
+      distanceKm: filter.near
+        ? haversineKm(filter.near, { lat: request.lat, lng: request.lng })
+        : 0,
+      createdAt: request.createdAt.toISOString(),
+    }));
+
+    // If artisan has no GPS we can't filter by radius — show all in category.
+    if (!filter.near) return mapped.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+    return mapped
+      .filter((r) => r.distanceKm <= filter.radiusKm)
       .sort((a, b) => a.distanceKm - b.distanceKm);
   }
 

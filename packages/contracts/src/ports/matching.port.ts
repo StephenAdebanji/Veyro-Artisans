@@ -139,7 +139,7 @@ export interface MatchingServicePort {
   listAvailableRequests(filter: {
     artisanId: string;
     category: SkillCategory;
-    near: GeoPoint;
+    near: GeoPoint | null;
     radiusKm: number;
   }): Promise<AvailableRequestSummary[]>;
   /** Backs the artisan dashboard's "Jobs" table — merges this artisan's PENDING offers with their ACTIVE/COMPLETED jobs into one feed. */

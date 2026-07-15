@@ -54,11 +54,13 @@ export default async function ArtisanDashboardPage() {
   const isRejected = profile.verificationStatus === "REJECTED";
 
   const [availableJobs, activeJobsCount, jobsFeed, disputesCount] = await Promise.all([
-    profile.primarySkill && profile.gpsLat !== null && profile.gpsLng !== null
+    profile.primarySkill
       ? matchingService.listAvailableRequests({
           artisanId: profile.id,
           category: profile.primarySkill,
-          near: { lat: profile.gpsLat, lng: profile.gpsLng },
+          near: profile.gpsLat !== null && profile.gpsLng !== null
+            ? { lat: profile.gpsLat, lng: profile.gpsLng }
+            : null,
           radiusKm: profile.serviceRadiusKm,
         })
       : Promise.resolve([]),

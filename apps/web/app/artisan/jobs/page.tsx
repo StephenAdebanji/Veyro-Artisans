@@ -33,11 +33,13 @@ export default async function ArtisanJobsPage() {
   }
 
   const [availableJobs, jobs] = await Promise.all([
-    artisan.primarySkill && artisan.gpsLat !== null && artisan.gpsLng !== null
+    artisan.primarySkill
       ? matchingService.listAvailableRequests({
           artisanId: artisan.id,
           category: artisan.primarySkill as SkillCategory,
-          near: { lat: artisan.gpsLat, lng: artisan.gpsLng },
+          near: artisan.gpsLat !== null && artisan.gpsLng !== null
+            ? { lat: artisan.gpsLat, lng: artisan.gpsLng }
+            : null,
           radiusKm: artisan.serviceRadiusKm,
         })
       : Promise.resolve([]),
@@ -79,7 +81,7 @@ export default async function ArtisanJobsPage() {
             </span>
           )}
         </h2>
-        {artisan.primarySkill && artisan.gpsLat !== null ? (
+        {artisan.primarySkill ? (
           <ArtisanJobFeed
             initialJobs={availableJobs}
             artisanId={artisan.id}
@@ -90,7 +92,7 @@ export default async function ArtisanJobsPage() {
           />
         ) : (
           <p className="text-sm text-muted-foreground">
-            Complete your profile (category + location) to see available jobs.
+            Complete your profile (set your trade category) to see available jobs.
           </p>
         )}
       </section>

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import type { CredentialType } from "@veyro/contracts";
 import { auth } from "@/platform/auth-session";
+import { geocodeAddress } from "@/platform/mapbox";
 import { trustService } from "@/services/trust/trust.service";
 import { userService } from "@/services/user/user.service";
 
@@ -35,7 +36,22 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const { step, data, credentials } = parsed.data;
+  const { step, credentials } = parsed.data;
+  const data = { ...(parsed.data.data ?? {}) };
+
+  // Step 3 carries location fields — geocode them server-side so every artisan
+  // gets accurate GPS coordinates rather than the Lagos-center fallback the
+  // client sends. If Mapbox fails we keep whatever the client provided.
+  if (step === 3) {
+    const parts = [data.residentialAddress, data.lga, data.city, data.state, data.country]
+      .filter((v) => typeof v === "string" && v.trim())
+      .join(", ");
+    const geo = await geocodeAddress(parts);
+    if (geo) {
+      data.gpsLat = geo.lat;
+      data.gpsLng = geo.lng;
+    }
+  }
 
   if (CREDENTIAL_STEPS.has(step)) {
     for (const credential of credentials ?? []) {
