@@ -2,13 +2,16 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/platform/auth-session";
 import { userService } from "@/services/user/user.service";
-import { geocodeAddress } from "@/platform/mapbox";
+import { geocodeStructured } from "@/platform/mapbox";
 
 const editSchema = z.object({
   bio: z.string().optional(),
   serviceRadiusKm: z.number().positive().optional(),
   city: z.string().optional(),
   state: z.string().optional(),
+  country: z.string().optional(),
+  countryCode: z.string().optional(),
+  lga: z.string().optional(),
   profilePhotoUrl: z.string().url().optional(),
 });
 
@@ -42,21 +45,23 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   const parsed = editSchema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
 
-  const { city, state, ...rest } = parsed.data;
+  const { city, state, lga, country: _country, countryCode, ...rest } = parsed.data;
 
-  // Geocode city+state so dashboard location-based counts stay accurate.
   let gpsLat: number | undefined;
   let gpsLng: number | undefined;
   if (city || state) {
-    const parts = [city, state, "Nigeria"].filter(Boolean).join(", ");
-    const geo = await geocodeAddress(parts);
+    const geo = await geocodeStructured({
+      lga: lga ?? city,
+      state,
+      countryCode: countryCode ?? "NG",
+    });
     if (geo) {
       gpsLat = geo.lat;
       gpsLng = geo.lng;
     }
   }
 
-  await userService.updateArtisanSettings(id, { ...rest, city, state, gpsLat, gpsLng });
+  await userService.updateArtisanSettings(id, { ...rest, city: lga ?? city, state, gpsLat, gpsLng });
 
   return NextResponse.json({ ok: true });
 }

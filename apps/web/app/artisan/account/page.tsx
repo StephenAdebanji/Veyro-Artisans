@@ -27,6 +27,7 @@ export default async function ArtisanAccountPage() {
     <ArtisanAccount
       artisanId={ref.id}
       email={user.email}
+      primarySkill={(profile.primarySkill as string | null) as import("@veyro/contracts").SkillCategory | null}
       verificationStatus={
         ((profile.verificationStatus as string | undefined) ?? "UNVERIFIED") as
           | "UNVERIFIED"

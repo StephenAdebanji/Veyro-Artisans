@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,8 +13,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 import { SKILL_CATEGORIES, SKILL_LABELS } from "@/components/shared/skill-labels";
+import { COUNTRIES, NIGERIAN_STATES, NIGERIAN_LGAS } from "@/lib/location-data";
 import type { SkillCategory } from "@veyro/contracts";
+
+const COUNTRY_OPTIONS = COUNTRIES.map((c) => ({ value: c.code, label: c.name }));
+const NIGERIAN_STATE_OPTIONS = NIGERIAN_STATES.map((s) => ({ value: s, label: s }));
 
 export function NewRequestForm() {
   const router = useRouter();
@@ -24,8 +29,9 @@ export function NewRequestForm() {
     (searchParams.get("category") as SkillCategory) ?? "",
   );
   const [description, setDescription] = useState("");
-  const [country, setCountry] = useState("Nigeria");
-  const [stateCity, setStateCity] = useState("");
+  const [countryCode, setCountryCode] = useState("NG");
+  const [state, setState] = useState("");
+  const [lga, setLga] = useState("");
   const [streetAddress, setStreetAddress] = useState("");
   const [budgetMin, setBudgetMin] = useState("");
   const [budgetMax, setBudgetMax] = useState("");
@@ -34,13 +40,30 @@ export function NewRequestForm() {
   const [loading, setLoading] = useState(false);
 
   const todayISO = new Date().toISOString().split("T")[0];
+  const isNigeria = countryCode === "NG";
+  const selectedCountry = COUNTRIES.find((c) => c.code === countryCode);
+
+  const lgaOptions = useMemo(
+    () => (state && isNigeria ? (NIGERIAN_LGAS[state] ?? []).map((l) => ({ value: l, label: l })) : []),
+    [state, isNigeria],
+  );
+
+  function handleCountryChange(code: string) {
+    setCountryCode(code);
+    setState("");
+    setLga("");
+  }
+
+  function handleStateChange(s: string) {
+    setState(s);
+    setLga("");
+  }
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
-    if (!category) {
-      setError("Choose a category.");
-      return;
-    }
+    if (!category) { setError("Choose a category."); return; }
+    if (!state) { setError("Choose a state / region."); return; }
+    if (!streetAddress.trim()) { setError("Enter a street address."); return; }
     if (budgetMin && Number(budgetMin) < 500) {
       setError("Minimum budget cannot be less than ₦500.");
       return;
@@ -52,17 +75,17 @@ export function NewRequestForm() {
     setError(null);
     setLoading(true);
 
-    const address = [streetAddress.trim(), stateCity.trim(), country.trim()]
-      .filter(Boolean)
-      .join(", ");
-
     const response = await fetch("/api/service-requests", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         category,
         description,
-        address,
+        streetAddress: streetAddress.trim(),
+        lga: lga || undefined,
+        state,
+        country: selectedCountry?.name ?? "Nigeria",
+        countryCode,
         budgetMin: budgetMin ? Number(budgetMin) : undefined,
         budgetMax: budgetMax ? Number(budgetMax) : undefined,
         preferredDate: preferredDate || undefined,
@@ -82,6 +105,7 @@ export function NewRequestForm() {
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+      {/* Service category */}
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="category">Service category</Label>
         <Select value={category} onValueChange={(value) => setCategory(value as SkillCategory)}>
@@ -98,6 +122,7 @@ export function NewRequestForm() {
         </Select>
       </div>
 
+      {/* Job description */}
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="description">Describe the job</Label>
         <Textarea
@@ -109,28 +134,55 @@ export function NewRequestForm() {
         />
       </div>
 
+      {/* Country */}
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="country">Country of Residence</Label>
-        <Input
-          id="country"
-          placeholder="Nigeria"
-          value={country}
-          onChange={(event) => setCountry(event.target.value)}
-          required
+        <Label>Country of Residence</Label>
+        <SearchableSelect
+          options={COUNTRY_OPTIONS}
+          value={countryCode}
+          onChange={handleCountryChange}
+          placeholder="Select country"
+          searchPlaceholder="Search countries…"
         />
       </div>
 
+      {/* State — Nigerian dropdown or free text for other countries */}
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="stateCity">State, LGA / City of Residence</Label>
-        <Input
-          id="stateCity"
-          placeholder="Lagos State, Lekki"
-          value={stateCity}
-          onChange={(event) => setStateCity(event.target.value)}
-          required
-        />
+        <Label htmlFor="state">State</Label>
+        {isNigeria ? (
+          <SearchableSelect
+            options={NIGERIAN_STATE_OPTIONS}
+            value={state}
+            onChange={handleStateChange}
+            placeholder="Select state"
+            searchPlaceholder="Search states…"
+          />
+        ) : (
+          <Input
+            id="state"
+            placeholder="State / Province / Region"
+            value={state}
+            onChange={(e) => { setState(e.target.value); setLga(""); }}
+            required
+          />
+        )}
       </div>
 
+      {/* LGA — only for Nigeria, only after state is chosen */}
+      {isNigeria && state && (
+        <div className="flex flex-col gap-1.5">
+          <Label>Local Government Area</Label>
+          <SearchableSelect
+            options={lgaOptions}
+            value={lga}
+            onChange={setLga}
+            placeholder="Select LGA"
+            searchPlaceholder="Search LGAs…"
+          />
+        </div>
+      )}
+
+      {/* Street address */}
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="streetAddress">Address</Label>
         <Input
@@ -142,6 +194,7 @@ export function NewRequestForm() {
         />
       </div>
 
+      {/* Budget */}
       <div className="grid grid-cols-2 gap-4">
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="budgetMin">Budget min (₦)</Label>
@@ -165,6 +218,7 @@ export function NewRequestForm() {
         </div>
       </div>
 
+      {/* Preferred date */}
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="preferredDate">Preferred date</Label>
         <Input

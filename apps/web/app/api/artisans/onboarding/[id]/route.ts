@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import type { CredentialType } from "@veyro/contracts";
 import { auth } from "@/platform/auth-session";
-import { geocodeAddress } from "@/platform/mapbox";
+import { geocodeStructured } from "@/platform/mapbox";
 import { trustService } from "@/services/trust/trust.service";
 import { userService } from "@/services/user/user.service";
 
@@ -43,10 +43,14 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   // gets accurate GPS coordinates rather than the Lagos-center fallback the
   // client sends. If Mapbox fails we keep whatever the client provided.
   if (step === 3) {
-    const parts = [data.residentialAddress, data.lga, data.city, data.state, data.country]
-      .filter((v) => typeof v === "string" && v.trim())
-      .join(", ");
-    const geo = await geocodeAddress(parts);
+    const geo = await geocodeStructured({
+      streetAddress: typeof data.residentialAddress === "string" ? data.residentialAddress : undefined,
+      lga: typeof data.lga === "string" ? data.lga : (typeof data.city === "string" ? data.city : undefined),
+      state: typeof data.state === "string" ? data.state : undefined,
+      countryCode: typeof data.country === "string" && data.country.length === 2
+        ? data.country
+        : "NG",
+    });
     if (geo) {
       data.gpsLat = geo.lat;
       data.gpsLng = geo.lng;

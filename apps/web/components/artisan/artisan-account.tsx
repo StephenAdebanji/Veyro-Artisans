@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import {
@@ -21,14 +21,22 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 import { KycSection, type StagedItem, type CredentialRecord, type VerificationStatus } from "./kyc-section";
 import { ProfilePhotoUpload } from "@/components/shared/profile-photo-upload";
+import { COUNTRIES, NIGERIAN_STATES, NIGERIAN_LGAS } from "@/lib/location-data";
+import { SKILL_LABELS } from "@/components/shared/skill-labels";
+import type { SkillCategory } from "@veyro/contracts";
+
+const COUNTRY_OPTIONS = COUNTRIES.map((c) => ({ value: c.code, label: c.name }));
+const NIGERIAN_STATE_OPTIONS = NIGERIAN_STATES.map((s) => ({ value: s, label: s }));
 
 type Tab = "profile" | "kyc" | "disputes" | "settings";
 
 interface ArtisanAccountProps {
   artisanId: string;
   email: string;
+  primarySkill: SkillCategory | null;
   verificationStatus: VerificationStatus;
   profilePhotoUrl: string | null;
   initialData: {
@@ -135,6 +143,7 @@ function AppearanceSection() {
 export function ArtisanAccount({
   artisanId,
   email,
+  primarySkill,
   verificationStatus,
   profilePhotoUrl,
   initialData,
@@ -151,8 +160,19 @@ export function ArtisanAccount({
   const [serviceRadiusKm, setServiceRadiusKm] = useState(
     initialData.serviceRadiusKm?.toString() ?? "",
   );
-  const [city, setCity] = useState(initialData.city);
+  // Location state — stored as state (Nigerian state / region) and city (LGA)
+  const [countryCode, setCountryCode] = useState("NG");
   const [stateVal, setStateVal] = useState(initialData.state);
+  const [lga, setLga] = useState(initialData.city);
+
+  const isNigeria = countryCode === "NG";
+  const lgaOptions = useMemo(
+    () =>
+      stateVal && isNigeria
+        ? (NIGERIAN_LGAS[stateVal] ?? []).map((l) => ({ value: l, label: l }))
+        : [],
+    [stateVal, isNigeria],
+  );
 
   // KYC tab state — lifted so Save/Cancel can control it from outside the section
   const [kycCredentials, setKycCredentials] = useState<CredentialRecord[]>(credentials);
@@ -171,7 +191,14 @@ export function ArtisanAccount({
 
     if (tab === "profile") {
       startSave(async () => {
-        const body: Record<string, unknown> = { bio, city, state: stateVal };
+        const selectedCountry = COUNTRIES.find((c) => c.code === countryCode);
+        const body: Record<string, unknown> = {
+          bio,
+          city: lga || stateVal,
+          state: stateVal,
+          country: selectedCountry?.name ?? "Nigeria",
+          countryCode,
+        };
         if (serviceRadiusKm) body.serviceRadiusKm = Number(serviceRadiusKm);
         const res = await fetch(`/api/artisans/${artisanId}`, {
           method: "PATCH",
@@ -247,8 +274,9 @@ export function ArtisanAccount({
     if (tab === "profile") {
       setBio(initialData.bio);
       setServiceRadiusKm(initialData.serviceRadiusKm?.toString() ?? "");
-      setCity(initialData.city);
+      setCountryCode("NG");
       setStateVal(initialData.state);
+      setLga(initialData.city);
     } else if (tab === "kyc") {
       setKycStaged({});
     }
@@ -258,7 +286,7 @@ export function ArtisanAccount({
 
   const isProfileDirty =
     bio !== initialData.bio ||
-    city !== initialData.city ||
+    lga !== initialData.city ||
     stateVal !== initialData.state ||
     serviceRadiusKm !== (initialData.serviceRadiusKm?.toString() ?? "");
 
@@ -329,7 +357,7 @@ export function ArtisanAccount({
             <section className="rounded-xl border bg-card p-6">
               <h2 className="text-base font-semibold">Account information</h2>
               <p className="mt-0.5 text-sm text-muted-foreground">
-                Your name and email cannot be changed here.
+                These fields cannot be changed here.
               </p>
               <div className="mt-4 grid gap-4 sm:grid-cols-2">
                 <div className="flex flex-col gap-1.5">
@@ -339,6 +367,14 @@ export function ArtisanAccount({
                 <div className="flex flex-col gap-1.5">
                   <Label>Email address</Label>
                   <Input value={email} disabled className="cursor-not-allowed opacity-60" />
+                </div>
+                <div className="flex flex-col gap-1.5 sm:col-span-2">
+                  <Label>Service category</Label>
+                  <Input
+                    value={primarySkill ? (SKILL_LABELS[primarySkill] ?? primarySkill) : "Not set"}
+                    disabled
+                    className="cursor-not-allowed opacity-60"
+                  />
                 </div>
               </div>
             </section>
@@ -359,16 +395,47 @@ export function ArtisanAccount({
                     onChange={(e) => { setBio(e.target.value); setSaved(false); }}
                   />
                 </div>
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="flex flex-col gap-1.5">
-                    <Label htmlFor="city">City</Label>
-                    <Input id="city" value={city} onChange={(e) => { setCity(e.target.value); setSaved(false); }} />
-                  </div>
-                  <div className="flex flex-col gap-1.5">
-                    <Label htmlFor="state">State</Label>
-                    <Input id="state" value={stateVal} onChange={(e) => { setStateVal(e.target.value); setSaved(false); }} />
-                  </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <Label>Country</Label>
+                  <SearchableSelect
+                    options={COUNTRY_OPTIONS}
+                    value={countryCode}
+                    onChange={(code) => { setCountryCode(code); setStateVal(""); setLga(""); setSaved(false); }}
+                    placeholder="Select country"
+                  />
                 </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <Label>State</Label>
+                  {isNigeria ? (
+                    <SearchableSelect
+                      options={NIGERIAN_STATE_OPTIONS}
+                      value={stateVal}
+                      onChange={(s) => { setStateVal(s); setLga(""); setSaved(false); }}
+                      placeholder="Select state"
+                    />
+                  ) : (
+                    <Input
+                      placeholder="State / Province / Region"
+                      value={stateVal}
+                      onChange={(e) => { setStateVal(e.target.value); setLga(""); setSaved(false); }}
+                    />
+                  )}
+                </div>
+
+                {isNigeria && stateVal && (
+                  <div className="flex flex-col gap-1.5">
+                    <Label>Local Government Area</Label>
+                    <SearchableSelect
+                      options={lgaOptions}
+                      value={lga}
+                      onChange={(l) => { setLga(l); setSaved(false); }}
+                      placeholder="Select LGA"
+                    />
+                  </div>
+                )}
+
                 <div className="flex flex-col gap-1.5">
                   <Label htmlFor="radius">Service radius (km)</Label>
                   <Input

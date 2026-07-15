@@ -11,6 +11,26 @@ export async function geocodeAddress(address: string): Promise<GeoPoint | null> 
   return typeof lat === "number" && typeof lng === "number" ? { lat, lng } : null;
 }
 
+export async function geocodeStructured(parts: {
+  streetAddress?: string;
+  lga?: string;
+  state?: string;
+  countryCode?: string;
+}): Promise<GeoPoint | null> {
+  const params = new URLSearchParams({ access_token: MAPBOX_TOKEN, limit: "1" });
+  if (parts.streetAddress) params.set("address_line1", parts.streetAddress);
+  if (parts.lga) params.set("place", parts.lga);
+  if (parts.state) params.set("region", parts.state);
+  if (parts.countryCode) params.set("country", parts.countryCode);
+
+  const url = `https://api.mapbox.com/search/geocode/v6/forward?${params}`;
+  const res = await fetch(url);
+  if (!res.ok) return null;
+  const data = await res.json();
+  const [lng, lat] = data.features?.[0]?.geometry?.coordinates ?? [];
+  return typeof lat === "number" && typeof lng === "number" ? { lat, lng } : null;
+}
+
 export async function getDistanceEta(
   from: GeoPoint,
   to: GeoPoint,
