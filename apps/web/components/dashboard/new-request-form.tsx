@@ -24,7 +24,9 @@ export function NewRequestForm() {
     (searchParams.get("category") as SkillCategory) ?? "",
   );
   const [description, setDescription] = useState("");
-  const [address, setAddress] = useState("");
+  const [country, setCountry] = useState("Nigeria");
+  const [stateCity, setStateCity] = useState("");
+  const [streetAddress, setStreetAddress] = useState("");
   const [budgetMin, setBudgetMin] = useState("");
   const [budgetMax, setBudgetMax] = useState("");
   const [preferredDate, setPreferredDate] = useState("");
@@ -49,6 +51,10 @@ export function NewRequestForm() {
     }
     setError(null);
     setLoading(true);
+
+    const address = [streetAddress.trim(), stateCity.trim(), country.trim()]
+      .filter(Boolean)
+      .join(", ");
 
     const response = await fetch("/api/service-requests", {
       method: "POST",
@@ -104,12 +110,34 @@ export function NewRequestForm() {
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="address">Location</Label>
+        <Label htmlFor="country">Country of Residence</Label>
         <Input
-          id="address"
-          placeholder="12 Admiralty Way, Lekki Phase 1, Lagos"
-          value={address}
-          onChange={(event) => setAddress(event.target.value)}
+          id="country"
+          placeholder="Nigeria"
+          value={country}
+          onChange={(event) => setCountry(event.target.value)}
+          required
+        />
+      </div>
+
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="stateCity">State, LGA / City of Residence</Label>
+        <Input
+          id="stateCity"
+          placeholder="Lagos State, Lekki"
+          value={stateCity}
+          onChange={(event) => setStateCity(event.target.value)}
+          required
+        />
+      </div>
+
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="streetAddress">Address</Label>
+        <Input
+          id="streetAddress"
+          placeholder="12 Admiralty Way, Lekki Phase 1"
+          value={streetAddress}
+          onChange={(event) => setStreetAddress(event.target.value)}
           required
         />
       </div>

@@ -62,16 +62,11 @@ export default async function ArtisanJobsPage() {
 
   return (
     <main className="flex-1 px-6 py-10">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Jobs</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Available requests nearby, your pending offers, and active work.
-          </p>
-        </div>
-        <a href="/artisan/history" className="text-sm font-medium text-primary hover:underline">
-          View history →
-        </a>
+      <div>
+        <h1 className="text-2xl font-bold">Jobs</h1>
+        <p className="mt-0.5 text-xs text-muted-foreground/70">
+          Available requests nearby, your pending offers, and active work.
+        </p>
       </div>
 
       {/* Available homeowner posts — the primary section artisans come here for */}
@@ -120,11 +115,6 @@ export default async function ArtisanJobsPage() {
         </section>
       )}
 
-      {availableJobs.length === 0 && pending.length === 0 && active.length === 0 && (
-        <p className="mt-4 text-sm text-muted-foreground">
-          No jobs available near you right now. Check back soon.
-        </p>
-      )}
     </main>
   );
 }
