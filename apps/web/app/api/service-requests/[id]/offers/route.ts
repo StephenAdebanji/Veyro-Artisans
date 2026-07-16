@@ -69,11 +69,26 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const matchId = await matchingService.offerMatch({
-    serviceRequestId,
-    artisanId: artisan.id,
-    ...parsed.data,
-  });
+  let matchId: string;
+  try {
+    matchId = await matchingService.offerMatch({
+      serviceRequestId,
+      artisanId: artisan.id,
+      ...parsed.data,
+    });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : "";
+    if (msg === "REQUEST_CANCELLED") {
+      return NextResponse.json(
+        {
+          error:
+            "Oops! It looks like the customer has already cancelled this request. Hang tight — new jobs come in regularly, and the next one could be yours!",
+        },
+        { status: 409 },
+      );
+    }
+    return NextResponse.json({ error: "Could not send your offer. Please try again." }, { status: 400 });
+  }
 
   // Fetch the full profile for display stats (summary type has no rating/trust).
   const fullProfile = await userService.getArtisanProfile(artisan.id) as Record<string, unknown> | null;

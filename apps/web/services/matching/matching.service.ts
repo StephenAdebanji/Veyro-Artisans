@@ -77,8 +77,19 @@ class MatchingService implements MatchingServicePort {
   }
 
   async offerMatch(input: MatchOfferInput): Promise<string> {
+    const request = await matchingRepository.findServiceRequest(input.serviceRequestId);
+    if (!request) throw new Error("Service request not found.");
+    if (request.status === "CANCELLED") {
+      throw new Error("REQUEST_CANCELLED");
+    }
+    if (!["SEARCHING", "MATCHED"].includes(request.status)) {
+      throw new Error("This request is no longer accepting offers.");
+    }
+
     const match = await matchingRepository.createMatch(input);
-    await matchingRepository.updateServiceRequestStatus(input.serviceRequestId, "MATCHED");
+    if (request.status === "SEARCHING") {
+      await matchingRepository.updateServiceRequestStatus(input.serviceRequestId, "MATCHED");
+    }
 
     eventBus.publish({
       type: "MatchOffered",

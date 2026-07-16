@@ -1,11 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useTheme } from "next-themes";
 import { Moon, Sun, Monitor, CheckCircle2, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { SearchableSelect } from "@/components/ui/searchable-select";
+import { COUNTRIES, NIGERIAN_STATES, NIGERIAN_LGAS } from "@/lib/location-data";
+
+const COUNTRY_OPTIONS = COUNTRIES.map((c) => ({ value: c.code, label: c.name }));
+const NIGERIAN_STATE_OPTIONS = NIGERIAN_STATES.map((s) => ({ value: s, label: s }));
 
 interface SettingsFormProps {
   email: string;
@@ -81,16 +86,26 @@ function LogDisputeSection() {
 
 export function SettingsForm({ email, fullName, initial }: SettingsFormProps) {
   const { theme, setTheme } = useTheme();
-  const [form, setForm] = useState(initial);
+  const [phone, setPhone] = useState(initial.phone);
+  const [countryCode, setCountryCode] = useState("NG");
+  const [state, setState] = useState(initial.state);
+  const [lga, setLga] = useState(initial.city);
+  const [streetAddress, setStreetAddress] = useState(initial.address);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  function update(key: keyof typeof form) {
-    return (e: React.ChangeEvent<HTMLInputElement>) => {
-      setForm((prev) => ({ ...prev, [key]: e.target.value }));
-      setSaved(false);
-    };
+  const isNigeria = countryCode === "NG";
+  const lgaOptions = useMemo(
+    () => (state && isNigeria ? (NIGERIAN_LGAS[state] ?? []).map((l) => ({ value: l, label: l })) : []),
+    [state, isNigeria],
+  );
+
+  function handleCountryChange(code: string) {
+    setCountryCode(code);
+    setState("");
+    setLga("");
+    setSaved(false);
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -100,7 +115,12 @@ export function SettingsForm({ email, fullName, initial }: SettingsFormProps) {
     const res = await fetch("/api/homeowners/profile", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
+      body: JSON.stringify({
+        phone,
+        address: streetAddress,
+        city: lga || state,
+        state,
+      }),
     });
     setSaving(false);
     if (!res.ok) {
@@ -133,42 +153,61 @@ export function SettingsForm({ email, fullName, initial }: SettingsFormProps) {
         <section className="rounded-xl border bg-card p-6">
           <h2 className="text-base font-semibold">Contact &amp; address</h2>
           <p className="mt-0.5 text-sm text-muted-foreground">Used to match you with nearby artisans.</p>
-          <div className="mt-4 grid gap-4 sm:grid-cols-2">
-            <div className="flex flex-col gap-1.5 sm:col-span-2">
+          <div className="mt-4 flex flex-col gap-4">
+            <div className="flex flex-col gap-1.5">
               <Label htmlFor="phone">Phone number</Label>
               <Input
                 id="phone"
                 placeholder="+234 800 000 0000"
-                value={form.phone}
-                onChange={update("phone")}
+                value={phone}
+                onChange={(e) => { setPhone(e.target.value); setSaved(false); }}
                 autoComplete="tel"
               />
             </div>
-            <div className="flex flex-col gap-1.5 sm:col-span-2">
-              <Label htmlFor="address">Street address</Label>
+            <div className="flex flex-col gap-1.5">
+              <Label>Country of Residence</Label>
+              <SearchableSelect
+                options={COUNTRY_OPTIONS}
+                value={countryCode}
+                onChange={handleCountryChange}
+                placeholder="Select country"
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label>State</Label>
+              {isNigeria ? (
+                <SearchableSelect
+                  options={NIGERIAN_STATE_OPTIONS}
+                  value={state}
+                  onChange={(s) => { setState(s); setLga(""); setSaved(false); }}
+                  placeholder="Select state"
+                />
+              ) : (
+                <Input
+                  placeholder="State / Province / Region"
+                  value={state}
+                  onChange={(e) => { setState(e.target.value); setSaved(false); }}
+                />
+              )}
+            </div>
+            {isNigeria && state && (
+              <div className="flex flex-col gap-1.5">
+                <Label>Local Government Area</Label>
+                <SearchableSelect
+                  options={lgaOptions}
+                  value={lga}
+                  onChange={(l) => { setLga(l); setSaved(false); }}
+                  placeholder="Select LGA"
+                />
+              </div>
+            )}
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="streetAddress">Address</Label>
               <Input
-                id="address"
+                id="streetAddress"
                 placeholder="12 Adeola Odeku Street"
-                value={form.address}
-                onChange={update("address")}
-              />
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="city">City</Label>
-              <Input
-                id="city"
-                placeholder="Lagos"
-                value={form.city}
-                onChange={update("city")}
-              />
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="state">State</Label>
-              <Input
-                id="state"
-                placeholder="Lagos State"
-                value={form.state}
-                onChange={update("state")}
+                value={streetAddress}
+                onChange={(e) => { setStreetAddress(e.target.value); setSaved(false); }}
               />
             </div>
           </div>

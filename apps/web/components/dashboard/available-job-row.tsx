@@ -15,6 +15,7 @@ export function AvailableJobRow({ job }: { job: AvailableRequestSummary }) {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
+  const [unavailable, setUnavailable] = useState(false);
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -33,7 +34,12 @@ export function AvailableJobRow({ job }: { job: AvailableRequestSummary }) {
 
     if (!response.ok) {
       const body = await response.json().catch(() => null);
-      setError(typeof body?.error === "string" ? body.error : "Could not send your offer.");
+      const msg = typeof body?.error === "string" ? body.error : "Could not send your offer.";
+      setError(msg);
+      if (response.status === 409) {
+        setUnavailable(true);
+        setExpanded(false);
+      }
       setLoading(false);
       return;
     }
@@ -53,12 +59,13 @@ export function AvailableJobRow({ job }: { job: AvailableRequestSummary }) {
             {job.budgetMin || job.budgetMax ? ` · Budget ₦${job.budgetMin ?? "?"}-₦${job.budgetMax ?? "?"}` : ""}
           </p>
         </div>
-        {!sent && (
+        {!sent && !unavailable && (
           <Button type="button" size="sm" variant={expanded ? "outline" : "default"} onClick={() => setExpanded((v) => !v)}>
             {expanded ? "Cancel" : "Send offer"}
           </Button>
         )}
         {sent && <span className="text-sm font-medium text-emerald-600">Offer sent</span>}
+        {unavailable && <span className="text-xs font-medium text-muted-foreground">Unavailable</span>}
       </div>
 
       {expanded && !sent && (
@@ -84,6 +91,10 @@ export function AvailableJobRow({ job }: { job: AvailableRequestSummary }) {
           </Button>
           {error && <p className="w-full text-sm text-destructive">{error}</p>}
         </form>
+      )}
+
+      {unavailable && error && (
+        <p className="mt-2 text-sm text-amber-600 dark:text-amber-400">{error}</p>
       )}
     </div>
   );
