@@ -72,10 +72,14 @@ export default async function ArtisanDashboardPage() {
     matchingService.listReviewsForArtisan(profile.id),
   ]);
 
-  // If this artisan has reviews but TrustProfile hasn't been updated yet
-  // (e.g. submitted before the sync fix was deployed), recalculate now.
+  // Detect stale TrustProfile (pre-fix data or first load) and resync from
+  // source of truth so trust score, completion rate, and ratings are live.
   let trustProfile = await trustService.getTrustProfile(profile.id);
-  if (reviews.length > 0 && (trustProfile?.ratingCount ?? 0) !== reviews.length) {
+  const completedJobsActual = jobsFeed.filter((j) => j.status === "COMPLETED").length;
+  const isStale =
+    (reviews.length > 0 && (trustProfile?.ratingCount ?? 0) !== reviews.length) ||
+    (completedJobsActual > 0 && (trustProfile?.completedJobs ?? 0) !== completedJobsActual);
+  if (isStale) {
     await trustService.applyNewReview(profile.id);
     trustProfile = await trustService.getTrustProfile(profile.id);
   }

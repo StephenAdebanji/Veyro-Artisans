@@ -124,23 +124,26 @@ class TrustService implements TrustServicePort {
   }
 
   async applyNewReview(artisanId: string): Promise<void> {
-    // Read all review ratings from source of truth to avoid incremental race
-    // conditions. Cross-schema read (matching.review) is acceptable in the
-    // monolith; on extraction Matching would publish aggregated stats instead.
-    const rows = await prisma.review.findMany({
-      where: { artisanId },
-      select: { rating: true },
-    });
-    const ratingCount = rows.length;
+    // Read all source-of-truth data in parallel — ratings AND job counts so
+    // the full trust score (completion rate included) is always correct.
+    const [reviewRows, completedJobs, totalJobsAccepted] = await Promise.all([
+      prisma.review.findMany({ where: { artisanId }, select: { rating: true } }),
+      prisma.job.count({ where: { artisanId, status: "COMPLETED" } }),
+      prisma.job.count({ where: { artisanId } }),
+    ]);
+    const ratingCount = reviewRows.length;
     const ratingAvg =
-      ratingCount > 0 ? rows.reduce((s, r) => s + r.rating, 0) / ratingCount : 0;
+      ratingCount > 0 ? reviewRows.reduce((s, r) => s + r.rating, 0) / ratingCount : 0;
 
     await trustRepository.getOrCreateTrustProfile(artisanId);
-    await trustRepository.updateTrustProfile(artisanId, { ratingAvg, ratingCount });
+    await trustRepository.updateTrustProfile(artisanId, {
+      ratingAvg,
+      ratingCount,
+      completedJobs,
+      totalJobsAccepted,
+    });
     await this.recalculateTrustScore(artisanId);
 
-    // Sync TrustProfile cache → ArtisanProfile synchronously so the artisan's
-    // dashboard shows updated stats immediately without waiting for the event handler.
     const updated = await prisma.trustProfile.findUnique({ where: { artisanId } });
     if (updated) {
       await prisma.artisanProfile.updateMany({

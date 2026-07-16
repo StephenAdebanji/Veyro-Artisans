@@ -21,9 +21,15 @@ function Stars({ rating, size = "sm" }: { rating: number; size?: "sm" | "lg" }) 
       {Array.from({ length: full }).map((_, i) => (
         <Star key={`f${i}`} className={`${cls} fill-amber-400 stroke-amber-400`} />
       ))}
-      {half && <StarHalf className={`${cls} fill-amber-400 stroke-amber-400`} />}
+      {half && (
+        /* Overlay filled half on top of a full outline so the right side is visible */
+        <span key="half" className="relative inline-flex shrink-0">
+          <Star className={`${cls} fill-none stroke-amber-400`} />
+          <StarHalf className={`${cls} absolute inset-0 fill-amber-400 stroke-amber-400`} />
+        </span>
+      )}
       {Array.from({ length: empty }).map((_, i) => (
-        <Star key={`e${i}`} className={`${cls} fill-none stroke-muted-foreground/40`} />
+        <Star key={`e${i}`} className={`${cls} fill-none stroke-amber-400/40`} />
       ))}
     </span>
   );
