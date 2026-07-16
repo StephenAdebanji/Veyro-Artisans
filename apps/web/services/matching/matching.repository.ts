@@ -178,9 +178,23 @@ export const matchingRepository = {
     });
   },
 
+  async findMatchForArtisan(matchId: string, artisanId: string) {
+    return prisma.match.findFirst({
+      where: { id: matchId, artisanId },
+      include: { serviceRequest: true },
+    });
+  },
+
   async findJobForArtisan(jobId: string, artisanId: string) {
     return prisma.job.findFirst({
       where: { id: jobId, artisanId },
+      include: { serviceRequest: true },
+    });
+  },
+
+  async findJobByMatchId(matchId: string, artisanId: string) {
+    return prisma.job.findFirst({
+      where: { matchId, artisanId },
       include: { serviceRequest: true },
     });
   },

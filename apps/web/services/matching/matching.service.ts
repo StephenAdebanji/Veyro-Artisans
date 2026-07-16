@@ -335,7 +335,7 @@ class MatchingService implements MatchingServicePort {
   async getJobFeedItem(
     jobId: string,
     artisanId: string,
-  ): Promise<(JobFeedItem & { conversationId: string | null }) | null> {
+  ): Promise<(JobFeedItem & { conversationId: string | null; expired?: boolean }) | null> {
     // Check pending matches first (PENDING state)
     const match = await matchingRepository.findPendingMatchForArtisan(jobId, artisanId);
     if (match) {
@@ -349,19 +349,51 @@ class MatchingService implements MatchingServicePort {
         conversationId: null,
       };
     }
-    // Otherwise look up a real Job row
+    // Look up a real Job row by job ID
     const job = await matchingRepository.findJobForArtisan(jobId, artisanId);
-    if (!job) return null;
-    const conv = await matchingRepository.findConversationByJob(jobId);
-    return {
-      id: job.id,
-      category: job.serviceRequest.category,
-      description: job.serviceRequest.description,
-      homeownerId: job.homeownerId,
-      status: job.status,
-      price: job.agreedPrice,
-      conversationId: conv?.id ?? null,
-    };
+    if (job) {
+      const conv = await matchingRepository.findConversationByJob(job.id);
+      return {
+        id: job.id,
+        category: job.serviceRequest.category,
+        description: job.serviceRequest.description,
+        homeownerId: job.homeownerId,
+        status: job.status,
+        price: job.agreedPrice,
+        conversationId: conv?.id ?? null,
+      };
+    }
+    // The supplied ID may be a match ID where the match was accepted or expired.
+    // Try to find a job that was spawned from this match (match accepted → job created).
+    const jobFromMatch = await matchingRepository.findJobByMatchId(jobId, artisanId);
+    if (jobFromMatch) {
+      const conv = await matchingRepository.findConversationByJob(jobFromMatch.id);
+      return {
+        id: jobFromMatch.id,
+        category: jobFromMatch.serviceRequest.category,
+        description: jobFromMatch.serviceRequest.description,
+        homeownerId: jobFromMatch.homeownerId,
+        status: jobFromMatch.status,
+        price: jobFromMatch.agreedPrice,
+        conversationId: conv?.id ?? null,
+      };
+    }
+    // Match exists but was declined/expired — return a sentinel so the UI can show
+    // a friendly message rather than a generic 404.
+    const staleMatch = await matchingRepository.findMatchForArtisan(jobId, artisanId);
+    if (staleMatch) {
+      return {
+        id: staleMatch.id,
+        category: staleMatch.serviceRequest.category,
+        description: staleMatch.serviceRequest.description,
+        homeownerId: staleMatch.serviceRequest.homeownerId,
+        status: "CANCELLED",
+        price: staleMatch.proposedPrice,
+        conversationId: null,
+        expired: true,
+      };
+    }
+    return null;
   }
 
   async cancelServiceRequest(serviceRequestId: string, homeownerId: string): Promise<void> {

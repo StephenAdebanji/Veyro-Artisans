@@ -47,6 +47,33 @@ export default async function JobDetailPage({
   const job = await matchingService.getJobFeedItem(jobId, artisan.id);
   if (!job) notFound();
 
+  // Offer was declined/expired — show a friendly message instead of 404.
+  if (job.expired) {
+    return (
+      <main className="mx-auto max-w-xl flex-1 px-6 py-10">
+        <Link
+          href="/artisan/jobs"
+          className="mb-6 flex items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back to jobs
+        </Link>
+        <div className="rounded-2xl border bg-card p-8 text-center">
+          <p className="text-lg font-semibold">Offer no longer active</p>
+          <p className="mt-2 text-sm text-muted-foreground">
+            This request was cancelled or filled by another artisan. Keep an eye out — new jobs come in regularly.
+          </p>
+          <Link
+            href="/artisan/jobs"
+            className="mt-6 inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
+          >
+            Browse available jobs
+          </Link>
+        </div>
+      </main>
+    );
+  }
+
   const homeowner = await userService.getHomeownerProfile(job.homeownerId);
   if (!homeowner) notFound();
 
@@ -104,7 +131,7 @@ export default async function JobDetailPage({
               Chat
             </Link>
           ) : (
-            <StartChatButton homeownerId={job.homeownerId} jobId={jobId} />
+            <StartChatButton homeownerId={job.homeownerId} jobId={job.id} />
           )}
 
           <CallButton phone={homeowner.phone} />
@@ -113,7 +140,7 @@ export default async function JobDetailPage({
 
       {/* Status stepper — only for real jobs (not PENDING offers) */}
       {job.status !== "PENDING" && (
-        <JobStatusStepper jobId={jobId} currentStatus={job.status} />
+        <JobStatusStepper jobId={job.id} currentStatus={job.status} />
       )}
     </main>
   );
