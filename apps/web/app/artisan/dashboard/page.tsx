@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Briefcase, CheckCircle2, ListChecks, Star } from "lucide-react";
+import { Briefcase, CheckCircle2, ListChecks } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { ArtisanJobFeed } from "@/components/dashboard/artisan-job-feed";
@@ -9,6 +9,7 @@ import { auth } from "@/platform/auth-session";
 import { isAvailableNow } from "@/services/user/availability";
 import { matchingService } from "@/services/matching/matching.service";
 import { userService } from "@/services/user/user.service";
+import { RatingCard } from "@/components/artisan/rating-card";
 import { VerifiedBanner } from "@/components/artisan/verified-banner";
 type ArtisanOnboardingStatus = "DRAFT" | "PENDING_REVIEW" | "ACTIVE" | "SUSPENDED";
 type ArtisanVerificationStatus = "UNVERIFIED" | "VERIFIED" | "REJECTED";
@@ -53,7 +54,7 @@ export default async function ArtisanDashboardPage() {
     profile.onboardingStatus !== "ACTIVE" && profile.verificationStatus === "UNVERIFIED";
   const isRejected = profile.verificationStatus === "REJECTED";
 
-  const [availableJobs, activeJobsCount, jobsFeed, disputesCount] = await Promise.all([
+  const [availableJobs, activeJobsCount, jobsFeed, disputesCount, reviews] = await Promise.all([
     profile.primarySkill
       ? matchingService.listAvailableRequests({
           artisanId: profile.id,
@@ -67,6 +68,7 @@ export default async function ArtisanDashboardPage() {
     matchingService.countActiveJobsForArtisan(profile.id),
     matchingService.listJobsFeedForArtisan(profile.id),
     matchingService.countDisputesForArtisan(profile.id),
+    matchingService.listReviewsForArtisan(profile.id),
   ]);
 
   const homeownerIds = [...new Set(jobsFeed.map((job) => job.homeownerId))];
@@ -131,7 +133,7 @@ export default async function ArtisanDashboardPage() {
         <StatCard icon={ListChecks} value={availableJobs.length} label="Available jobs" />
         <StatCard icon={Briefcase} value={activeJobsCount} label="Active jobs" href="/artisan/history?tab=active" />
         <StatCard icon={CheckCircle2} value={profile.completedJobs} label="Completed" href="/artisan/history?tab=completed" />
-        <StatCard icon={Star} value={profile.ratingAvg.toFixed(1)} label="Rating" />
+        <RatingCard ratingAvg={profile.ratingAvg} ratingCount={profile.ratingCount} reviews={reviews} />
       </div>
 
       <div className="mt-8 grid gap-6 lg:grid-cols-3">

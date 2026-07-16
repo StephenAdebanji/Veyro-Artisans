@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/platform/auth-session";
 import { matchingService } from "@/services/matching/matching.service";
+import { trustService } from "@/services/trust/trust.service";
 import { userService } from "@/services/user/user.service";
 
 const reviewSchema = z.object({ rating: z.number().int().min(1).max(5), comment: z.string().optional() });
@@ -29,5 +30,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
 
   const reviewId = await matchingService.submitReview(jobId, parsed.data.rating, parsed.data.comment);
+  // Sync trust score and rating immediately — can't rely on async event bus
+  // in serverless/short-lived contexts where the handler might not complete.
+  await trustService.applyNewReview(job.artisanId);
   return NextResponse.json({ reviewId }, { status: 201 });
 }

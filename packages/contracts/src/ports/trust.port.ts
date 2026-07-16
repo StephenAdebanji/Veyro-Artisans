@@ -53,6 +53,13 @@ export interface TrustServicePort {
   recalculateTrustScore(
     artisanId: string,
   ): Promise<{ score: number; breakdown: TrustScoreBreakdown }>;
+  /**
+   * Reads all reviews for the artisan from DB, recalculates ratingAvg/ratingCount
+   * from source of truth, updates TrustProfile, recalculates trust score, and
+   * syncs the cache back to ArtisanProfile — all synchronously so the caller
+   * doesn't have to wait for the async event bus.
+   */
+  applyNewReview(artisanId: string): Promise<void>;
   getTrustProfile(artisanId: string): Promise<TrustProfileSnapshot | null>;
   getScoreHistory(artisanId: string): Promise<Array<{ score: number; createdAt: string }>>;
   /** Backs the admin verification queue (docs/API.md). */
