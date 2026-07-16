@@ -33,15 +33,16 @@ export default async function HomeownerDashboardPage() {
 
   const requestsWithArtisanNames = await Promise.all(
     activeRequests.map(async (request) => {
-      if (!request.acceptedMatch) return { request, artisanName: undefined, conversationId: null };
+      if (!request.acceptedMatch) return { request, artisanName: undefined, conversationId: null, artisanPhone: null };
       const artisan = await userService.getArtisanProfile(request.acceptedMatch.artisanId);
-      const profile = artisan as { firstName?: string | null; lastName?: string | null } | null;
+      const profile = artisan as { firstName?: string | null; lastName?: string | null; user?: { phone?: string | null } | null } | null;
       const artisanName = profile ? [profile.firstName, profile.lastName].filter(Boolean).join(" ") : undefined;
+      const artisanPhone = profile?.user?.phone ?? null;
       const conversationId =
         request.status === "IN_PROGRESS" && request.jobId
           ? await chatService.findConversationByJob(request.jobId)
           : null;
-      return { request, artisanName, conversationId };
+      return { request, artisanName, conversationId, artisanPhone };
     }),
   );
 
@@ -80,8 +81,8 @@ export default async function HomeownerDashboardPage() {
             No active requests yet — create one to get matched with verified artisans.
           </p>
         ) : (
-          <div className="mt-3 grid gap-3 sm:grid-cols-2">
-            {requestsWithArtisanNames.map(({ request, artisanName, conversationId }) => (
+          <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {requestsWithArtisanNames.map(({ request, artisanName, conversationId, artisanPhone }) => (
               <ActiveRequestCard
                 key={request.id}
                 requestId={request.id}
@@ -92,6 +93,7 @@ export default async function HomeownerDashboardPage() {
                 artisanName={artisanName}
                 etaMinutes={request.acceptedMatch?.etaMinutes}
                 conversationId={conversationId}
+                artisanPhone={artisanPhone}
               />
             ))}
           </div>

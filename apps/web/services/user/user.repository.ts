@@ -32,7 +32,7 @@ export const userRepository = {
   async findArtisanProfile(artisanId: string) {
     return prisma.artisanProfile.findUnique({
       where: { id: artisanId },
-      include: { availability: true, portfolio: true },
+      include: { availability: true, portfolio: true, user: { select: { phone: true } } },
     });
   },
 
