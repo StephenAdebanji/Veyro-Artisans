@@ -108,12 +108,6 @@ export function RatingCard({
                 ))}
               </div>
 
-              {/* Formula footer */}
-              <p className="border-t pt-3 text-center text-xs text-muted-foreground">
-                Average rating ={" "}
-                {reviews.map((r) => r.rating).join(" + ")} ÷ {reviews.length} ={" "}
-                <strong>{calculated.toFixed(2)}</strong>
-              </p>
             </>
           )}
         </DialogContent>
