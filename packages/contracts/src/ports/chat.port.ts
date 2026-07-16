@@ -14,6 +14,7 @@ export interface ConversationSummary {
   artisanId: string;
   lastMessageAt: string | null;
   unreadCount: number;
+  lastMessagePreview?: string | null;
 }
 
 export interface MessageRecord {

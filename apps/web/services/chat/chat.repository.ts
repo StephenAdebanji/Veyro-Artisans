@@ -45,8 +45,13 @@ export const chatRepository = {
             messages: { where: { senderId: { not: userId }, readAt: null } },
           },
         },
+        messages: { orderBy: { createdAt: "desc" }, take: 1, select: { content: true, senderId: true } },
       },
     });
+  },
+
+  async findConversationByJob(jobId: string) {
+    return prisma.conversation.findFirst({ where: { jobId } });
   },
 
   async listMessages(conversationId: string) {

@@ -84,7 +84,13 @@ class ChatService implements ChatServicePort {
       artisanId: row.artisanId,
       lastMessageAt: row.lastMessageAt ? row.lastMessageAt.toISOString() : null,
       unreadCount: row._count.messages,
+      lastMessagePreview: row.messages[0]?.content ?? null,
     }));
+  }
+
+  async findConversationByJob(jobId: string): Promise<string | null> {
+    const conv = await chatRepository.findConversationByJob(jobId);
+    return conv?.id ?? null;
   }
 
   async listMessages(conversationId: string): Promise<MessageRecord[]> {

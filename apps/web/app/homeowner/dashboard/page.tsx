@@ -33,11 +33,15 @@ export default async function HomeownerDashboardPage() {
 
   const requestsWithArtisanNames = await Promise.all(
     activeRequests.map(async (request) => {
-      if (!request.acceptedMatch) return { request, artisanName: undefined };
+      if (!request.acceptedMatch) return { request, artisanName: undefined, conversationId: null };
       const artisan = await userService.getArtisanProfile(request.acceptedMatch.artisanId);
       const profile = artisan as { firstName?: string | null; lastName?: string | null } | null;
       const artisanName = profile ? [profile.firstName, profile.lastName].filter(Boolean).join(" ") : undefined;
-      return { request, artisanName };
+      const conversationId =
+        request.status === "IN_PROGRESS" && request.jobId
+          ? await chatService.findConversationByJob(request.jobId)
+          : null;
+      return { request, artisanName, conversationId };
     }),
   );
 
@@ -77,7 +81,7 @@ export default async function HomeownerDashboardPage() {
           </p>
         ) : (
           <div className="mt-3 grid gap-3 sm:grid-cols-2">
-            {requestsWithArtisanNames.map(({ request, artisanName }) => (
+            {requestsWithArtisanNames.map(({ request, artisanName, conversationId }) => (
               <ActiveRequestCard
                 key={request.id}
                 requestId={request.id}
@@ -87,6 +91,7 @@ export default async function HomeownerDashboardPage() {
                 status={request.status}
                 artisanName={artisanName}
                 etaMinutes={request.acceptedMatch?.etaMinutes}
+                conversationId={conversationId}
               />
             ))}
           </div>

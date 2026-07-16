@@ -27,6 +27,7 @@ export default async function HomeownerMessagesPage() {
         counterpartName,
         lastMessageAt: c.lastMessageAt,
         unreadCount: c.unreadCount,
+        lastMessagePreview: c.lastMessagePreview ?? null,
       };
     }),
   );

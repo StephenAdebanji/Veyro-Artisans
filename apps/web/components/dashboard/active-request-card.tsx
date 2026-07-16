@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, Radio } from "lucide-react";
+import { ArrowRight, MessageCircle, Radio } from "lucide-react";
 import { SKILL_LABELS } from "@/components/shared/skill-labels";
 import type { SkillCategory } from "@veyro/contracts";
 
@@ -38,6 +38,7 @@ export function ActiveRequestCard({
   status,
   artisanName,
   etaMinutes,
+  conversationId,
 }: {
   requestId: string;
   jobId?: string;
@@ -46,59 +47,85 @@ export function ActiveRequestCard({
   status: string;
   artisanName?: string;
   etaMinutes?: number;
+  conversationId?: string | null;
 }) {
   const cfg = STATUS_CONFIG[status] ?? STATUS_CONFIG.SEARCHING;
-  const href =
+  const viewHref =
     status === "IN_PROGRESS" && jobId
       ? `/homeowner/jobs/${jobId}`
       : status === "IN_PROGRESS"
       ? "/homeowner/messages"
       : `/homeowner/requests/${requestId}/matching`;
 
+  const isActive = status === "IN_PROGRESS";
+
   return (
-    <Link
-      href={href}
-      className={`group flex flex-col gap-3 rounded-xl border p-4 transition-shadow hover:shadow-md ${cfg.bg} ${cfg.border}`}
-    >
-      <div className="flex items-start justify-between gap-2">
-        <p className="font-semibold leading-snug">
-          {description || SKILL_LABELS[category]}
+    <div className={`group flex flex-col gap-3 rounded-xl border p-4 transition-shadow hover:shadow-md ${cfg.bg} ${cfg.border}`}>
+      {/* Clickable header area */}
+      <Link href={viewHref} className="flex flex-col gap-3">
+        <div className="flex items-start justify-between gap-2">
+          <p className="font-semibold leading-snug">
+            {description || SKILL_LABELS[category]}
+          </p>
+          <span
+            className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${cfg.badge}`}
+          >
+            <span className={`h-1.5 w-1.5 rounded-full ${cfg.dot}`} />
+            {cfg.label}
+          </span>
+        </div>
+
+        <p className="text-sm text-muted-foreground">
+          {artisanName
+            ? `${artisanName} · ETA ${etaMinutes} min`
+            : `Looking for a ${SKILL_LABELS[category].toLowerCase()}`}
         </p>
-        <span
-          className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${cfg.badge}`}
-        >
-          <span className={`h-1.5 w-1.5 rounded-full ${cfg.dot}`} />
-          {cfg.label}
-        </span>
-      </div>
 
-      <p className="text-sm text-muted-foreground">
-        {artisanName
-          ? `${artisanName} · ETA ${etaMinutes} min`
-          : `Looking for a ${SKILL_LABELS[category].toLowerCase()}`}
-      </p>
+        {status === "SEARCHING" && (
+          <div className="flex items-center gap-1.5 text-xs font-medium text-amber-700 dark:text-amber-300">
+            <Radio className="h-3.5 w-3.5 animate-pulse" />
+            View live search or post again
+            <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+          </div>
+        )}
 
-      {status === "SEARCHING" && (
-        <div className="flex items-center gap-1.5 text-xs font-medium text-amber-700 dark:text-amber-300">
-          <Radio className="h-3.5 w-3.5 animate-pulse" />
-          View live search or post again
-          <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+        {status === "MATCHED" && (
+          <div className="flex items-center gap-1.5 text-xs font-medium text-blue-700 dark:text-blue-300">
+            Review offers
+            <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+          </div>
+        )}
+
+        {isActive && (
+          <div className="flex items-center gap-1.5 text-xs font-medium text-emerald-700 dark:text-emerald-300">
+            View job details
+            <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+          </div>
+        )}
+      </Link>
+
+      {/* Action buttons — only when job is active */}
+      {isActive && (
+        <div className="flex gap-2 border-t border-emerald-200 pt-3 dark:border-emerald-800">
+          {conversationId ? (
+            <Link
+              href={`/homeowner/messages?c=${conversationId}`}
+              className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-emerald-700 px-3 py-2 text-xs font-semibold text-white transition-opacity hover:opacity-90"
+            >
+              <MessageCircle className="h-3.5 w-3.5" />
+              Chat
+            </Link>
+          ) : (
+            <Link
+              href="/homeowner/messages"
+              className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-emerald-700 px-3 py-2 text-xs font-semibold text-white transition-opacity hover:opacity-90"
+            >
+              <MessageCircle className="h-3.5 w-3.5" />
+              Chat
+            </Link>
+          )}
         </div>
       )}
-
-      {status === "MATCHED" && (
-        <div className="flex items-center gap-1.5 text-xs font-medium text-blue-700 dark:text-blue-300">
-          Review offers
-          <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
-        </div>
-      )}
-
-      {status === "IN_PROGRESS" && (
-        <div className="flex items-center gap-1.5 text-xs font-medium text-emerald-700 dark:text-emerald-300">
-          View job
-          <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
-        </div>
-      )}
-    </Link>
+    </div>
   );
 }

@@ -25,6 +25,7 @@ export default async function ArtisanMessagesPage() {
         counterpartName,
         lastMessageAt: c.lastMessageAt,
         unreadCount: c.unreadCount,
+        lastMessagePreview: c.lastMessagePreview ?? null,
       };
     }),
   );

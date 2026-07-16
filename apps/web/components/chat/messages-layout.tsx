@@ -13,6 +13,7 @@ export interface EnrichedConversation {
   counterpartName: string;
   lastMessageAt: string | null;
   unreadCount: number;
+  lastMessagePreview?: string | null;
 }
 
 interface MessagesLayoutProps {
@@ -79,6 +80,7 @@ export function MessagesLayout({ conversations, currentProfileId, backHref }: Me
               id={convo.id}
               counterpartName={convo.counterpartName}
               lastMessageAt={convo.lastMessageAt}
+              lastMessagePreview={convo.lastMessagePreview}
               unreadCount={unreadMap[convo.id] ?? convo.unreadCount}
               selected={convo.id === selectedId}
               onClick={() => select(convo.id)}

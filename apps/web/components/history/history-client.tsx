@@ -31,6 +31,7 @@ function fmtDate(iso: string) {
     year: "numeric",
     hour: "2-digit",
     minute: "2-digit",
+    hour12: true,
   });
 }
 
@@ -97,8 +98,8 @@ export function HistoryClient({
       {filtered.length === 0 ? (
         <p className="mt-8 text-center text-sm text-muted-foreground">No jobs here yet.</p>
       ) : (
-        <div className="mt-4 overflow-hidden rounded-xl border bg-card">
-          <table className="w-full text-sm">
+        <div className="mt-4 overflow-x-auto rounded-xl border bg-card">
+          <table className="w-full min-w-[580px] text-sm">
             <thead>
               <tr className="border-b text-left text-xs uppercase text-muted-foreground">
                 <th className="px-4 py-3 font-medium">Job</th>
