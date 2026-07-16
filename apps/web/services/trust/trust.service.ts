@@ -163,6 +163,7 @@ class TrustService implements TrustServicePort {
       ratingAvg: profile.ratingAvg,
       ratingCount: profile.ratingCount,
       completedJobs: profile.completedJobs,
+      totalJobsAccepted: profile.totalJobsAccepted,
       responseTimeAvgSeconds: profile.responseTimeAvgSeconds ?? 0,
     };
   }

@@ -66,6 +66,8 @@ export interface CompletedJobSummary {
 export interface ReviewSummary {
   id: string;
   homeownerId: string;
+  homeownerName: string | null;
+  jobDescription: string | null;
   rating: number;
   comment: string | null;
   createdAt: string;

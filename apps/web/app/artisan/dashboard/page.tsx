@@ -8,6 +8,7 @@ import { JobsTable, type JobsTableRow } from "@/components/dashboard/jobs-table"
 import { auth } from "@/platform/auth-session";
 import { isAvailableNow } from "@/services/user/availability";
 import { matchingService } from "@/services/matching/matching.service";
+import { trustService } from "@/services/trust/trust.service";
 import { userService } from "@/services/user/user.service";
 import { RatingCard } from "@/components/artisan/rating-card";
 import { VerifiedBanner } from "@/components/artisan/verified-banner";
@@ -71,6 +72,14 @@ export default async function ArtisanDashboardPage() {
     matchingService.listReviewsForArtisan(profile.id),
   ]);
 
+  // If this artisan has reviews but TrustProfile hasn't been updated yet
+  // (e.g. submitted before the sync fix was deployed), recalculate now.
+  let trustProfile = await trustService.getTrustProfile(profile.id);
+  if (reviews.length > 0 && (trustProfile?.ratingCount ?? 0) !== reviews.length) {
+    await trustService.applyNewReview(profile.id);
+    trustProfile = await trustService.getTrustProfile(profile.id);
+  }
+
   const homeownerIds = [...new Set(jobsFeed.map((job) => job.homeownerId))];
   const homeowners = await Promise.all(homeownerIds.map((id) => userService.getHomeownerProfile(id)));
   const nameById = new Map(homeowners.map((h, i) => [homeownerIds[i], h?.fullName ?? "Homeowner"]));
@@ -85,8 +94,8 @@ export default async function ArtisanDashboardPage() {
   ];
 
   const completionRate =
-    profile.totalJobsAccepted && profile.totalJobsAccepted > 0
-      ? Math.round((profile.completedJobs / profile.totalJobsAccepted) * 100)
+    trustProfile && trustProfile.totalJobsAccepted > 0
+      ? Math.round((trustProfile.completedJobs / trustProfile.totalJobsAccepted) * 100)
       : null;
 
   return (
@@ -173,13 +182,13 @@ export default async function ArtisanDashboardPage() {
         <div className="space-y-4">
           <div className="rounded-xl border bg-card p-4">
             <h3 className="flex items-center gap-1.5 font-semibold">Trust Score</h3>
-            <p className="mt-2 text-3xl font-bold text-primary">{Math.round(profile.trustScore)}/100</p>
+            <p className="mt-2 text-3xl font-bold text-primary">{Math.round(trustProfile?.score ?? 0)}/100</p>
             <p className="text-xs text-muted-foreground">
               Based on verified identity, credentials, ratings, reviews, completion rate and response
               time.
             </p>
             <div className="mt-3 h-2 overflow-hidden rounded-full bg-muted">
-              <div className="h-full bg-primary" style={{ width: `${Math.min(100, profile.trustScore)}%` }} />
+              <div className="h-full bg-primary" style={{ width: `${Math.min(100, trustProfile?.score ?? 0)}%` }} />
             </div>
           </div>
 
@@ -194,10 +203,12 @@ export default async function ArtisanDashboardPage() {
                 <dd className="font-medium">{completionRate !== null ? `${completionRate}%` : "—"}</dd>
               </div>
               <div className="flex justify-between">
-                <dt className="text-muted-foreground">Response time</dt>
-                <dd className="font-medium">
-                  {profile.responseTimeAvgSeconds ? `${Math.round(profile.responseTimeAvgSeconds / 60)} min` : "—"}
-                </dd>
+                <dt className="text-muted-foreground">Jobs accepted</dt>
+                <dd className="font-medium">{trustProfile?.totalJobsAccepted ?? 0}</dd>
+              </div>
+              <div className="flex justify-between">
+                <dt className="text-muted-foreground">Jobs completed</dt>
+                <dd className="font-medium">{trustProfile?.completedJobs ?? 0}</dd>
               </div>
               <div className="flex justify-between">
                 <dt className="text-muted-foreground">Disputes</dt>

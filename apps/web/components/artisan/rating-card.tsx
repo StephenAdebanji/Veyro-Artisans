@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Star } from "lucide-react";
+import { Star, StarHalf } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -12,13 +12,18 @@ import type { ReviewSummary } from "@veyro/contracts";
 
 function Stars({ rating, size = "sm" }: { rating: number; size?: "sm" | "lg" }) {
   const cls = size === "lg" ? "h-5 w-5" : "h-3.5 w-3.5";
+  const full = Math.floor(rating);
+  const half = rating - full >= 0.5;
+  const empty = 5 - full - (half ? 1 : 0);
+
   return (
     <span className="flex items-center gap-0.5">
-      {[1, 2, 3, 4, 5].map((n) => (
-        <Star
-          key={n}
-          className={`${cls} ${n <= rating ? "fill-amber-400 stroke-amber-400" : "fill-none stroke-muted-foreground/40"}`}
-        />
+      {Array.from({ length: full }).map((_, i) => (
+        <Star key={`f${i}`} className={`${cls} fill-amber-400 stroke-amber-400`} />
+      ))}
+      {half && <StarHalf className={`${cls} fill-amber-400 stroke-amber-400`} />}
+      {Array.from({ length: empty }).map((_, i) => (
+        <Star key={`e${i}`} className={`${cls} fill-none stroke-muted-foreground/40`} />
       ))}
     </span>
   );
@@ -35,11 +40,7 @@ function fmtDate(iso: string) {
   });
 }
 
-export function RatingCard({
-  reviews,
-}: {
-  reviews: ReviewSummary[];
-}) {
+export function RatingCard({ reviews }: { reviews: ReviewSummary[] }) {
   const [open, setOpen] = useState(false);
 
   const calculated =
@@ -56,7 +57,7 @@ export function RatingCard({
       >
         <Star className="size-5 text-primary" />
         <p className="mt-3 text-2xl font-bold">{calculated.toFixed(1)}</p>
-        <Stars rating={Math.round(calculated)} size="sm" />
+        <Stars rating={calculated} size="sm" />
         <p className="mt-1 text-sm text-muted-foreground">
           Rating{ratingCount > 0 ? ` · ${ratingCount} review${ratingCount === 1 ? "" : "s"}` : ""}
         </p>
@@ -83,7 +84,7 @@ export function RatingCard({
               <div className="flex items-center gap-3 rounded-xl bg-muted/50 px-4 py-3">
                 <p className="text-3xl font-bold">{calculated.toFixed(1)}</p>
                 <div>
-                  <Stars rating={Math.round(calculated)} size="lg" />
+                  <Stars rating={calculated} size="lg" />
                   <p className="mt-0.5 text-xs text-muted-foreground">
                     {reviews.length} review{reviews.length === 1 ? "" : "s"} · average{" "}
                     {calculated.toFixed(2)}/5
@@ -99,13 +100,20 @@ export function RatingCard({
                       <Stars rating={r.rating} />
                       <span className="text-xs text-muted-foreground">{fmtDate(r.createdAt)}</span>
                     </div>
+                    {r.homeownerName && (
+                      <p className="mt-1 text-xs font-medium text-foreground">{r.homeownerName}</p>
+                    )}
+                    {r.jobDescription && (
+                      <p className="mt-0.5 text-xs text-muted-foreground line-clamp-1">
+                        {r.jobDescription}
+                      </p>
+                    )}
                     {r.comment && (
                       <p className="mt-1.5 text-sm leading-relaxed">{r.comment}</p>
                     )}
                   </div>
                 ))}
               </div>
-
             </>
           )}
         </DialogContent>

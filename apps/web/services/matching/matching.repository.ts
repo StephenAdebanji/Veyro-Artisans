@@ -130,7 +130,11 @@ export const matchingRepository = {
   },
 
   async listReviewsForArtisan(artisanId: string) {
-    return prisma.review.findMany({ where: { artisanId }, orderBy: { createdAt: "desc" } });
+    return prisma.review.findMany({
+      where: { artisanId },
+      orderBy: { createdAt: "desc" },
+      include: { job: { include: { serviceRequest: { select: { description: true } } } } },
+    });
   },
 
   async countCompletedRequestsForHomeowner(homeownerId: string) {

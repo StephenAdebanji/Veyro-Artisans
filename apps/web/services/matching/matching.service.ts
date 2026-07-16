@@ -19,6 +19,7 @@ import type {
 } from "@veyro/contracts";
 import { eventBus } from "@/platform/event-bus";
 import { haversineKm } from "@/platform/geo";
+import { prisma } from "@/platform/prisma";
 import { matchingRepository } from "./matching.repository";
 
 /** Owns: ServiceRequest, Match, Job, Review, Dispute — the job lifecycle end to
@@ -260,9 +261,20 @@ class MatchingService implements MatchingServicePort {
 
   async listReviewsForArtisan(artisanId: string): Promise<ReviewSummary[]> {
     const reviews = await matchingRepository.listReviewsForArtisan(artisanId);
+    const homeownerIds = [...new Set(reviews.map((r) => r.homeownerId))];
+    const homeowners = homeownerIds.length
+      ? await prisma.homeownerProfile.findMany({
+          where: { id: { in: homeownerIds } },
+          select: { id: true, fullName: true },
+        })
+      : [];
+    const nameById = new Map(homeowners.map((h) => [h.id, h.fullName]));
+
     return reviews.map((review) => ({
       id: review.id,
       homeownerId: review.homeownerId,
+      homeownerName: nameById.get(review.homeownerId) ?? null,
+      jobDescription: review.job?.serviceRequest?.description ?? null,
       rating: review.rating,
       comment: review.comment,
       createdAt: review.createdAt.toISOString(),

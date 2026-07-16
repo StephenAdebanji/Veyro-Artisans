@@ -21,6 +21,7 @@ export interface TrustProfileSnapshot {
   ratingAvg: number;
   ratingCount: number;
   completedJobs: number;
+  totalJobsAccepted: number;
   responseTimeAvgSeconds: number;
 }
 
