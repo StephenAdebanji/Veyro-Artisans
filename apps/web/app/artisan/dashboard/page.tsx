@@ -133,7 +133,7 @@ export default async function ArtisanDashboardPage() {
         <StatCard icon={ListChecks} value={availableJobs.length} label="Available jobs" />
         <StatCard icon={Briefcase} value={activeJobsCount} label="Active jobs" href="/artisan/history?tab=active" />
         <StatCard icon={CheckCircle2} value={profile.completedJobs} label="Completed" href="/artisan/history?tab=completed" />
-        <RatingCard ratingAvg={profile.ratingAvg} ratingCount={profile.ratingCount} reviews={reviews} />
+        <RatingCard reviews={reviews} />
       </div>
 
       <div className="mt-8 grid gap-6 lg:grid-cols-3">

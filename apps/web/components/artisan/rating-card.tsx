@@ -36,12 +36,8 @@ function fmtDate(iso: string) {
 }
 
 export function RatingCard({
-  ratingAvg,
-  ratingCount,
   reviews,
 }: {
-  ratingAvg: number;
-  ratingCount: number;
   reviews: ReviewSummary[];
 }) {
   const [open, setOpen] = useState(false);
@@ -50,6 +46,7 @@ export function RatingCard({
     reviews.length > 0
       ? reviews.reduce((s, r) => s + r.rating, 0) / reviews.length
       : 0;
+  const ratingCount = reviews.length;
 
   return (
     <>
@@ -58,7 +55,7 @@ export function RatingCard({
         className="w-full rounded-xl border bg-card p-4 text-left transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
         <Star className="size-5 text-primary" />
-        <p className="mt-3 text-2xl font-bold">{ratingAvg.toFixed(1)}</p>
+        <p className="mt-3 text-2xl font-bold">{calculated.toFixed(1)}</p>
         <p className="text-sm text-muted-foreground">
           Rating{ratingCount > 0 ? ` · ${ratingCount} review${ratingCount === 1 ? "" : "s"}` : ""}
         </p>
