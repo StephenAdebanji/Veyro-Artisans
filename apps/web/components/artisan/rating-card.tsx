@@ -56,7 +56,8 @@ export function RatingCard({
       >
         <Star className="size-5 text-primary" />
         <p className="mt-3 text-2xl font-bold">{calculated.toFixed(1)}</p>
-        <p className="text-sm text-muted-foreground">
+        <Stars rating={Math.round(calculated)} size="sm" />
+        <p className="mt-1 text-sm text-muted-foreground">
           Rating{ratingCount > 0 ? ` · ${ratingCount} review${ratingCount === 1 ? "" : "s"}` : ""}
         </p>
         {ratingCount > 0 && (
