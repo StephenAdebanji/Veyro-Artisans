@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Footer } from "@/components/shared/footer";
+import { MarketingNav } from "@/components/landing/marketing-nav";
 
 export default function MarketingLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -13,12 +14,7 @@ export default function MarketingLayout({ children }: { children: React.ReactNod
         </Link>
 
         {/* Desktop nav */}
-        <nav className="hidden items-center gap-6 text-sm text-muted-foreground md:flex">
-          <Link href="/how-it-works">How it works</Link>
-          <Link href="/for-homeowners">For homeowners</Link>
-          <Link href="/for-artisans">For artisans</Link>
-          <Link href="/trust">Trust</Link>
-        </nav>
+        <MarketingNav />
 
         {/* Desktop actions */}
         <div className="hidden items-center gap-3 text-sm md:flex">
