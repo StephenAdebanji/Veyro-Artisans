@@ -6,7 +6,7 @@ import { signIn } from "next-auth/react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { StepFooter } from "./step-footer";
-import { setOnboardingArtisanId } from "./onboarding-storage";
+import { getOnboardingArtisanId, setOnboardingArtisanId } from "./onboarding-storage";
 import { loadDraft, saveDraft } from "./onboarding-draft";
 
 type Step1Draft = {
@@ -18,8 +18,10 @@ type Step1Draft = {
 
 export function Step1BasicInfo() {
   const router = useRouter();
-  // Draft is loaded once on first client-side mount (ssr: false guarantees window is available).
-  // Password is intentionally excluded from the draft.
+
+  // If artisanId is already in localStorage, the account was created in a previous
+  // visit to this step — don't allow re-registration.
+  const alreadyRegistered = useMemo(() => !!getOnboardingArtisanId(), []);
   const init = useMemo(() => loadDraft<Step1Draft>(1), []);
 
   const [form, setForm] = useState({
@@ -48,6 +50,13 @@ export function Step1BasicInfo() {
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
+
+    // Account already exists — just advance to step 2.
+    if (alreadyRegistered) {
+      router.push("/join-artisan/steps/2");
+      return;
+    }
+
     setError(null);
     setLoading(true);
 
@@ -74,13 +83,32 @@ export function Step1BasicInfo() {
 
   return (
     <form onSubmit={handleSubmit} className="grid gap-4 sm:grid-cols-2" autoComplete="off">
+      {alreadyRegistered && (
+        <p className="rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700 sm:col-span-2">
+          Your account is already created. Click Continue to pick up where you left off.
+        </p>
+      )}
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="firstName">First name <span className="text-destructive">*</span></Label>
-        <Input id="firstName" placeholder="Emeka" value={form.firstName} onChange={update("firstName")} required />
+        <Input
+          id="firstName"
+          placeholder="Emeka"
+          value={form.firstName}
+          onChange={update("firstName")}
+          disabled={alreadyRegistered}
+          required={!alreadyRegistered}
+        />
       </div>
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="lastName">Last name <span className="text-destructive">*</span></Label>
-        <Input id="lastName" placeholder="Okafor" value={form.lastName} onChange={update("lastName")} required />
+        <Input
+          id="lastName"
+          placeholder="Okafor"
+          value={form.lastName}
+          onChange={update("lastName")}
+          disabled={alreadyRegistered}
+          required={!alreadyRegistered}
+        />
       </div>
       <div className="flex flex-col gap-1.5 sm:col-span-2">
         <Label htmlFor="email">Email <span className="text-destructive">*</span></Label>
@@ -91,25 +119,35 @@ export function Step1BasicInfo() {
           placeholder="you@example.com"
           value={form.email}
           onChange={update("email")}
-          required
+          disabled={alreadyRegistered}
+          required={!alreadyRegistered}
         />
       </div>
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="phone">Phone <span className="text-destructive">*</span></Label>
-        <Input id="phone" placeholder="+234..." value={form.phone} onChange={update("phone")} required />
-      </div>
-      <div className="flex flex-col gap-1.5">
-        <Label htmlFor="password">Password <span className="text-destructive">*</span></Label>
         <Input
-          id="password"
-          type="password"
-          autoComplete="new-password"
-          minLength={8}
-          value={form.password}
-          onChange={update("password")}
-          required
+          id="phone"
+          placeholder="+234..."
+          value={form.phone}
+          onChange={update("phone")}
+          disabled={alreadyRegistered}
+          required={!alreadyRegistered}
         />
       </div>
+      {!alreadyRegistered && (
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="password">Password <span className="text-destructive">*</span></Label>
+          <Input
+            id="password"
+            type="password"
+            autoComplete="new-password"
+            minLength={8}
+            value={form.password}
+            onChange={update("password")}
+            required
+          />
+        </div>
+      )}
       {error && <p className="text-sm text-destructive sm:col-span-2">{error}</p>}
       <div className="sm:col-span-2">
         <StepFooter step={1} loading={loading} />
