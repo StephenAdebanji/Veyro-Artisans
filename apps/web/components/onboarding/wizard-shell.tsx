@@ -23,7 +23,7 @@ export function WizardShell({ step, children }: { step: number; children: React.
             </span>
             VEYRO
           </Link>
-          <OnboardingSignOutButton />
+          {step > 1 && <OnboardingSignOutButton />}
         </div>
       </header>
       <main className="flex-1 px-6 py-10">

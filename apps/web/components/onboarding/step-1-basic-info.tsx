@@ -2,12 +2,12 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { signIn } from "next-auth/react";
+import { signIn, useSession } from "next-auth/react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { StepFooter } from "./step-footer";
-import { getOnboardingArtisanId, setOnboardingArtisanId } from "./onboarding-storage";
-import { loadDraft, saveDraft } from "./onboarding-draft";
+import { clearOnboardingArtisanId, getOnboardingArtisanId, setOnboardingArtisanId } from "./onboarding-storage";
+import { clearAllDrafts, loadDraft, saveDraft } from "./onboarding-draft";
 
 type Step1Draft = {
   firstName: string;
@@ -18,6 +18,7 @@ type Step1Draft = {
 
 export function Step1BasicInfo() {
   const router = useRouter();
+  const { status } = useSession();
   const init = useMemo(() => loadDraft<Step1Draft>(1), []);
 
   const [form, setForm] = useState({
@@ -29,6 +30,17 @@ export function Step1BasicInfo() {
   });
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  // If the user is not authenticated but localStorage has a stale artisanId
+  // from a previous incomplete session, wipe it so every new visitor starts
+  // with a fresh form. (Authenticated back-navigation keeps the draft.)
+  useEffect(() => {
+    if (status !== "unauthenticated") return;
+    if (!getOnboardingArtisanId()) return;
+    clearAllDrafts();
+    clearOnboardingArtisanId();
+    setForm({ firstName: "", lastName: "", email: "", phone: "", password: "" });
+  }, [status]);
 
   useEffect(() => {
     saveDraft<Step1Draft>(1, {
