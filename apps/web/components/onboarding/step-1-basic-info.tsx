@@ -19,6 +19,10 @@ type Step1Draft = {
 export function Step1BasicInfo() {
   const router = useRouter();
   const { status } = useSession();
+
+  // True when the user navigated back from a later step — account already exists.
+  // We read this once at mount (component is ssr:false so localStorage is available).
+  const alreadyRegistered = useMemo(() => !!getOnboardingArtisanId(), []);
   const init = useMemo(() => loadDraft<Step1Draft>(1), []);
 
   const [form, setForm] = useState({
@@ -43,13 +47,14 @@ export function Step1BasicInfo() {
   }, [status]);
 
   useEffect(() => {
+    if (alreadyRegistered) return; // don't overwrite draft with locked field values
     saveDraft<Step1Draft>(1, {
       firstName: form.firstName,
       lastName: form.lastName,
       email: form.email,
       phone: form.phone,
     });
-  }, [form.firstName, form.lastName, form.email, form.phone]);
+  }, [alreadyRegistered, form.firstName, form.lastName, form.email, form.phone]);
 
   function update(key: keyof typeof form) {
     return (event: React.ChangeEvent<HTMLInputElement>) =>
@@ -59,9 +64,8 @@ export function Step1BasicInfo() {
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
 
-    // If the account was already created in a previous visit to this step
-    // (artisanId exists in localStorage), skip re-registration and advance.
-    if (getOnboardingArtisanId()) {
+    // Account already created — just advance. Never re-register or accept a new password.
+    if (alreadyRegistered) {
       router.push("/join-artisan/steps/2");
       return;
     }
@@ -90,6 +94,39 @@ export function Step1BasicInfo() {
     router.push("/join-artisan/steps/2");
   }
 
+  // ── Returning user (back navigation) ──────────────────────────────────────
+  // Account is already set up. Show details as read-only and hide the
+  // password field entirely — there is no password to set or change here.
+  if (alreadyRegistered) {
+    return (
+      <form onSubmit={handleSubmit} className="grid gap-4 sm:grid-cols-2">
+        <p className="text-sm text-muted-foreground sm:col-span-2">
+          Your account is already set up. Click Continue to pick up where you left off.
+        </p>
+        <div className="flex flex-col gap-1.5">
+          <Label>First name</Label>
+          <Input value={form.firstName} disabled />
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <Label>Last name</Label>
+          <Input value={form.lastName} disabled />
+        </div>
+        <div className="flex flex-col gap-1.5 sm:col-span-2">
+          <Label>Email</Label>
+          <Input value={form.email} disabled />
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <Label>Phone</Label>
+          <Input value={form.phone} disabled />
+        </div>
+        <div className="sm:col-span-2">
+          <StepFooter step={1} loading={loading} />
+        </div>
+      </form>
+    );
+  }
+
+  // ── Fresh sign-up ──────────────────────────────────────────────────────────
   return (
     <form onSubmit={handleSubmit} className="grid gap-4 sm:grid-cols-2" autoComplete="off">
       <div className="flex flex-col gap-1.5">
