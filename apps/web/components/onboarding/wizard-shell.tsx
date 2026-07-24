@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { OnboardingSignOutButton } from "./onboarding-sign-out-button";
 
 const STEP_LABELS = [
   "Basic info",
@@ -15,12 +16,15 @@ export function WizardShell({ step, children }: { step: number; children: React.
   return (
     <div className="force-light flex min-h-screen flex-col bg-background text-foreground">
       <header className="border-b px-6 py-4">
-        <Link href="/" className="flex items-center gap-2 font-bold">
-          <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary text-sm text-primary-foreground">
-            V
-          </span>
-          VEYRO
-        </Link>
+        <div className="flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-2 font-bold">
+            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary text-sm text-primary-foreground">
+              V
+            </span>
+            VEYRO
+          </Link>
+          <OnboardingSignOutButton />
+        </div>
       </header>
       <main className="flex-1 px-6 py-10">
         <div className="mx-auto max-w-2xl">

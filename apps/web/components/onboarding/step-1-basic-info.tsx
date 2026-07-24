@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { StepFooter } from "./step-footer";
 import { setOnboardingArtisanId } from "./onboarding-storage";
-import { clearDraft, loadDraft, saveDraft } from "./onboarding-draft";
+import { loadDraft, saveDraft } from "./onboarding-draft";
 
 type Step1Draft = {
   firstName: string;
@@ -66,7 +66,6 @@ export function Step1BasicInfo() {
 
     const { artisanId } = await response.json();
     setOnboardingArtisanId(artisanId);
-    clearDraft(1);
 
     await signIn("credentials", { email: form.email, password: form.password, redirect: false });
 
