@@ -1,18 +1,45 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { StepFooter } from "./step-footer";
 import { setOnboardingArtisanId } from "./onboarding-storage";
+import { clearDraft, loadDraft, saveDraft } from "./onboarding-draft";
+
+type Step1Draft = {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+};
 
 export function Step1BasicInfo() {
   const router = useRouter();
-  const [form, setForm] = useState({ firstName: "", lastName: "", email: "", phone: "", password: "" });
+  // Draft is loaded once on first client-side mount (ssr: false guarantees window is available).
+  // Password is intentionally excluded from the draft.
+  const init = useMemo(() => loadDraft<Step1Draft>(1), []);
+
+  const [form, setForm] = useState({
+    firstName: init?.firstName ?? "",
+    lastName: init?.lastName ?? "",
+    email: init?.email ?? "",
+    phone: init?.phone ?? "",
+    password: "",
+  });
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    saveDraft<Step1Draft>(1, {
+      firstName: form.firstName,
+      lastName: form.lastName,
+      email: form.email,
+      phone: form.phone,
+    });
+  }, [form.firstName, form.lastName, form.email, form.phone]);
 
   function update(key: keyof typeof form) {
     return (event: React.ChangeEvent<HTMLInputElement>) =>
@@ -39,6 +66,7 @@ export function Step1BasicInfo() {
 
     const { artisanId } = await response.json();
     setOnboardingArtisanId(artisanId);
+    clearDraft(1);
 
     await signIn("credentials", { email: form.email, password: form.password, redirect: false });
 

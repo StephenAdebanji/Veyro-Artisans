@@ -2,7 +2,7 @@ import Link from "next/link";
 
 const STEP_LABELS = [
   "Basic info",
-  "Professional",
+  "Profession",
   "Location",
   "Verification",
   "Proof of address",

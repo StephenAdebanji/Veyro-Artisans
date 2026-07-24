@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -27,21 +27,13 @@ type Step4Draft = {
 
 export function Step4Verification() {
   const router = useRouter();
-  const [idType, setIdType] = useState<(typeof ID_TYPES)[number]>("NIN");
-  const [idNumber, setIdNumber] = useState("");
-  const [fileUrl, setFileUrl] = useState<string | null>(null);
+  const init = useMemo(() => loadDraft<Step4Draft>(4), []);
+
+  const [idType, setIdType] = useState<(typeof ID_TYPES)[number]>(init?.idType ?? "NIN");
+  const [idNumber, setIdNumber] = useState(init?.idNumber ?? "");
+  const [fileUrl, setFileUrl] = useState<string | null>(init?.fileUrl ?? null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  // Stable initial URL for FileUpload — set once from draft.
-  const [initialFileUrl, setInitialFileUrl] = useState<string | null>(null);
-
-  useEffect(() => {
-    const draft = loadDraft<Step4Draft>(4);
-    if (!draft) return;
-    if (draft.idType) setIdType(draft.idType);
-    if (draft.idNumber) setIdNumber(draft.idNumber);
-    if (draft.fileUrl) { setFileUrl(draft.fileUrl); setInitialFileUrl(draft.fileUrl); }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     saveDraft<Step4Draft>(4, { idType, idNumber, fileUrl });
@@ -113,12 +105,12 @@ export function Step4Verification() {
         <p className="text-xs text-muted-foreground">Upload a clear photo or scan of your ID (images only)</p>
         <div className="max-w-48">
           <FileUpload
-            key={`id-doc-${initialFileUrl ?? "empty"}`}
+            key={`id-doc-${init?.fileUrl ?? "empty"}`}
             uploadType="id-document"
             label="Click to upload"
             accept="image/*"
             showPreview={false}
-            initialUrl={initialFileUrl}
+            initialUrl={init?.fileUrl ?? null}
             onUploaded={(url) => setFileUrl(url)}
           />
         </div>

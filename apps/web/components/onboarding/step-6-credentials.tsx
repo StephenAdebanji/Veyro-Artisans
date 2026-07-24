@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Label } from "@/components/ui/label";
 import { FileUpload } from "@/components/shared/file-upload";
@@ -17,23 +17,13 @@ type Step6Draft = {
 
 export function Step6Credentials() {
   const router = useRouter();
-  const [tradeCertUrl, setTradeCertUrl] = useState<string | null>(null);
-  const [licenseUrl, setLicenseUrl] = useState<string | null>(null);
-  const [otherUrl, setOtherUrl] = useState<string | null>(null);
+  const init = useMemo(() => loadDraft<Step6Draft>(6), []);
+
+  const [tradeCertUrl, setTradeCertUrl] = useState<string | null>(init?.tradeCertUrl ?? null);
+  const [licenseUrl, setLicenseUrl] = useState<string | null>(init?.licenseUrl ?? null);
+  const [otherUrl, setOtherUrl] = useState<string | null>(init?.otherUrl ?? null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  // Stable initial URLs for FileUpload slots — set once from draft.
-  const [initialTradeCertUrl, setInitialTradeCertUrl] = useState<string | null>(null);
-  const [initialLicenseUrl, setInitialLicenseUrl] = useState<string | null>(null);
-  const [initialOtherUrl, setInitialOtherUrl] = useState<string | null>(null);
-
-  useEffect(() => {
-    const draft = loadDraft<Step6Draft>(6);
-    if (!draft) return;
-    if (draft.tradeCertUrl) { setTradeCertUrl(draft.tradeCertUrl); setInitialTradeCertUrl(draft.tradeCertUrl); }
-    if (draft.licenseUrl) { setLicenseUrl(draft.licenseUrl); setInitialLicenseUrl(draft.licenseUrl); }
-    if (draft.otherUrl) { setOtherUrl(draft.otherUrl); setInitialOtherUrl(draft.otherUrl); }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     saveDraft<Step6Draft>(6, { tradeCertUrl, licenseUrl, otherUrl });
@@ -70,20 +60,20 @@ export function Step6Credentials() {
       <div className="flex flex-col gap-1.5">
         <Label>Trade certificate</Label>
         <FileUpload
-          key={`trade-${initialTradeCertUrl ?? "empty"}`}
+          key={`trade-${init?.tradeCertUrl ?? "empty"}`}
           uploadType="credential"
           label="Click to upload"
-          initialUrl={initialTradeCertUrl}
+          initialUrl={init?.tradeCertUrl ?? null}
           onUploaded={(url) => setTradeCertUrl(url)}
         />
       </div>
       <div className="flex flex-col gap-1.5">
         <Label>License (optional)</Label>
         <FileUpload
-          key={`license-${initialLicenseUrl ?? "empty"}`}
+          key={`license-${init?.licenseUrl ?? "empty"}`}
           uploadType="credential"
           label="Click to upload"
-          initialUrl={initialLicenseUrl}
+          initialUrl={init?.licenseUrl ?? null}
           onUploaded={(url) => setLicenseUrl(url)}
         />
       </div>
@@ -91,10 +81,10 @@ export function Step6Credentials() {
         <Label>Other credentials</Label>
         <div className="max-w-48">
           <FileUpload
-            key={`other-${initialOtherUrl ?? "empty"}`}
+            key={`other-${init?.otherUrl ?? "empty"}`}
             uploadType="credential"
             label="Click to upload"
-            initialUrl={initialOtherUrl}
+            initialUrl={init?.otherUrl ?? null}
             onUploaded={(url) => setOtherUrl(url)}
           />
         </div>

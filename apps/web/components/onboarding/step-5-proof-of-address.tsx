@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Label } from "@/components/ui/label";
 import { FileUpload } from "@/components/shared/file-upload";
@@ -15,16 +15,11 @@ type Step5Draft = {
 
 export function Step5ProofOfAddress() {
   const router = useRouter();
-  const [utilityBillUrl, setUtilityBillUrl] = useState<string | null>(null);
+  const init = useMemo(() => loadDraft<Step5Draft>(5), []);
+
+  const [utilityBillUrl, setUtilityBillUrl] = useState<string | null>(init?.utilityBillUrl ?? null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [initialBillUrl, setInitialBillUrl] = useState<string | null>(null);
-
-  useEffect(() => {
-    const draft = loadDraft<Step5Draft>(5);
-    if (!draft) return;
-    if (draft.utilityBillUrl) { setUtilityBillUrl(draft.utilityBillUrl); setInitialBillUrl(draft.utilityBillUrl); }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     saveDraft<Step5Draft>(5, { utilityBillUrl });
@@ -42,12 +37,10 @@ export function Step5ProofOfAddress() {
       return;
     }
 
-    const credentials = [{ type: "UTILITY_BILL", fileUrl: utilityBillUrl }];
-
     setError(null);
     setLoading(true);
     try {
-      await patchOnboardingStep(artisanId, 5, undefined, credentials);
+      await patchOnboardingStep(artisanId, 5, undefined, [{ type: "UTILITY_BILL", fileUrl: utilityBillUrl }]);
       router.push("/join-artisan/steps/6");
     } catch (err) {
       setError((err as Error).message);
@@ -64,12 +57,12 @@ export function Step5ProofOfAddress() {
         </Label>
         <p className="text-xs text-muted-foreground">Electricity, water or gas bill (images only)</p>
         <FileUpload
-          key={`bill-${initialBillUrl ?? "empty"}`}
+          key={`bill-${init?.utilityBillUrl ?? "empty"}`}
           uploadType="proof-of-address"
           label="Click to upload"
           accept="image/*"
           showPreview={false}
-          initialUrl={initialBillUrl}
+          initialUrl={init?.utilityBillUrl ?? null}
           onUploaded={(url) => setUtilityBillUrl(url)}
         />
       </div>

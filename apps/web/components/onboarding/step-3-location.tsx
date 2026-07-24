@@ -23,21 +23,14 @@ const NIGERIAN_STATE_OPTIONS = NIGERIAN_STATES.map((s) => ({ value: s, label: s 
 
 export function Step3Location() {
   const router = useRouter();
-  const [countryCode, setCountryCode] = useState("NG");
-  const [state, setState] = useState("");
-  const [lga, setLga] = useState("");
-  const [residentialAddress, setResidentialAddress] = useState("");
+  const init = useMemo(() => loadDraft<Step3Draft>(3), []);
+
+  const [countryCode, setCountryCode] = useState(init?.countryCode ?? "NG");
+  const [state, setState] = useState(init?.state ?? "");
+  const [lga, setLga] = useState(init?.lga ?? "");
+  const [residentialAddress, setResidentialAddress] = useState(init?.residentialAddress ?? "");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    const draft = loadDraft<Step3Draft>(3);
-    if (!draft) return;
-    if (draft.countryCode) setCountryCode(draft.countryCode);
-    if (draft.state) setState(draft.state);
-    if (draft.lga) setLga(draft.lga);
-    if (draft.residentialAddress) setResidentialAddress(draft.residentialAddress);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     saveDraft<Step3Draft>(3, { countryCode, state, lga, residentialAddress });
@@ -94,7 +87,6 @@ export function Step3Location() {
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-      {/* Country */}
       <div className="flex flex-col gap-1.5">
         <Label>Country <span className="text-destructive">*</span></Label>
         <SearchableSelect
@@ -106,7 +98,6 @@ export function Step3Location() {
         />
       </div>
 
-      {/* State */}
       <div className="flex flex-col gap-1.5">
         <Label>State <span className="text-destructive">*</span></Label>
         {isNigeria ? (
@@ -127,7 +118,6 @@ export function Step3Location() {
         )}
       </div>
 
-      {/* LGA — only for Nigeria */}
       {isNigeria && state && (
         <div className="flex flex-col gap-1.5">
           <Label>Local Government Area</Label>
@@ -141,7 +131,6 @@ export function Step3Location() {
         </div>
       )}
 
-      {/* Residential address */}
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="residentialAddress">Residential address <span className="text-destructive">*</span></Label>
         <Input

@@ -17,6 +17,12 @@ export function loadDraft<T>(step: number): T | null {
   }
 }
 
+export function clearDraft(step: number): void {
+  try {
+    localStorage.removeItem(key(step));
+  } catch {}
+}
+
 export function clearAllDrafts(): void {
   try {
     for (let i = 1; i <= 8; i++) {

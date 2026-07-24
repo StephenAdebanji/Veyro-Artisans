@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -21,21 +21,16 @@ const DAYS = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
 
 export function Step8Availability() {
   const router = useRouter();
-  const [workingDays, setWorkingDays] = useState<string[]>(["MON", "TUE", "WED", "THU", "FRI", "SAT"]);
-  const [startTime, setStartTime] = useState("08:00");
-  const [endTime, setEndTime] = useState("18:00");
-  const [emergencyAvailable, setEmergencyAvailable] = useState(false);
+  const init = useMemo(() => loadDraft<Step8Draft>(8), []);
+
+  const [workingDays, setWorkingDays] = useState<string[]>(
+    init?.workingDays?.length ? init.workingDays : ["MON", "TUE", "WED", "THU", "FRI", "SAT"],
+  );
+  const [startTime, setStartTime] = useState(init?.startTime ?? "08:00");
+  const [endTime, setEndTime] = useState(init?.endTime ?? "18:00");
+  const [emergencyAvailable, setEmergencyAvailable] = useState(init?.emergencyAvailable ?? false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    const draft = loadDraft<Step8Draft>(8);
-    if (!draft) return;
-    if (draft.workingDays?.length) setWorkingDays(draft.workingDays);
-    if (draft.startTime) setStartTime(draft.startTime);
-    if (draft.endTime) setEndTime(draft.endTime);
-    if (typeof draft.emergencyAvailable === "boolean") setEmergencyAvailable(draft.emergencyAvailable);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     saveDraft<Step8Draft>(8, { workingDays, startTime, endTime, emergencyAvailable });

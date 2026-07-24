@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { FileUpload } from "@/components/shared/file-upload";
 import { StepFooter } from "./step-footer";
@@ -13,25 +13,23 @@ type Step7Draft = {
 };
 
 const SLOT_COUNT = 10;
-const EMPTY_SLOTS = Array<string | null>(SLOT_COUNT).fill(null);
+const EMPTY_SLOTS: Array<string | null> = Array(SLOT_COUNT).fill(null);
 
 export function Step7Portfolio() {
   const router = useRouter();
-  const [urls, setUrls] = useState<Array<string | null>>(EMPTY_SLOTS);
+  // init.urls provides stable initial URLs per slot — used as FileUpload keys
+  // so each slot only remounts once (on first mount with draft values).
+  const init = useMemo(() => {
+    const d = loadDraft<Step7Draft>(7);
+    if (!d?.urls) return { urls: EMPTY_SLOTS };
+    const loaded = d.urls.slice(0, SLOT_COUNT);
+    while (loaded.length < SLOT_COUNT) loaded.push(null);
+    return { urls: loaded };
+  }, []);
+
+  const [urls, setUrls] = useState<Array<string | null>>(init.urls);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  // Stable initial URLs per slot — set once from draft so FileUpload only
-  // remounts once (on draft load), not on every subsequent upload.
-  const [initialUrls, setInitialUrls] = useState<Array<string | null>>(EMPTY_SLOTS);
-
-  useEffect(() => {
-    const draft = loadDraft<Step7Draft>(7);
-    if (!draft?.urls) return;
-    const loaded = draft.urls.slice(0, SLOT_COUNT);
-    while (loaded.length < SLOT_COUNT) loaded.push(null);
-    setUrls(loaded);
-    setInitialUrls(loaded);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     saveDraft<Step7Draft>(7, { urls });
@@ -71,10 +69,12 @@ export function Step7Portfolio() {
         Add up to {SLOT_COUNT} images showcasing your work. Images only · max 5MB each.
       </p>
       {uploadedCount > 0 && (
-        <p className="mt-1 text-sm font-medium text-primary">{uploadedCount} photo{uploadedCount !== 1 ? "s" : ""} uploaded</p>
+        <p className="mt-1 text-sm font-medium text-primary">
+          {uploadedCount} photo{uploadedCount !== 1 ? "s" : ""} uploaded
+        </p>
       )}
       <div className="mt-4 grid grid-cols-4 gap-3 sm:grid-cols-5">
-        {initialUrls.map((initialUrl, index) => (
+        {init.urls.map((initialUrl, index) => (
           <FileUpload
             key={`slot-${index}-${initialUrl ?? "empty"}`}
             uploadType="portfolio"

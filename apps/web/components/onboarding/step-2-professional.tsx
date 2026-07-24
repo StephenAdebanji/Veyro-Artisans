@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -27,28 +27,17 @@ const EXPERIENCE_OPTIONS: ExperienceLevel[] = ["0-2", "3-5", "6-10", "10+"];
 
 export function Step2Professional() {
   const router = useRouter();
-  const [profilePhotoUrl, setProfilePhotoUrl] = useState<string | null>(null);
-  const [primarySkill, setPrimarySkill] = useState<SkillCategory | "">("");
-  const [secondarySkills, setSecondarySkills] = useState("");
-  const [experienceLevel, setExperienceLevel] = useState<ExperienceLevel | "">("");
-  const [serviceRadiusKm, setServiceRadiusKm] = useState("10");
-  const [bio, setBio] = useState("");
+  // Loaded once on first client-only mount — ssr: false in page.tsx ensures window is available.
+  const init = useMemo(() => loadDraft<Step2Draft>(2), []);
+
+  const [profilePhotoUrl, setProfilePhotoUrl] = useState<string | null>(init?.profilePhotoUrl ?? null);
+  const [primarySkill, setPrimarySkill] = useState<SkillCategory | "">(init?.primarySkill ?? "");
+  const [secondarySkills, setSecondarySkills] = useState(init?.secondarySkills ?? "");
+  const [experienceLevel, setExperienceLevel] = useState<ExperienceLevel | "">(init?.experienceLevel ?? "");
+  const [serviceRadiusKm, setServiceRadiusKm] = useState(init?.serviceRadiusKm ?? "10");
+  const [bio, setBio] = useState(init?.bio ?? "");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  // Stable initial URL for FileUpload — set once from draft so the component
-  // only remounts once (when draft loads), not on every subsequent photo upload.
-  const [initialPhotoUrl, setInitialPhotoUrl] = useState<string | null>(null);
-
-  useEffect(() => {
-    const draft = loadDraft<Step2Draft>(2);
-    if (!draft) return;
-    if (draft.profilePhotoUrl) { setProfilePhotoUrl(draft.profilePhotoUrl); setInitialPhotoUrl(draft.profilePhotoUrl); }
-    if (draft.primarySkill) setPrimarySkill(draft.primarySkill);
-    if (draft.secondarySkills) setSecondarySkills(draft.secondarySkills);
-    if (draft.experienceLevel) setExperienceLevel(draft.experienceLevel);
-    if (draft.serviceRadiusKm) setServiceRadiusKm(draft.serviceRadiusKm);
-    if (draft.bio) setBio(draft.bio);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     saveDraft<Step2Draft>(2, { profilePhotoUrl, primarySkill, secondarySkills, experienceLevel, serviceRadiusKm, bio });
@@ -93,10 +82,10 @@ export function Step2Professional() {
       <div className="flex flex-col gap-1.5">
         <Label>Profile photo</Label>
         <FileUpload
-          key={`photo-${initialPhotoUrl ?? "empty"}`}
+          key={`photo-${init?.profilePhotoUrl ?? "empty"}`}
           uploadType="profile-photo"
           label="Click to upload"
-          initialUrl={initialPhotoUrl}
+          initialUrl={init?.profilePhotoUrl ?? null}
           onUploaded={(url) => setProfilePhotoUrl(url)}
         />
       </div>
