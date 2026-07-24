@@ -35,7 +35,9 @@ export default async function JoinArtisanPage() {
 
       // DRAFT: clear form drafts for a "fresh" feel but keep artisanId so
       // the step-1 alreadyRegistered check still works on back navigation.
-      const resumeStep = Math.min(artisanProfile.onboardingStep + 1, 8);
+      // Never route back to step 1 — the account was created there already,
+      // so start at step 2 minimum regardless of onboardingStep value.
+      const resumeStep = Math.max(2, Math.min(artisanProfile.onboardingStep + 1, 8));
       return (
         <JoinArtisanEntryClient
           clearArtisanId={false}

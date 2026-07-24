@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { signIn, useSession } from "next-auth/react";
 import { Input } from "@/components/ui/input";
@@ -20,9 +20,12 @@ export function Step1BasicInfo() {
   const router = useRouter();
   const { status } = useSession();
 
-  // True when the user navigated back from a later step — account already exists.
-  // We read this once at mount (component is ssr:false so localStorage is available).
-  const alreadyRegistered = useMemo(() => !!getOnboardingArtisanId(), []);
+  // True only after the session confirms "authenticated" AND artisanId exists in
+  // localStorage. Starting from false means unauthenticated visitors (fresh
+  // sign-ups, returning drop-offs) NEVER see the "already set up" banner even
+  // if stale localStorage data is present — it only appears for mid-wizard
+  // back navigation where the session is active.
+  const [alreadyRegistered, setAlreadyRegistered] = useState(false);
 
   // Always start empty. Draft is loaded ONLY after we confirm the session is
   // "authenticated" (meaning the user is mid-wizard navigating back), never
@@ -38,9 +41,12 @@ export function Step1BasicInfo() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // Load draft only when session resolves to authenticated (= back navigation).
+  // Session resolved to authenticated = user is mid-wizard navigating back.
+  // Only now do we: (a) flag the account as already registered, and
+  // (b) load the saved draft into the form.
   useEffect(() => {
     if (status !== "authenticated" || draftLoaded) return;
+    if (getOnboardingArtisanId()) setAlreadyRegistered(true);
     const draft = loadDraft<Step1Draft>(1);
     if (draft) {
       setForm((f) => ({
