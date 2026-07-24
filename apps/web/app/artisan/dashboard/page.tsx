@@ -27,6 +27,7 @@ interface ArtisanProfileRecord {
   ratingCount: number;
   completedJobs: number;
   responseTimeAvgSeconds: number | null;
+  rejectionReason: string | null;
   totalJobsAccepted?: number;
   onboardingStatus: ArtisanOnboardingStatus;
   verificationStatus: ArtisanVerificationStatus;
@@ -118,12 +119,24 @@ export default async function ArtisanDashboardPage() {
       {isRejected && (
         <div className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
           <p className="font-semibold">Your application was rejected.</p>
-          <p className="mt-0.5">
-            One or more of your verification documents could not be approved. Please go to{" "}
+          {profile.rejectionReason ? (
+            <>
+              <p className="mt-1">{profile.rejectionReason}</p>
+              <p className="mt-1 text-red-700">
+                Please review the file and make sure it is correct, clear, and not outdated.
+              </p>
+            </>
+          ) : (
+            <p className="mt-0.5">
+              One or more of your verification documents could not be approved.
+            </p>
+          )}
+          <p className="mt-2">
+            Go to{" "}
             <a href="/artisan/account" className="font-medium underline underline-offset-2">
               Account &rsaquo; Profile &rsaquo; KYC Verification
             </a>{" "}
-            to see which documents need to be re-uploaded. Once re-submitted, your application will
+            to re-upload the required documents. Once re-submitted, your application will
             automatically return to the review queue.
           </p>
         </div>

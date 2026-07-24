@@ -11,6 +11,7 @@ import {
   RotateCcw,
   Trash2,
   Eye,
+  AlertTriangle,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -29,13 +30,15 @@ type VerificationStatus = "UNVERIFIED" | "PENDING" | "VERIFIED" | "REJECTED";
 const CREDENTIAL_STATUS_STYLE: Record<string, string> = {
   APPROVED: "bg-emerald-100 text-emerald-700",
   REJECTED: "bg-red-100 text-red-700",
-  PENDING: "bg-amber-100 text-amber-700",
+  PENDING:  "bg-amber-100 text-amber-700",
 };
 
 const DECISION_LABEL: Record<string, { label: string; className: string }> = {
-  VERIFIED: { label: "Approved", className: "text-emerald-600" },
-  REJECTED: { label: "Rejected", className: "text-red-600" },
+  VERIFIED: { label: "Approved",  className: "text-emerald-600" },
+  REJECTED: { label: "Rejected",  className: "text-red-600" },
 };
+
+// ── Per-credential row ────────────────────────────────────────────────────────
 
 function CredentialRow({
   cred,
@@ -82,75 +85,158 @@ function CredentialRow({
         onConfirm={handleDelete}
         onCancel={() => setConfirmDelete(false)}
       />
-    <li className="flex items-center justify-between gap-4 rounded-lg border p-3">
-      <div className="flex min-w-0 items-center gap-2">
-        <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
-        <div className="min-w-0">
-          <p className="truncate text-sm font-medium">{cred.type.replace(/_/g, " ")}</p>
-          <p className="text-xs text-muted-foreground">
-            {new Date(cred.createdAt).toLocaleDateString()}
-          </p>
+      <li className="flex items-center justify-between gap-4 rounded-lg border p-3">
+        <div className="flex min-w-0 items-center gap-2">
+          <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
+          <div className="min-w-0">
+            <p className="truncate text-sm font-medium">{cred.type.replace(/_/g, " ")}</p>
+            <p className="text-xs text-muted-foreground">
+              {new Date(cred.createdAt).toLocaleDateString()}
+            </p>
+          </div>
         </div>
-      </div>
-      <div className="flex shrink-0 items-center gap-2">
-        <Badge className={CREDENTIAL_STATUS_STYLE[cred.status] ?? "bg-muted text-muted-foreground"}>
-          {cred.status}
-        </Badge>
-        <a
-          href={cred.fileUrl}
-          target="_blank"
-          rel="noreferrer"
-          className="flex items-center gap-1 whitespace-nowrap text-xs text-primary hover:underline"
-        >
-          <Eye className="h-3 w-3" /> View
-        </a>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="h-7 w-7 p-0 text-red-500 hover:bg-red-50 hover:text-red-600"
-          title="Delete credential"
-          disabled={pending}
-          onClick={() => setConfirmDelete(true)}
-        >
-          <Trash2 className="h-3.5 w-3.5" />
-        </Button>
-        {locked ? (
-          <span
-            title="Final decision taken — revoke to re-enable"
-            className="flex items-center gap-1 rounded px-2 py-1 text-xs text-muted-foreground"
+        <div className="flex shrink-0 items-center gap-2">
+          <Badge className={CREDENTIAL_STATUS_STYLE[cred.status] ?? "bg-muted text-muted-foreground"}>
+            {cred.status}
+          </Badge>
+          <a
+            href={cred.fileUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="flex items-center gap-1 whitespace-nowrap text-xs text-primary hover:underline"
           >
-            <Lock className="h-3.5 w-3.5" />
-            Locked
-          </span>
-        ) : (
-          <>
-            <Button
-              variant="ghost"
-              size="sm"
-              disabled={pending || cred.status === "APPROVED"}
-              className="h-7 w-7 p-0 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700"
-              title="Approve"
-              onClick={() => decide("APPROVED")}
+            <Eye className="h-3 w-3" /> View
+          </a>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 w-7 p-0 text-red-500 hover:bg-red-50 hover:text-red-600"
+            title="Delete credential"
+            disabled={pending}
+            onClick={() => setConfirmDelete(true)}
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </Button>
+          {locked ? (
+            <span
+              title="Final decision taken — revoke to re-enable"
+              className="flex items-center gap-1 rounded px-2 py-1 text-xs text-muted-foreground"
             >
-              <CheckCircle2 className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              disabled={pending || cred.status === "REJECTED"}
-              className="h-7 w-7 p-0 text-red-500 hover:bg-red-50 hover:text-red-600"
-              title="Reject"
-              onClick={() => decide("REJECTED")}
-            >
-              <XCircle className="h-4 w-4" />
-            </Button>
-          </>
-        )}
-      </div>
-    </li>
+              <Lock className="h-3.5 w-3.5" />
+              Locked
+            </span>
+          ) : (
+            <>
+              <Button
+                variant="ghost"
+                size="sm"
+                disabled={pending || cred.status === "APPROVED"}
+                className="h-7 w-7 p-0 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700"
+                title="Approve"
+                onClick={() => decide("APPROVED")}
+              >
+                <CheckCircle2 className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                disabled={pending || cred.status === "REJECTED"}
+                className="h-7 w-7 p-0 text-red-500 hover:bg-red-50 hover:text-red-600"
+                title="Reject"
+                onClick={() => decide("REJECTED")}
+              >
+                <XCircle className="h-4 w-4" />
+              </Button>
+            </>
+          )}
+        </div>
+      </li>
     </>
   );
 }
+
+// ── Rejection reason dialog ───────────────────────────────────────────────────
+
+function RejectReasonDialog({
+  credentials,
+  open,
+  loading,
+  onConfirm,
+  onCancel,
+}: {
+  credentials: CredentialItem[];
+  open: boolean;
+  loading: boolean;
+  onConfirm: (reason: string) => void;
+  onCancel: () => void;
+}) {
+  const [reason, setReason] = useState("");
+  const trimmed = reason.trim();
+
+  if (!open) return null;
+
+  const credLabels = credentials.map((c) => c.type.replace(/_/g, " ")).join(", ");
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+      <div className="w-full max-w-md rounded-2xl border bg-card p-6 shadow-xl">
+        <div className="mb-4 flex items-start gap-3">
+          <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-red-500" />
+          <div>
+            <h2 className="text-base font-semibold">Reject artisan application</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              This will reject <strong>all uploaded documents</strong> and notify the artisan.
+              You must provide a reason before proceeding.
+            </p>
+          </div>
+        </div>
+
+        {credentials.length > 0 && (
+          <div className="mb-4 rounded-lg border bg-muted/40 p-3 text-xs text-muted-foreground">
+            <p className="font-medium text-foreground">Documents being rejected:</p>
+            <p className="mt-1">{credLabels}</p>
+          </div>
+        )}
+
+        <label className="mb-1.5 block text-sm font-medium" htmlFor="rejection-reason">
+          Rejection reason <span className="text-red-500">*</span>
+        </label>
+        <p className="mb-2 text-xs text-muted-foreground">
+          Specify which file category is challenged. The artisan will see this message on their dashboard.
+        </p>
+        <textarea
+          id="rejection-reason"
+          rows={4}
+          className="w-full rounded-md border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+          placeholder={`e.g. Your Government ID could not be approved — please re-upload a clear, valid, and unexpired document.`}
+          value={reason}
+          onChange={(e) => setReason(e.target.value)}
+        />
+        <p className="mt-1.5 text-xs text-muted-foreground">
+          A standard reminder will be appended automatically:{" "}
+          <em>"Please review the file and make sure it is correct, clear, and not outdated."</em>
+        </p>
+
+        <div className="mt-5 flex justify-end gap-3">
+          <Button variant="outline" size="sm" onClick={onCancel} disabled={loading}>
+            Cancel
+          </Button>
+          <Button
+            size="sm"
+            className="gap-2 bg-red-600 text-white hover:bg-red-700"
+            disabled={!trimmed || loading}
+            onClick={() => onConfirm(trimmed)}
+          >
+            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <XCircle className="h-4 w-4" />}
+            Confirm Rejection
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Main panel ────────────────────────────────────────────────────────────────
 
 export function VerificationPanel({
   artisanId,
@@ -167,6 +253,7 @@ export function VerificationPanel({
   );
   const [credentials, setCredentials] = useState<CredentialItem[]>(initialCredentials);
   const [pending, startTransition] = useTransition();
+  const [showRejectDialog, setShowRejectDialog] = useState(false);
 
   const decided = verificationStatus === "VERIFIED" || verificationStatus === "REJECTED";
   const approvedCount = credentials.filter((c) => c.status === "APPROVED").length;
@@ -180,21 +267,26 @@ export function VerificationPanel({
     setCredentials((prev) => prev.filter((c) => c.id !== id));
   }
 
-  function submitDecision(decision: "APPROVED" | "REJECTED" | "REVOKED") {
+  function submitDecision(decision: "APPROVED" | "REJECTED" | "REVOKED", reason?: string) {
     startTransition(async () => {
       const res = await fetch(`/api/admin/artisans/${artisanId}/verification`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ decision }),
+        body: JSON.stringify({ decision, reason }),
       });
       if (!res.ok) return;
 
       if (decision === "APPROVED") {
         setVerificationStatus("VERIFIED");
+        // Reflect mass-approval in the local credential list.
+        setCredentials((prev) => prev.map((c) => ({ ...c, status: "APPROVED" })));
       } else if (decision === "REJECTED") {
         setVerificationStatus("REJECTED");
+        setShowRejectDialog(false);
+        // Reflect mass-rejection in the local credential list.
+        setCredentials((prev) => prev.map((c) => ({ ...c, status: "REJECTED" })));
       } else {
-        // REVOKED — reset everything locally
+        // REVOKED — reset everything locally.
         setVerificationStatus("UNVERIFIED");
         setCredentials((prev) => prev.map((c) => ({ ...c, status: "PENDING" })));
       }
@@ -205,7 +297,15 @@ export function VerificationPanel({
 
   return (
     <>
-      {/* Credentials */}
+      <RejectReasonDialog
+        credentials={credentials}
+        open={showRejectDialog}
+        loading={pending}
+        onConfirm={(reason) => submitDecision("REJECTED", reason)}
+        onCancel={() => setShowRejectDialog(false)}
+      />
+
+      {/* Credentials list */}
       {total > 0 && (
         <div className="mt-5 rounded-2xl border bg-card p-5">
           <div className="mb-3 flex items-center justify-between">
@@ -246,7 +346,8 @@ export function VerificationPanel({
           Final Decision
         </h2>
         <p className="mb-4 text-sm text-muted-foreground">
-          Review the credentials above then make your final call on this artisan application.
+          Approve or reject this artisan application. The decision will mass-update all uploaded
+          documents and immediately reflect on the artisan&apos;s dashboard.
         </p>
 
         {decided ? (
@@ -294,13 +395,9 @@ export function VerificationPanel({
               variant="outline"
               className="flex-1 gap-2 border-red-300 text-red-600 hover:border-red-400 hover:bg-red-50"
               disabled={pending}
-              onClick={() => submitDecision("REJECTED")}
+              onClick={() => setShowRejectDialog(true)}
             >
-              {pending ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <XCircle className="h-4 w-4" />
-              )}
+              <XCircle className="h-4 w-4" />
               Reject Artisan
             </Button>
           </div>

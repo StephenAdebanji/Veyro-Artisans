@@ -25,6 +25,13 @@ export const trustRepository = {
     });
   },
 
+  async massUpdateCredentials(artisanId: string, status: "APPROVED" | "REJECTED", reviewedBy: string) {
+    return prisma.credential.updateMany({
+      where: { artisanId },
+      data: { status, reviewedBy, reviewedAt: new Date() },
+    });
+  },
+
   async countApprovedCredentials(artisanId: string): Promise<number> {
     return prisma.credential.count({ where: { artisanId, status: "APPROVED" } });
   },

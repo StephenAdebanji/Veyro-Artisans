@@ -218,6 +218,8 @@ model ArtisanProfile {
   onboardingStep         Int                            @default(1)
   /// Cache — see ArtisanVerificationStatusCache doc comment.
   verificationStatus     ArtisanVerificationStatusCache @default(UNVERIFIED)
+  /// Set by admin on final REJECTED decision; shown to the artisan on their dashboard.
+  rejectionReason        String?
   /// Cache of trust.TrustProfile.trustScore, synced via TrustScoreUpdated event.
   trustScore             Float                          @default(0)
   /// Cache of trust.TrustProfile.{ratingAvg,ratingCount,completedJobs,responseTimeAvgSeconds}, synced via JobCompleted/ReviewSubmitted events.
