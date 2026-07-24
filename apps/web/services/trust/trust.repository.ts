@@ -27,7 +27,12 @@ export const trustRepository = {
 
   async massUpdateCredentials(artisanId: string, status: "APPROVED" | "REJECTED", reviewedBy: string) {
     return prisma.credential.updateMany({
-      where: { artisanId },
+      where: {
+        artisanId,
+        // When mass-rejecting, skip credentials the admin already individually approved.
+        // When mass-approving, update everything.
+        ...(status === "REJECTED" ? { status: { not: "APPROVED" } } : {}),
+      },
       data: { status, reviewedBy, reviewedAt: new Date() },
     });
   },

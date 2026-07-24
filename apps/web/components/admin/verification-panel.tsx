@@ -155,6 +155,65 @@ function CredentialRow({
   );
 }
 
+// ── Approve confirm dialog ────────────────────────────────────────────────────
+
+function ApproveConfirmDialog({
+  credentials,
+  open,
+  loading,
+  onConfirm,
+  onCancel,
+}: {
+  credentials: CredentialItem[];
+  open: boolean;
+  loading: boolean;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  if (!open) return null;
+
+  const credLabels = credentials.map((c) => c.type.replace(/_/g, " ")).join(", ");
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+      <div className="w-full max-w-md rounded-2xl border bg-card p-6 shadow-xl">
+        <div className="mb-4 flex items-start gap-3">
+          <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-500" />
+          <div>
+            <h2 className="text-base font-semibold">Approve artisan application</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              This will approve <strong>all uploaded documents</strong> and grant the artisan
+              full access to receive job requests.
+            </p>
+          </div>
+        </div>
+
+        {credentials.length > 0 && (
+          <div className="mb-4 rounded-lg border bg-muted/40 p-3 text-xs text-muted-foreground">
+            <p className="font-medium text-foreground">Documents being approved:</p>
+            <p className="mt-1">{credLabels}</p>
+          </div>
+        )}
+
+        <div className="mt-5 flex justify-end gap-3">
+          <Button variant="outline" size="sm" onClick={onCancel} disabled={loading}>
+            Cancel
+          </Button>
+          <Button
+            size="sm"
+            className="gap-2 bg-emerald-600 text-white hover:bg-emerald-700"
+            disabled={loading}
+            onClick={onConfirm}
+          >
+            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
+            Confirm Approval
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Rejection reason dialog ───────────────────────────────────────────────────
 
 function RejectReasonDialog({
@@ -253,6 +312,7 @@ export function VerificationPanel({
   );
   const [credentials, setCredentials] = useState<CredentialItem[]>(initialCredentials);
   const [pending, startTransition] = useTransition();
+  const [showApproveDialog, setShowApproveDialog] = useState(false);
   const [showRejectDialog, setShowRejectDialog] = useState(false);
 
   const decided = verificationStatus === "VERIFIED" || verificationStatus === "REJECTED";
@@ -278,13 +338,16 @@ export function VerificationPanel({
 
       if (decision === "APPROVED") {
         setVerificationStatus("VERIFIED");
+        setShowApproveDialog(false);
         // Reflect mass-approval in the local credential list.
         setCredentials((prev) => prev.map((c) => ({ ...c, status: "APPROVED" })));
       } else if (decision === "REJECTED") {
         setVerificationStatus("REJECTED");
         setShowRejectDialog(false);
-        // Reflect mass-rejection in the local credential list.
-        setCredentials((prev) => prev.map((c) => ({ ...c, status: "REJECTED" })));
+        // Preserve already-approved credentials — only non-approved ones were mass-rejected.
+        setCredentials((prev) =>
+          prev.map((c) => (c.status === "APPROVED" ? c : { ...c, status: "REJECTED" })),
+        );
       } else {
         // REVOKED — reset everything locally.
         setVerificationStatus("UNVERIFIED");
@@ -297,6 +360,13 @@ export function VerificationPanel({
 
   return (
     <>
+      <ApproveConfirmDialog
+        credentials={credentials}
+        open={showApproveDialog}
+        loading={pending}
+        onConfirm={() => submitDecision("APPROVED")}
+        onCancel={() => setShowApproveDialog(false)}
+      />
       <RejectReasonDialog
         credentials={credentials}
         open={showRejectDialog}
@@ -382,7 +452,7 @@ export function VerificationPanel({
             <Button
               className="flex-1 gap-2 bg-emerald-600 text-white hover:bg-emerald-700"
               disabled={pending}
-              onClick={() => submitDecision("APPROVED")}
+              onClick={() => setShowApproveDialog(true)}
             >
               {pending ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
