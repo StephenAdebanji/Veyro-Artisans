@@ -6,8 +6,6 @@ import { prisma } from "@/platform/prisma";
 
 const schema = z.object({ email: z.string().email() });
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-
 export async function POST(request: Request) {
   const body = await request.json();
   const parsed = schema.safeParse(body);
@@ -29,6 +27,7 @@ export async function POST(request: Request) {
   const resetUrl = `${appUrl}/reset-password?token=${token}`;
 
   if (process.env.RESEND_API_KEY) {
+    const resend = new Resend(process.env.RESEND_API_KEY);
     await resend.emails.send({
       from: process.env.EMAIL_FROM ?? "noreply@veyro.app",
       to: user.email,
