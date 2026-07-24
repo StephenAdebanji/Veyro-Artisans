@@ -15,7 +15,7 @@ export function ArtisanCta() {
           Join VEYRO. Build a verified reputation, win jobs near you, and get paid securely.
         </p>
         <Link
-          href="/join-artisan/steps/1"
+          href="/join-artisan"
           className="mt-4 inline-flex items-center rounded-md bg-white px-4 py-2 text-sm font-medium text-primary"
         >
           Start verification →

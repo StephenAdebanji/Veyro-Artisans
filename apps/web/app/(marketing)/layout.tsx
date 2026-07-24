@@ -22,7 +22,7 @@ export default function MarketingLayout({ children }: { children: React.ReactNod
           <Link href="/sign-up" className="rounded-md bg-primary px-3 py-2 text-primary-foreground">
             Join as homeowner
           </Link>
-          <Link href="/join-artisan/steps/1" className="rounded-md bg-primary px-3 py-2 text-primary-foreground">
+          <Link href="/join-artisan" className="rounded-md bg-primary px-3 py-2 text-primary-foreground">
             Join as artisan
           </Link>
         </div>

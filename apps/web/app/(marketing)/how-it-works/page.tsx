@@ -135,7 +135,7 @@ export default function HowItWorksPage() {
             ))}
           </div>
           <Button asChild className="mt-2 bg-[#1E3A8A] text-white hover:bg-[#1E3A8A]/90">
-            <Link href="/join-artisan/steps/1">Create your artisan profile</Link>
+            <Link href="/join-artisan">Create your artisan profile</Link>
           </Button>
         </div>
       </section>
@@ -175,7 +175,7 @@ export default function HowItWorksPage() {
             <Link href="/sign-up">I need an artisan</Link>
           </Button>
           <Button asChild size="lg" className="bg-white/20 text-white border border-white hover:bg-white/30">
-            <Link href="/join-artisan/steps/1">I am an artisan</Link>
+            <Link href="/join-artisan">I am an artisan</Link>
           </Button>
         </div>
       </section>

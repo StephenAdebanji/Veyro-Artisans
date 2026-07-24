@@ -224,7 +224,7 @@ export default function TrustPage() {
             <Link href="/sign-up">Find a verified artisan</Link>
           </Button>
           <Button asChild size="lg" variant="outline">
-            <Link href="/join-artisan/steps/1">Get verified as an artisan</Link>
+            <Link href="/join-artisan">Get verified as an artisan</Link>
           </Button>
         </div>
       </section>

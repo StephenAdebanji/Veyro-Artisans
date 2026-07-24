@@ -62,7 +62,7 @@ export default function ForArtisansPage() {
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-4">
             <Button asChild size="lg" className="bg-white text-[#1E3A8A] hover:bg-blue-50">
-              <Link href="/join-artisan/steps/1">Join as an artisan</Link>
+              <Link href="/join-artisan">Join as an artisan</Link>
             </Button>
             <Button asChild size="lg" className="bg-white/20 text-white border border-white hover:bg-white/30">
               <Link href="/how-it-works">See how it works</Link>
@@ -119,7 +119,7 @@ export default function ForArtisansPage() {
           Registration is free — always.
         </p>
         <Button asChild size="lg" className="mt-6 bg-[#1E3A8A] text-white hover:bg-[#1E3A8A]/90">
-          <Link href="/join-artisan/steps/1">Create your artisan profile</Link>
+          <Link href="/join-artisan">Create your artisan profile</Link>
         </Button>
       </section>
     </div>

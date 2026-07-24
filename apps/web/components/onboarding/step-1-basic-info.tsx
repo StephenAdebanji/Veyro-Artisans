@@ -23,38 +23,56 @@ export function Step1BasicInfo() {
   // True when the user navigated back from a later step — account already exists.
   // We read this once at mount (component is ssr:false so localStorage is available).
   const alreadyRegistered = useMemo(() => !!getOnboardingArtisanId(), []);
-  const init = useMemo(() => loadDraft<Step1Draft>(1), []);
 
+  // Always start empty. Draft is loaded ONLY after we confirm the session is
+  // "authenticated" (meaning the user is mid-wizard navigating back), never
+  // for unauthenticated arrivals (fresh sign-up, or returning after drop-off).
   const [form, setForm] = useState({
-    firstName: init?.firstName ?? "",
-    lastName: init?.lastName ?? "",
-    email: init?.email ?? "",
-    phone: init?.phone ?? "",
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
     password: "",
   });
+  const [draftLoaded, setDraftLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // If the user is not authenticated but localStorage has a stale artisanId
-  // from a previous incomplete session, wipe it so every new visitor starts
-  // with a fresh form. (Authenticated back-navigation keeps the draft.)
+  // Load draft only when session resolves to authenticated (= back navigation).
+  useEffect(() => {
+    if (status !== "authenticated" || draftLoaded) return;
+    const draft = loadDraft<Step1Draft>(1);
+    if (draft) {
+      setForm((f) => ({
+        ...f,
+        firstName: draft.firstName ?? "",
+        lastName: draft.lastName ?? "",
+        email: draft.email ?? "",
+        phone: draft.phone ?? "",
+      }));
+    }
+    setDraftLoaded(true);
+  }, [status, draftLoaded]);
+
+  // For unauthenticated arrivals: ensure any stale localStorage is wiped.
+  // (The /join-artisan entry page already does this, but guard here too in
+  //  case the user arrives at /steps/1 directly by typing the URL.)
   useEffect(() => {
     if (status !== "unauthenticated") return;
-    if (!getOnboardingArtisanId()) return;
     clearAllDrafts();
     clearOnboardingArtisanId();
-    setForm({ firstName: "", lastName: "", email: "", phone: "", password: "" });
   }, [status]);
 
   useEffect(() => {
-    if (alreadyRegistered) return; // don't overwrite draft with locked field values
+    if (status !== "authenticated") return; // only persist during an active wizard session
+    if (alreadyRegistered) return; // locked read-only view — nothing new to save
     saveDraft<Step1Draft>(1, {
       firstName: form.firstName,
       lastName: form.lastName,
       email: form.email,
       phone: form.phone,
     });
-  }, [alreadyRegistered, form.firstName, form.lastName, form.email, form.phone]);
+  }, [status, alreadyRegistered, form.firstName, form.lastName, form.email, form.phone]);
 
   function update(key: keyof typeof form) {
     return (event: React.ChangeEvent<HTMLInputElement>) =>
@@ -95,30 +113,36 @@ export function Step1BasicInfo() {
   }
 
   // ── Returning user (back navigation) ──────────────────────────────────────
-  // Account is already set up. Show details as read-only and hide the
-  // password field entirely — there is no password to set or change here.
+  // Account is already set up. Show details as read-only when we have them
+  // (mid-wizard back navigation with draft data); otherwise just show the
+  // prompt and the Continue button (arrived fresh via /join-artisan button).
   if (alreadyRegistered) {
+    const hasData = !!(form.firstName || form.email);
     return (
       <form onSubmit={handleSubmit} className="grid gap-4 sm:grid-cols-2">
         <p className="text-sm text-muted-foreground sm:col-span-2">
           Your account is already set up. Click Continue to pick up where you left off.
         </p>
-        <div className="flex flex-col gap-1.5">
-          <Label>First name</Label>
-          <Input value={form.firstName} disabled />
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <Label>Last name</Label>
-          <Input value={form.lastName} disabled />
-        </div>
-        <div className="flex flex-col gap-1.5 sm:col-span-2">
-          <Label>Email</Label>
-          <Input value={form.email} disabled />
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <Label>Phone</Label>
-          <Input value={form.phone} disabled />
-        </div>
+        {hasData && (
+          <>
+            <div className="flex flex-col gap-1.5">
+              <Label>First name</Label>
+              <Input value={form.firstName} disabled />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label>Last name</Label>
+              <Input value={form.lastName} disabled />
+            </div>
+            <div className="flex flex-col gap-1.5 sm:col-span-2">
+              <Label>Email</Label>
+              <Input value={form.email} disabled />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label>Phone</Label>
+              <Input value={form.phone} disabled />
+            </div>
+          </>
+        )}
         <div className="sm:col-span-2">
           <StepFooter step={1} loading={loading} />
         </div>
