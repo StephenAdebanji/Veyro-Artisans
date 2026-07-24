@@ -16,6 +16,21 @@ const stepSchema = z.object({
 // uploads owned by Trust Service, not User Service — see docs/API.md.
 const CREDENTIAL_STEPS = new Set([4, 5, 6]);
 
+/** Returns the artisan's full private profile for onboarding resume hydration. */
+export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id: artisanId } = await params;
+
+  const session = await auth();
+  const userId = (session?.user as { id?: string } | undefined)?.id;
+  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const profile = await userService.getArtisanProfile(artisanId, { includePrivate: true }) as Record<string, unknown> | null;
+  if (!profile) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  if ((profile.userId as string) !== userId) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+
+  return NextResponse.json({ profile });
+}
+
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id: artisanId } = await params;
 
