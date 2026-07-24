@@ -26,3 +26,6 @@ npm-debug.log*
 
 # OS
 .DS_Store
+
+# Project report (academic defence — not for public repo)
+VEYRO_PROJECT_REPORT.md

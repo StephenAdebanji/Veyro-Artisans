@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,6 +9,14 @@ import { StepFooter } from "./step-footer";
 import { getOnboardingArtisanId } from "./onboarding-storage";
 import { patchOnboardingStep } from "./onboarding-api";
 import { COUNTRIES, NIGERIAN_STATES, NIGERIAN_LGAS } from "@/lib/location-data";
+import { loadDraft, saveDraft } from "./onboarding-draft";
+
+type Step3Draft = {
+  countryCode: string;
+  state: string;
+  lga: string;
+  residentialAddress: string;
+};
 
 const COUNTRY_OPTIONS = COUNTRIES.map((c) => ({ value: c.code, label: c.name }));
 const NIGERIAN_STATE_OPTIONS = NIGERIAN_STATES.map((s) => ({ value: s, label: s }));
@@ -21,6 +29,19 @@ export function Step3Location() {
   const [residentialAddress, setResidentialAddress] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const draft = loadDraft<Step3Draft>(3);
+    if (!draft) return;
+    if (draft.countryCode) setCountryCode(draft.countryCode);
+    if (draft.state) setState(draft.state);
+    if (draft.lga) setLga(draft.lga);
+    if (draft.residentialAddress) setResidentialAddress(draft.residentialAddress);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    saveDraft<Step3Draft>(3, { countryCode, state, lga, residentialAddress });
+  }, [countryCode, state, lga, residentialAddress]);
 
   const isNigeria = countryCode === "NG";
   const selectedCountry = COUNTRIES.find((c) => c.code === countryCode);
@@ -57,7 +78,6 @@ export function Step3Location() {
     try {
       await patchOnboardingStep(artisanId, 3, {
         country: selectedCountry?.name ?? "Nigeria",
-        // Pass the ISO code so the server can geocode with it directly
         countryCode,
         state,
         city: lga || state,
@@ -76,7 +96,7 @@ export function Step3Location() {
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       {/* Country */}
       <div className="flex flex-col gap-1.5">
-        <Label>Country</Label>
+        <Label>Country <span className="text-destructive">*</span></Label>
         <SearchableSelect
           options={COUNTRY_OPTIONS}
           value={countryCode}
@@ -88,7 +108,7 @@ export function Step3Location() {
 
       {/* State */}
       <div className="flex flex-col gap-1.5">
-        <Label>State</Label>
+        <Label>State <span className="text-destructive">*</span></Label>
         {isNigeria ? (
           <SearchableSelect
             options={NIGERIAN_STATE_OPTIONS}
@@ -123,7 +143,7 @@ export function Step3Location() {
 
       {/* Residential address */}
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="residentialAddress">Residential address</Label>
+        <Label htmlFor="residentialAddress">Residential address <span className="text-destructive">*</span></Label>
         <Input
           id="residentialAddress"
           placeholder="12 Admiralty Way, Lekki Phase 1"

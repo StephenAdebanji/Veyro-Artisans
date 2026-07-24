@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,6 +9,7 @@ import { FileUpload } from "@/components/shared/file-upload";
 import { StepFooter } from "./step-footer";
 import { getOnboardingArtisanId } from "./onboarding-storage";
 import { patchOnboardingStep } from "./onboarding-api";
+import { loadDraft, saveDraft } from "./onboarding-draft";
 
 const ID_TYPES = ["NIN", "NATIONAL_ID", "DRIVERS_LICENSE", "PASSPORT"] as const;
 const ID_TYPE_LABELS: Record<(typeof ID_TYPES)[number], string> = {
@@ -18,6 +19,12 @@ const ID_TYPE_LABELS: Record<(typeof ID_TYPES)[number], string> = {
   PASSPORT: "Passport",
 };
 
+type Step4Draft = {
+  idType: (typeof ID_TYPES)[number];
+  idNumber: string;
+  fileUrl: string | null;
+};
+
 export function Step4Verification() {
   const router = useRouter();
   const [idType, setIdType] = useState<(typeof ID_TYPES)[number]>("NIN");
@@ -25,9 +32,22 @@ export function Step4Verification() {
   const [fileUrl, setFileUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  // Stable initial URL for FileUpload — set once from draft.
+  const [initialFileUrl, setInitialFileUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    const draft = loadDraft<Step4Draft>(4);
+    if (!draft) return;
+    if (draft.idType) setIdType(draft.idType);
+    if (draft.idNumber) setIdNumber(draft.idNumber);
+    if (draft.fileUrl) { setFileUrl(draft.fileUrl); setInitialFileUrl(draft.fileUrl); }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    saveDraft<Step4Draft>(4, { idType, idNumber, fileUrl });
+  }, [idType, idNumber, fileUrl]);
 
   function handleIdNumberChange(e: React.ChangeEvent<HTMLInputElement>) {
-    // Only allow digits
     const value = e.target.value.replace(/\D/g, "");
     setIdNumber(value);
   }
@@ -58,7 +78,7 @@ export function Step4Verification() {
   return (
     <form onSubmit={handleSubmit} className="grid gap-4 sm:grid-cols-2">
       <div className="flex flex-col gap-1.5">
-        <Label>ID type</Label>
+        <Label>ID type <span className="text-destructive">*</span></Label>
         <Select value={idType} onValueChange={(value) => setIdType(value as (typeof ID_TYPES)[number])}>
           <SelectTrigger>
             <SelectValue />
@@ -74,7 +94,7 @@ export function Step4Verification() {
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="idNumber">ID number</Label>
+        <Label htmlFor="idNumber">ID number <span className="text-destructive">*</span></Label>
         <Input
           id="idNumber"
           inputMode="numeric"
@@ -93,11 +113,13 @@ export function Step4Verification() {
         <p className="text-xs text-muted-foreground">Upload a clear photo or scan of your ID (images only)</p>
         <div className="max-w-48">
           <FileUpload
+            key={`id-doc-${initialFileUrl ?? "empty"}`}
             uploadType="id-document"
             label="Click to upload"
             accept="image/*"
             showPreview={false}
-            onUploaded={setFileUrl}
+            initialUrl={initialFileUrl}
+            onUploaded={(url) => setFileUrl(url)}
           />
         </div>
       </div>

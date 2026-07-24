@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -8,6 +8,14 @@ import { Label } from "@/components/ui/label";
 import { StepFooter } from "./step-footer";
 import { clearOnboardingArtisanId, getOnboardingArtisanId } from "./onboarding-storage";
 import { patchOnboardingStep, submitOnboarding } from "./onboarding-api";
+import { clearAllDrafts, loadDraft, saveDraft } from "./onboarding-draft";
+
+type Step8Draft = {
+  workingDays: string[];
+  startTime: string;
+  endTime: string;
+  emergencyAvailable: boolean;
+};
 
 const DAYS = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
 
@@ -19,6 +27,19 @@ export function Step8Availability() {
   const [emergencyAvailable, setEmergencyAvailable] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const draft = loadDraft<Step8Draft>(8);
+    if (!draft) return;
+    if (draft.workingDays?.length) setWorkingDays(draft.workingDays);
+    if (draft.startTime) setStartTime(draft.startTime);
+    if (draft.endTime) setEndTime(draft.endTime);
+    if (typeof draft.emergencyAvailable === "boolean") setEmergencyAvailable(draft.emergencyAvailable);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    saveDraft<Step8Draft>(8, { workingDays, startTime, endTime, emergencyAvailable });
+  }, [workingDays, startTime, endTime, emergencyAvailable]);
 
   function toggleDay(day: string) {
     setWorkingDays((current) =>
@@ -40,6 +61,7 @@ export function Step8Availability() {
       await patchOnboardingStep(artisanId, 8, { workingDays, startTime, endTime, emergencyAvailable });
       await submitOnboarding(artisanId);
       clearOnboardingArtisanId();
+      clearAllDrafts();
       router.push("/join-artisan/submitted");
     } catch (err) {
       setError((err as Error).message);

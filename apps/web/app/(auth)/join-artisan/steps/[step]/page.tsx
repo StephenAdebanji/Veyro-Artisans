@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { WizardShell } from "@/components/onboarding/wizard-shell";
+import { ResumeHydrator } from "@/components/onboarding/resume-hydrator";
 import { Step1BasicInfo } from "@/components/onboarding/step-1-basic-info";
 import { Step2Professional } from "@/components/onboarding/step-2-professional";
 import { Step3Location } from "@/components/onboarding/step-3-location";
@@ -22,10 +23,13 @@ const STEP_COMPONENTS = [
 
 export default async function JoinArtisanStepPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ step: string }>;
+  searchParams: Promise<{ resume?: string }>;
 }) {
   const { step } = await params;
+  const { resume } = await searchParams;
   const stepNumber = Number(step);
   const StepComponent = STEP_COMPONENTS[stepNumber - 1];
 
@@ -35,6 +39,10 @@ export default async function JoinArtisanStepPage({
 
   return (
     <WizardShell step={stepNumber}>
+      {/* When an artisan resumes mid-onboarding (redirected by the artisan
+          layout), the ?resume=<artisanId> param re-hydrates localStorage so
+          each step form can pick up where they left off on any device. */}
+      {resume && <ResumeHydrator artisanId={resume} />}
       <StepComponent />
     </WizardShell>
   );

@@ -1,18 +1,34 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Label } from "@/components/ui/label";
 import { FileUpload } from "@/components/shared/file-upload";
 import { StepFooter } from "./step-footer";
 import { getOnboardingArtisanId } from "./onboarding-storage";
 import { patchOnboardingStep } from "./onboarding-api";
+import { loadDraft, saveDraft } from "./onboarding-draft";
+
+type Step5Draft = {
+  utilityBillUrl: string | null;
+};
 
 export function Step5ProofOfAddress() {
   const router = useRouter();
   const [utilityBillUrl, setUtilityBillUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [initialBillUrl, setInitialBillUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    const draft = loadDraft<Step5Draft>(5);
+    if (!draft) return;
+    if (draft.utilityBillUrl) { setUtilityBillUrl(draft.utilityBillUrl); setInitialBillUrl(draft.utilityBillUrl); }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    saveDraft<Step5Draft>(5, { utilityBillUrl });
+  }, [utilityBillUrl]);
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -48,11 +64,13 @@ export function Step5ProofOfAddress() {
         </Label>
         <p className="text-xs text-muted-foreground">Electricity, water or gas bill (images only)</p>
         <FileUpload
+          key={`bill-${initialBillUrl ?? "empty"}`}
           uploadType="proof-of-address"
           label="Click to upload"
           accept="image/*"
           showPreview={false}
-          onUploaded={setUtilityBillUrl}
+          initialUrl={initialBillUrl}
+          onUploaded={(url) => setUtilityBillUrl(url)}
         />
       </div>
 

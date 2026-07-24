@@ -48,15 +48,15 @@ export function Step1BasicInfo() {
   return (
     <form onSubmit={handleSubmit} className="grid gap-4 sm:grid-cols-2" autoComplete="off">
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="firstName">First name</Label>
+        <Label htmlFor="firstName">First name <span className="text-destructive">*</span></Label>
         <Input id="firstName" placeholder="Emeka" value={form.firstName} onChange={update("firstName")} required />
       </div>
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="lastName">Last name</Label>
+        <Label htmlFor="lastName">Last name <span className="text-destructive">*</span></Label>
         <Input id="lastName" placeholder="Okafor" value={form.lastName} onChange={update("lastName")} required />
       </div>
       <div className="flex flex-col gap-1.5 sm:col-span-2">
-        <Label htmlFor="email">Email</Label>
+        <Label htmlFor="email">Email <span className="text-destructive">*</span></Label>
         <Input
           id="email"
           type="email"
@@ -68,11 +68,11 @@ export function Step1BasicInfo() {
         />
       </div>
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="phone">Phone</Label>
+        <Label htmlFor="phone">Phone <span className="text-destructive">*</span></Label>
         <Input id="phone" placeholder="+234..." value={form.phone} onChange={update("phone")} required />
       </div>
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="password">Password</Label>
+        <Label htmlFor="password">Password <span className="text-destructive">*</span></Label>
         <Input
           id="password"
           type="password"

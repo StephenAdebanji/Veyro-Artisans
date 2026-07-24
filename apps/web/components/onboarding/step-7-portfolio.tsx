@@ -1,19 +1,41 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { FileUpload } from "@/components/shared/file-upload";
 import { StepFooter } from "./step-footer";
 import { getOnboardingArtisanId } from "./onboarding-storage";
 import { patchOnboardingStep } from "./onboarding-api";
+import { loadDraft, saveDraft } from "./onboarding-draft";
+
+type Step7Draft = {
+  urls: Array<string | null>;
+};
 
 const SLOT_COUNT = 10;
+const EMPTY_SLOTS = Array<string | null>(SLOT_COUNT).fill(null);
 
 export function Step7Portfolio() {
   const router = useRouter();
-  const [urls, setUrls] = useState<Array<string | null>>(Array(SLOT_COUNT).fill(null));
+  const [urls, setUrls] = useState<Array<string | null>>(EMPTY_SLOTS);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  // Stable initial URLs per slot — set once from draft so FileUpload only
+  // remounts once (on draft load), not on every subsequent upload.
+  const [initialUrls, setInitialUrls] = useState<Array<string | null>>(EMPTY_SLOTS);
+
+  useEffect(() => {
+    const draft = loadDraft<Step7Draft>(7);
+    if (!draft?.urls) return;
+    const loaded = draft.urls.slice(0, SLOT_COUNT);
+    while (loaded.length < SLOT_COUNT) loaded.push(null);
+    setUrls(loaded);
+    setInitialUrls(loaded);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    saveDraft<Step7Draft>(7, { urls });
+  }, [urls]);
 
   function setSlot(index: number, url: string) {
     setUrls((current) => current.map((value, i) => (i === index ? url : value)));
@@ -52,14 +74,15 @@ export function Step7Portfolio() {
         <p className="mt-1 text-sm font-medium text-primary">{uploadedCount} photo{uploadedCount !== 1 ? "s" : ""} uploaded</p>
       )}
       <div className="mt-4 grid grid-cols-4 gap-3 sm:grid-cols-5">
-        {urls.map((_, index) => (
+        {initialUrls.map((initialUrl, index) => (
           <FileUpload
-            key={index}
+            key={`slot-${index}-${initialUrl ?? "empty"}`}
             uploadType="portfolio"
             label={`Photo ${index + 1}`}
             accept="image/*"
             maxSizeMb={5}
             showPreview={true}
+            initialUrl={initialUrl}
             onUploaded={(url) => setSlot(index, url)}
           />
         ))}

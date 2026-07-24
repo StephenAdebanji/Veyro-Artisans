@@ -23,6 +23,7 @@ export function FileUpload({
   accept = "image/*",
   maxSizeMb = MAX_SIZE_MB,
   showPreview = true,
+  initialUrl,
 }: {
   uploadType: UploadType;
   label: string;
@@ -30,10 +31,15 @@ export function FileUpload({
   accept?: string;
   maxSizeMb?: number;
   showPreview?: boolean;
+  initialUrl?: string | null;
 }) {
-  const [status, setStatus] = useState<"idle" | "uploading" | "done" | "error">("idle");
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [uploadedUrl, setUploadedUrl] = useState<string | null>(null);
+  const [status, setStatus] = useState<"idle" | "uploading" | "done" | "error">(
+    initialUrl ? "done" : "idle",
+  );
+  const [previewUrl, setPreviewUrl] = useState<string | null>(
+    initialUrl && showPreview ? initialUrl : null,
+  );
+  const [uploadedUrl, setUploadedUrl] = useState<string | null>(initialUrl ?? null);
   const [sizeError, setSizeError] = useState(false);
 
   async function handleChange(event: React.ChangeEvent<HTMLInputElement>) {

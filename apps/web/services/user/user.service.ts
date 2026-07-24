@@ -60,6 +60,8 @@ class UserService implements UserServicePort {
       location: profile.gpsLat !== null && profile.gpsLng !== null ? { lat: profile.gpsLat, lng: profile.gpsLng } : null,
       verificationStatus: (profile.verificationStatus ?? "UNVERIFIED") as "UNVERIFIED" | "VERIFIED" | "REJECTED",
       profilePhotoUrl: profile.profilePhotoUrl ?? null,
+      onboardingStatus: profile.onboardingStatus as "DRAFT" | "PENDING_REVIEW" | "ACTIVE" | "REJECTED" | "SUSPENDED",
+      onboardingStep: profile.onboardingStep,
     };
   }
 

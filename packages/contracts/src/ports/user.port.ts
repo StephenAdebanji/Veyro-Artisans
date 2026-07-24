@@ -44,6 +44,8 @@ export interface ArtisanProfileSummary {
   location: GeoPoint | null;
   verificationStatus: "UNVERIFIED" | "VERIFIED" | "REJECTED";
   profilePhotoUrl: string | null;
+  onboardingStatus: "DRAFT" | "PENDING_REVIEW" | "ACTIVE" | "REJECTED" | "SUSPENDED";
+  onboardingStep: number;
 }
 
 export interface FeaturedArtisan {

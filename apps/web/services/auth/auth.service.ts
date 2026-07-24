@@ -14,14 +14,15 @@ function toAuthenticatedUser(row: UserRow): AuthenticatedUser {
  * that's User Service, wired up via the UserRegistered event below. */
 class AuthService implements AuthServicePort {
   async register(input: RegisterUserInput): Promise<AuthenticatedUser> {
-    const existing = await authRepository.findByEmail(input.email);
+    const normalizedEmail = input.email.toLowerCase().trim();
+    const existing = await authRepository.findByEmail(normalizedEmail);
     if (existing) {
       throw new Error("Email already registered");
     }
 
     const passwordHash = await bcrypt.hash(input.password, PASSWORD_SALT_ROUNDS);
     const row = await authRepository.create({
-      email: input.email,
+      email: normalizedEmail,
       phone: input.phone,
       passwordHash,
       role: input.role,
@@ -39,7 +40,7 @@ class AuthService implements AuthServicePort {
   }
 
   async verifyCredentials(email: string, password: string): Promise<AuthenticatedUser | null> {
-    const row = await authRepository.findByEmail(email);
+    const row = await authRepository.findByEmail(email.toLowerCase().trim());
     if (!row) return null;
 
     const valid = await bcrypt.compare(password, row.passwordHash);
