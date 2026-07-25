@@ -18,6 +18,10 @@ export const authRepository = {
     return prisma.user.update({ where: { id: userId }, data });
   },
 
+  async setPassword(userId: string, passwordHash: string) {
+    return prisma.user.update({ where: { id: userId }, data: { passwordHash } });
+  },
+
   async countAll() {
     return prisma.user.count();
   },

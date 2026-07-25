@@ -2,10 +2,11 @@
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
-import { Eye, Pencil, Trash2, ShieldOff, ShieldCheck } from "lucide-react";
+import { Eye, Pencil, Trash2, ShieldOff, ShieldCheck, KeyRound } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { EditHomeownerModal, type EditHomeownerData } from "./edit-user-modal";
+import { ResetPasswordModal } from "./reset-password-modal";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 
 type HomeownerRow = {
@@ -32,6 +33,7 @@ function HomeownerActionRow({ row, index }: { row: HomeownerRow; index: number }
   const [data, setData] = useState(row);
   const [removed, setRemoved] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
+  const [resetOpen, setResetOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [pending, startTransition] = useTransition();
 
@@ -124,6 +126,14 @@ function HomeownerActionRow({ row, index }: { row: HomeownerRow; index: number }
             <Button
               variant="ghost"
               size="sm"
+              className="h-7 gap-1 text-xs text-primary"
+              onClick={() => setResetOpen(true)}
+            >
+              <KeyRound className="h-3.5 w-3.5" /> Reset password
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
               className={`h-7 gap-1 text-xs ${data.user.status === "SUSPENDED" ? "text-emerald-600" : "text-amber-600"}`}
               disabled={pending}
               onClick={toggleSuspend}
@@ -154,6 +164,13 @@ function HomeownerActionRow({ row, index }: { row: HomeownerRow; index: number }
         initial={editInitial}
         onClose={() => setEditOpen(false)}
         onSaved={handleSaved}
+      />
+      <ResetPasswordModal
+        open={resetOpen}
+        kind="homeowner"
+        id={data.id}
+        name={data.fullName ?? "this homeowner"}
+        onClose={() => setResetOpen(false)}
       />
     </>
   );
