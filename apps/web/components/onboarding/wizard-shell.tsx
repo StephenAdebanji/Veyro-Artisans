@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { OnboardingLogoutButton } from "./onboarding-logout-button";
 
 const STEP_LABELS = [
   "Basic info",
@@ -11,16 +12,25 @@ const STEP_LABELS = [
   "Availability",
 ];
 
-export function WizardShell({ step, children }: { step: number; children: React.ReactNode }) {
+export function WizardShell({
+  step,
+  showLogout,
+  children,
+}: {
+  step: number;
+  showLogout?: boolean;
+  children: React.ReactNode;
+}) {
   return (
     <div className="force-light flex min-h-screen flex-col bg-background text-foreground">
-      <header className="border-b px-6 py-4">
+      <header className="flex items-center justify-between border-b px-6 py-4">
         <Link href="/" className="flex items-center gap-2 font-bold">
           <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary text-sm text-primary-foreground">
             V
           </span>
           VEYRO
         </Link>
+        {showLogout && <OnboardingLogoutButton />}
       </header>
       <main className="flex-1 px-6 py-10">
         <div className="mx-auto max-w-2xl">

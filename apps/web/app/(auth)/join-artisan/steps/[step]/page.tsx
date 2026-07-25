@@ -57,7 +57,7 @@ export default async function JoinArtisanStepPage({
   // ──────────────────────────────────────────────────────────────────────────
 
   return (
-    <WizardShell step={stepNumber}>
+    <WizardShell step={stepNumber} showLogout={!!userId}>
       {resume && <ResumeHydrator artisanId={resume} />}
       <StepRenderer step={stepNumber} />
     </WizardShell>
