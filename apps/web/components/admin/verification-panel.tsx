@@ -318,6 +318,7 @@ export function VerificationPanel({
   const decided = verificationStatus === "VERIFIED" || verificationStatus === "REJECTED";
   const approvedCount = credentials.filter((c) => c.status === "APPROVED").length;
   const total = credentials.length;
+  const pendingCredentials = credentials.filter((c) => c.status === "PENDING");
 
   function handleCredentialReviewed(id: string, decision: "APPROVED" | "REJECTED") {
     setCredentials((prev) => prev.map((c) => (c.id === id ? { ...c, status: decision } : c)));
@@ -339,14 +340,16 @@ export function VerificationPanel({
       if (decision === "APPROVED") {
         setVerificationStatus("VERIFIED");
         setShowApproveDialog(false);
-        // Reflect mass-approval in the local credential list.
-        setCredentials((prev) => prev.map((c) => ({ ...c, status: "APPROVED" })));
+        // Only PENDING credentials were mass-approved; leave already-reviewed ones untouched.
+        setCredentials((prev) =>
+          prev.map((c) => (c.status === "PENDING" ? { ...c, status: "APPROVED" } : c)),
+        );
       } else if (decision === "REJECTED") {
         setVerificationStatus("REJECTED");
         setShowRejectDialog(false);
-        // Preserve already-approved credentials — only non-approved ones were mass-rejected.
+        // Only PENDING credentials were mass-rejected; leave already-reviewed ones untouched.
         setCredentials((prev) =>
-          prev.map((c) => (c.status === "APPROVED" ? c : { ...c, status: "REJECTED" })),
+          prev.map((c) => (c.status === "PENDING" ? { ...c, status: "REJECTED" } : c)),
         );
       } else {
         // REVOKED — reset everything locally.
@@ -361,14 +364,14 @@ export function VerificationPanel({
   return (
     <>
       <ApproveConfirmDialog
-        credentials={credentials}
+        credentials={pendingCredentials}
         open={showApproveDialog}
         loading={pending}
         onConfirm={() => submitDecision("APPROVED")}
         onCancel={() => setShowApproveDialog(false)}
       />
       <RejectReasonDialog
-        credentials={credentials}
+        credentials={pendingCredentials}
         open={showRejectDialog}
         loading={pending}
         onConfirm={(reason) => submitDecision("REJECTED", reason)}
