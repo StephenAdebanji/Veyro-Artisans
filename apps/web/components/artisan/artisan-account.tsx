@@ -46,6 +46,7 @@ interface ArtisanAccountProps {
     serviceRadiusKm?: number;
     city: string;
     state: string;
+    phone: string;
   };
   credentials: CredentialRecord[];
 }
@@ -157,6 +158,7 @@ export function ArtisanAccount({
 
   // Profile tab state
   const [bio, setBio] = useState(initialData.bio);
+  const [phone, setPhone] = useState(initialData.phone);
   const [serviceRadiusKm, setServiceRadiusKm] = useState(
     initialData.serviceRadiusKm?.toString() ?? "",
   );
@@ -198,6 +200,7 @@ export function ArtisanAccount({
           state: stateVal,
           country: selectedCountry?.name ?? "Nigeria",
           countryCode,
+          ...(phone.trim() ? { phone: phone.trim() } : {}),
         };
         if (serviceRadiusKm) body.serviceRadiusKm = Number(serviceRadiusKm);
         const res = await fetch(`/api/artisans/${artisanId}`, {
@@ -273,6 +276,7 @@ export function ArtisanAccount({
     setSaveError(null);
     if (tab === "profile") {
       setBio(initialData.bio);
+      setPhone(initialData.phone);
       setServiceRadiusKm(initialData.serviceRadiusKm?.toString() ?? "");
       setCountryCode("NG");
       setStateVal(initialData.state);
@@ -286,6 +290,7 @@ export function ArtisanAccount({
 
   const isProfileDirty =
     bio !== initialData.bio ||
+    phone !== initialData.phone ||
     lga !== initialData.city ||
     stateVal !== initialData.state ||
     serviceRadiusKm !== (initialData.serviceRadiusKm?.toString() ?? "");
@@ -367,6 +372,16 @@ export function ArtisanAccount({
                 <div className="flex flex-col gap-1.5">
                   <Label>Email address</Label>
                   <Input value={email} disabled className="cursor-not-allowed opacity-60" />
+                </div>
+                <div className="flex flex-col gap-1.5 sm:col-span-2">
+                  <Label htmlFor="phone">Phone number</Label>
+                  <Input
+                    id="phone"
+                    type="tel"
+                    placeholder="e.g. +2348012345678"
+                    value={phone}
+                    onChange={(e) => { setPhone(e.target.value); setSaved(false); }}
+                  />
                 </div>
                 <div className="flex flex-col gap-1.5 sm:col-span-2">
                   <Label>Service category</Label>

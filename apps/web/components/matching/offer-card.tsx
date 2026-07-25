@@ -23,12 +23,17 @@ export interface OfferData {
 interface OfferCardProps {
   offer: OfferData;
   onAccept: (matchId: string) => Promise<void>;
+  onReject?: (matchId: string, reason: string) => Promise<void>;
   disabled?: boolean;
   isTopRecommendation?: boolean;
 }
 
-export function OfferCard({ offer, onAccept, disabled, isTopRecommendation }: OfferCardProps) {
+export function OfferCard({ offer, onAccept, onReject, disabled, isTopRecommendation }: OfferCardProps) {
   const [accepting, setAccepting] = useState(false);
+  const [showRejectForm, setShowRejectForm] = useState(false);
+  const [rejectReason, setRejectReason] = useState("");
+  const [rejecting, setRejecting] = useState(false);
+  const [rejectError, setRejectError] = useState<string | null>(null);
 
   const initials = offer.artisanName
     .split(" ")
@@ -43,6 +48,24 @@ export function OfferCard({ offer, onAccept, disabled, isTopRecommendation }: Of
       await onAccept(offer.matchId);
     } finally {
       setAccepting(false);
+    }
+  }
+
+  async function handleRejectConfirm() {
+    if (!rejectReason.trim()) {
+      setRejectError("Please provide a reason for rejecting this offer.");
+      return;
+    }
+    setRejecting(true);
+    setRejectError(null);
+    try {
+      await onReject?.(offer.matchId, rejectReason.trim());
+      setShowRejectForm(false);
+      setRejectReason("");
+    } catch {
+      setRejectError("Failed to reject offer. Please try again.");
+    } finally {
+      setRejecting(false);
     }
   }
 
@@ -104,24 +127,68 @@ export function OfferCard({ offer, onAccept, disabled, isTopRecommendation }: Of
         <div className="shrink-0 text-right">
           <p className="text-xl font-bold">₦{offer.proposedPrice.toLocaleString()}</p>
           {offer.status === "PENDING" ? (
-            <Button
-              size="default"
-              className="mt-2"
-              onClick={handleAccept}
-              disabled={disabled || accepting}
-            >
-              {accepting ? "Accepting…" : "Accept"}
-            </Button>
+            <div className="mt-2 flex flex-col gap-1.5">
+              <Button
+                size="default"
+                onClick={handleAccept}
+                disabled={disabled || accepting || showRejectForm}
+              >
+                {accepting ? "Accepting…" : "Accept"}
+              </Button>
+              {onReject && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="border-destructive/40 text-destructive hover:bg-destructive/5 hover:text-destructive"
+                  onClick={() => { setShowRejectForm((v) => !v); setRejectError(null); }}
+                  disabled={disabled || accepting}
+                >
+                  Reject
+                </Button>
+              )}
+            </div>
           ) : (
             <Badge
               variant={offer.status === "ACCEPTED" ? "default" : "secondary"}
               className="mt-2"
             >
-              {offer.status === "ACCEPTED" ? "Accepted" : offer.status.toLowerCase()}
+              {offer.status === "ACCEPTED" ? "Accepted" : offer.status === "DECLINED" ? "Declined" : offer.status.toLowerCase()}
             </Badge>
           )}
         </div>
       </div>
+
+      {showRejectForm && offer.status === "PENDING" && (
+        <div className="mt-4 rounded-xl border border-destructive/20 bg-destructive/5 p-4">
+          <p className="mb-2 text-sm font-medium">Why are you rejecting this offer?</p>
+          <textarea
+            className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-destructive/30"
+            rows={3}
+            placeholder="e.g. Price is too high, I need someone sooner…"
+            value={rejectReason}
+            onChange={(e) => { setRejectReason(e.target.value); setRejectError(null); }}
+          />
+          {rejectError && <p className="mt-1 text-xs text-destructive">{rejectError}</p>}
+          <div className="mt-3 flex gap-2">
+            <Button
+              size="sm"
+              variant="destructive"
+              onClick={handleRejectConfirm}
+              disabled={rejecting || !rejectReason.trim()}
+            >
+              {rejecting ? "Rejecting…" : "Confirm reject"}
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => { setShowRejectForm(false); setRejectReason(""); setRejectError(null); }}
+              disabled={rejecting}
+            >
+              Cancel
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

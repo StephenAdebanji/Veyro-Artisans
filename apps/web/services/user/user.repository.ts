@@ -164,4 +164,10 @@ export const userRepository = {
     if (profile) await prisma.user.update({ where: { id: profile.userId }, data: { status: "SUSPENDED" } });
     await prisma.homeownerProfile.delete({ where: { id: homeownerId } });
   },
+
+  async updateUserPhoneByArtisanId(artisanId: string, phone: string) {
+    const profile = await prisma.artisanProfile.findUnique({ where: { id: artisanId }, select: { userId: true } });
+    if (!profile) return;
+    return prisma.user.update({ where: { id: profile.userId }, data: { phone } });
+  },
 };

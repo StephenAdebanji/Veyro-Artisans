@@ -47,8 +47,11 @@ export const matchingRepository = {
     return prisma.match.findMany({ where: { serviceRequestId }, orderBy: { createdAt: "asc" } });
   },
 
-  async updateMatchStatus(id: string, status: "ACCEPTED" | "DECLINED") {
-    return prisma.match.update({ where: { id }, data: { status, respondedAt: new Date() } });
+  async updateMatchStatus(id: string, status: "ACCEPTED" | "DECLINED", declineReason?: string) {
+    return prisma.match.update({
+      where: { id },
+      data: { status, respondedAt: new Date(), ...(declineReason ? { declineReason } : {}) },
+    });
   },
 
   async expirePendingMatches(serviceRequestId: string, exceptMatchId: string) {
@@ -180,7 +183,8 @@ export const matchingRepository = {
         category,
         status: "SEARCHING",
         createdAt: { gte: windowStart },
-        matches: { none: { artisanId: excludeArtisanId } },
+        // Exclude only if artisan has an active (non-declined) match — DECLINED means they can re-offer.
+        matches: { none: { artisanId: excludeArtisanId, status: { in: ["PENDING", "ACCEPTED", "EXPIRED"] } } },
       },
       orderBy: { createdAt: "desc" },
     });
@@ -188,7 +192,7 @@ export const matchingRepository = {
 
   async listPendingMatchesForArtisan(artisanId: string) {
     return prisma.match.findMany({
-      where: { artisanId, status: "PENDING" },
+      where: { artisanId, status: "PENDING", serviceRequest: { status: { not: "CANCELLED" } } },
       include: { serviceRequest: true },
       orderBy: { createdAt: "desc" },
     });

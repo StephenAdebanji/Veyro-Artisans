@@ -53,6 +53,9 @@ export function AvailableJobRow({ job }: { job: AvailableRequestSummary }) {
     <div className="rounded-xl border bg-card p-4">
       <div className="flex items-center justify-between">
         <div>
+          {job.homeownerName && (
+            <p className="text-xs font-medium text-muted-foreground">{job.homeownerName}</p>
+          )}
           <p className="font-semibold">{job.description || SKILL_LABELS[job.category]}</p>
           <p className="text-sm text-muted-foreground">
             {job.address} · {job.distanceKm.toFixed(1)} km away

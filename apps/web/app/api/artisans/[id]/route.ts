@@ -13,6 +13,7 @@ const editSchema = z.object({
   countryCode: z.string().optional(),
   lga: z.string().optional(),
   profilePhotoUrl: z.string().url().optional(),
+  phone: z.string().optional(),
 });
 
 /** Public artisan profile. residentialAddress/gps are stripped unless the
@@ -45,7 +46,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   const parsed = editSchema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
 
-  const { city, state, lga, country: _country, countryCode, ...rest } = parsed.data;
+  const { city, state, lga, country: _country, countryCode, phone, ...rest } = parsed.data;
 
   let gpsLat: number | undefined;
   let gpsLng: number | undefined;
@@ -61,7 +62,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     }
   }
 
-  await userService.updateArtisanSettings(id, { ...rest, city: lga ?? city, state, gpsLat, gpsLng });
+  await userService.updateArtisanSettings(id, { ...rest, city: lga ?? city, state, gpsLat, gpsLng, phone });
 
   return NextResponse.json({ ok: true });
 }

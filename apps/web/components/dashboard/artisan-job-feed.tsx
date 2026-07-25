@@ -45,7 +45,7 @@ export function ArtisanJobFeed({
 
       socket.on(
         "job:new",
-        (job: { id: string; description: string; address: string; budgetMin: number | null; budgetMax: number | null; lat?: number; lng?: number; distanceKm?: number; createdAt: string; category: SkillCategory }) => {
+        (job: { id: string; description: string; address: string; budgetMin: number | null; budgetMax: number | null; lat?: number; lng?: number; distanceKm?: number; createdAt: string; category: SkillCategory; homeownerName?: string | null }) => {
           if (!mounted) return;
 
           // Compute distance from artisan's GPS to the job location.
@@ -68,6 +68,7 @@ export function ArtisanJobFeed({
               budgetMax: job.budgetMax,
               distanceKm,
               createdAt: job.createdAt,
+              homeownerName: job.homeownerName ?? null,
             };
             return [newJob, ...prev];
           });

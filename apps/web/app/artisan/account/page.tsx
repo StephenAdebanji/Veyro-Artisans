@@ -14,7 +14,7 @@ export default async function ArtisanAccountPage() {
 
   const [profile, user, credentials] = await Promise.all([
     userService.getArtisanProfile(ref.id, { includePrivate: true }) as Promise<Record<string, unknown> | null>,
-    prisma.user.findUnique({ where: { id: userId }, select: { email: true } }),
+    prisma.user.findUnique({ where: { id: userId }, select: { email: true, phone: true } }),
     prisma.credential.findMany({
       where: { artisanId: ref.id },
       orderBy: { createdAt: "desc" },
@@ -42,6 +42,7 @@ export default async function ArtisanAccountPage() {
         serviceRadiusKm: profile.serviceRadiusKm ? Number(profile.serviceRadiusKm) : undefined,
         city: (profile.city as string | null) ?? "",
         state: (profile.state as string | null) ?? "",
+        phone: user.phone ?? "",
       }}
       credentials={credentials.map((c) => ({
         id: c.id,

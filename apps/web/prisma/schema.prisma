@@ -334,6 +334,7 @@ model Match {
   etaMinutes       Int
   distanceKm       Float
   status           MatchStatus    @default(PENDING)
+  declineReason    String?
   respondedAt      DateTime?
   createdAt        DateTime       @default(now())
 

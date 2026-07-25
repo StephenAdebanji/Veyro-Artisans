@@ -82,6 +82,7 @@ export interface AvailableRequestSummary {
   budgetMax: number | null;
   distanceKm: number;
   createdAt: string;
+  homeownerName: string | null;
 }
 
 export interface JobHistoryItem {

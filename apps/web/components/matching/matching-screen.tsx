@@ -137,6 +137,18 @@ export function MatchingScreen({
     );
   }
 
+  async function handleReject(matchId: string, reason: string) {
+    const res = await fetch(`/api/matches/${matchId}/respond`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ decision: "DECLINE", reason }),
+    });
+    if (!res.ok) throw new Error("Failed to reject offer");
+    setOffers((prev) =>
+      prev.map((o) => (o.matchId === matchId ? { ...o, status: "DECLINED" } : o)),
+    );
+  }
+
   async function handleCancel() {
     if (!confirm("Cancel this request?")) return;
     setCancelling(true);
@@ -369,6 +381,7 @@ export function MatchingScreen({
                           aiReason: ai?.semanticReason ?? offer.aiReason,
                         }}
                         onAccept={handleAccept}
+                        onReject={handleReject}
                         disabled={!!acceptedMatchId}
                         isTopRecommendation={offer.artisanId === topArtisanId && !!ai}
                       />

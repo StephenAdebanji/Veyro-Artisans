@@ -140,6 +140,7 @@ class UserService implements UserServicePort {
       gpsLat?: number;
       gpsLng?: number;
       profilePhotoUrl?: string;
+      phone?: string;
     },
   ): Promise<void> {
     await userRepository.updateArtisanProfile(artisanId, {
@@ -151,6 +152,9 @@ class UserService implements UserServicePort {
       gpsLng: data.gpsLng,
       profilePhotoUrl: data.profilePhotoUrl ?? undefined,
     });
+    if (data.phone) {
+      await userRepository.updateUserPhoneByArtisanId(artisanId, data.phone);
+    }
   }
 
   async submitArtisanOnboarding(artisanId: string): Promise<void> {

@@ -118,12 +118,13 @@ class MatchingService implements MatchingServicePort {
   async respondToOffer(
     matchId: string,
     decision: MatchDecision,
+    declineReason?: string,
   ): Promise<{ jobId: string | null }> {
     const match = await matchingRepository.findMatch(matchId);
     if (!match) throw new Error("Match not found");
 
     if (decision === "DECLINE") {
-      await matchingRepository.updateMatchStatus(matchId, "DECLINED");
+      await matchingRepository.updateMatchStatus(matchId, "DECLINED", declineReason);
       return { jobId: null };
     }
 
@@ -296,6 +297,14 @@ class MatchingService implements MatchingServicePort {
       filter.artisanId,
     );
 
+    // Fetch homeowner names in one batch.
+    const homeownerIds = [...new Set(requests.map((r) => r.homeownerId))];
+    const homeowners = await prisma.homeownerProfile.findMany({
+      where: { id: { in: homeownerIds } },
+      select: { id: true, fullName: true },
+    });
+    const nameById = new Map(homeowners.map((h) => [h.id, h.fullName]));
+
     const mapped = requests.map((request) => ({
       id: request.id,
       category: request.category,
@@ -307,6 +316,7 @@ class MatchingService implements MatchingServicePort {
         ? haversineKm(filter.near, { lat: request.lat, lng: request.lng })
         : 0,
       createdAt: request.createdAt.toISOString(),
+      homeownerName: nameById.get(request.homeownerId) ?? null,
     }));
 
     // If artisan has no GPS we can't filter by radius — show all in category.
