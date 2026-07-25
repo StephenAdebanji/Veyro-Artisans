@@ -154,6 +154,25 @@ export const matchingRepository = {
     });
   },
 
+  async expireStaleRequests(): Promise<number> {
+    const cutoff = new Date(Date.now() - MATCH_WINDOW_MS);
+    const stale = await prisma.serviceRequest.findMany({
+      where: { status: "SEARCHING", createdAt: { lt: cutoff } },
+      select: { id: true },
+    });
+    if (stale.length === 0) return 0;
+    const ids = stale.map((r) => r.id);
+    await prisma.match.updateMany({
+      where: { serviceRequestId: { in: ids }, status: "PENDING" },
+      data: { status: "EXPIRED" },
+    });
+    await prisma.serviceRequest.updateMany({
+      where: { id: { in: ids } },
+      data: { status: "CANCELLED" },
+    });
+    return stale.length;
+  },
+
   async listSearchingRequests(category: SkillCategory, excludeArtisanId: string) {
     const windowStart = new Date(Date.now() - MATCH_WINDOW_MS);
     return prisma.serviceRequest.findMany({
