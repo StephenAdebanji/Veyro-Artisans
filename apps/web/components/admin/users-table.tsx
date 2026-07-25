@@ -13,6 +13,7 @@ export type UserRow = {
   email: string;
   role: string;
   status: string;
+  location: string;
   createdAt: string;
   href?: string;
 };
@@ -65,7 +66,7 @@ export function UsersTable({ initialRows }: { initialRows: UserRow[] }) {
               <th className="py-3 font-medium">Email</th>
               <th className="py-3 font-medium">Role</th>
               <th className="py-3 font-medium">Status</th>
-              <th className="py-3 font-medium">Joined</th>
+              <th className="py-3 font-medium">Location</th>
               <th className="py-3 pr-4 text-right font-medium">Actions</th>
             </tr>
           </thead>
@@ -92,13 +93,7 @@ export function UsersTable({ initialRows }: { initialRows: UserRow[] }) {
                       {row.status.charAt(0) + row.status.slice(1).toLowerCase()}
                     </Badge>
                   </td>
-                  <td className="py-3 text-sm text-muted-foreground">
-                    {new Date(row.createdAt).toLocaleDateString("en-GB", {
-                      day: "numeric",
-                      month: "long",
-                      year: "numeric",
-                    })}
-                  </td>
+                  <td className="py-3 text-sm text-muted-foreground">{row.location}</td>
                   <td className="py-3 pr-4 text-right">
                     {row.href ? (
                       <Link href={row.href}>

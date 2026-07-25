@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { BarChart2, ShieldCheck, AlertTriangle, Settings, Hammer, Home, LogOut, History } from "lucide-react";
+import { BarChart2, ShieldCheck, AlertTriangle, Settings, Hammer, Home, LogOut, History, Users } from "lucide-react";
 import { auth, signOut } from "@/platform/auth-session";
 
 const NAV = [
   { href: "/admin/console", label: "Console", icon: BarChart2 },
+  { href: "/admin/users", label: "All Users", icon: Users },
   { href: "/admin/artisans", label: "Artisans", icon: Hammer },
   { href: "/admin/homeowners", label: "Homeowners", icon: Home },
   { href: "/admin/verifications", label: "Verifications", icon: ShieldCheck },

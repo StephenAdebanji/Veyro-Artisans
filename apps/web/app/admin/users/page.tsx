@@ -21,6 +21,7 @@ export default async function AdminUsersPage() {
       email: a.email,
       role: a.role,
       status: a.status,
+      location: "—",
       createdAt: a.createdAt.toISOString(),
     })),
     ...artisans.map((a) => ({
@@ -29,6 +30,7 @@ export default async function AdminUsersPage() {
       email: a.user.email,
       role: a.user.role,
       status: a.user.status,
+      location: [a.city, a.state].filter(Boolean).join(", ") || "—",
       createdAt: a.user.createdAt.toISOString(),
       href: `/admin/artisans/${a.id}`,
     })),
@@ -38,6 +40,7 @@ export default async function AdminUsersPage() {
       email: h.user.email,
       role: h.user.role,
       status: h.user.status,
+      location: [h.city, h.state].filter(Boolean).join(", ") || "—",
       createdAt: h.user.createdAt.toISOString(),
       href: `/admin/homeowners/${h.id}`,
     })),
