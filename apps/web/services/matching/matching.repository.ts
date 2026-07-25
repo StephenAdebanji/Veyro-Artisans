@@ -1,6 +1,8 @@
 import type { SkillCategory } from "@prisma/client";
 import { prisma } from "@/platform/prisma";
 
+const MATCH_WINDOW_MS = 10 * 60 * 1000; // must match matching-screen.tsx
+
 export const matchingRepository = {
   async createServiceRequest(data: {
     homeownerId: string;
@@ -153,8 +155,14 @@ export const matchingRepository = {
   },
 
   async listSearchingRequests(category: SkillCategory, excludeArtisanId: string) {
+    const windowStart = new Date(Date.now() - MATCH_WINDOW_MS);
     return prisma.serviceRequest.findMany({
-      where: { category, status: "SEARCHING", matches: { none: { artisanId: excludeArtisanId } } },
+      where: {
+        category,
+        status: "SEARCHING",
+        createdAt: { gte: windowStart },
+        matches: { none: { artisanId: excludeArtisanId } },
+      },
       orderBy: { createdAt: "desc" },
     });
   },
