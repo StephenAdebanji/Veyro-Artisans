@@ -22,11 +22,18 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   if (!(await requireAdmin())) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { id } = await params;
-  const body = (await req.json()) as { action: "suspend" | "activate" };
+  const body = (await req.json()) as { action?: "suspend" | "activate"; primarySkill?: string };
   const artisan = await userRepository.findArtisanProfileFull(id);
   if (!artisan) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
   if (body.action === "suspend") await userRepository.suspendUser(artisan.userId);
   else if (body.action === "activate") await userRepository.activateUser(artisan.userId);
+  else if (body.primarySkill) {
+    await userRepository.updateArtisanProfile(id, {
+      primarySkill: body.primarySkill as SkillCategory,
+    });
+  }
+
   return NextResponse.json({ ok: true });
 }
 

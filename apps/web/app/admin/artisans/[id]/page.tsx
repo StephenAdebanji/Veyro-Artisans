@@ -8,6 +8,7 @@ import { prisma } from "@/platform/prisma";
 import { Badge } from "@/components/ui/badge";
 import { SKILL_LABELS } from "@/components/shared/skill-labels";
 import { VerificationPanel } from "@/components/admin/verification-panel";
+import { ArtisanSkillEditor } from "@/components/admin/artisan-skill-editor";
 import type { SkillCategory } from "@veyro/contracts";
 
 const VERIFICATION_STYLE: Record<string, string> = {
@@ -104,10 +105,11 @@ export default async function AdminArtisanDetailPage({
           <dl className="space-y-2 text-sm">
             <div className="flex justify-between">
               <dt className="text-muted-foreground">Primary skill</dt>
-              <dd className="font-medium">
-                {artisan.primarySkill
-                  ? (SKILL_LABELS[artisan.primarySkill as SkillCategory] ?? artisan.primarySkill)
-                  : "—"}
+              <dd>
+                <ArtisanSkillEditor
+                  artisanId={artisan.id}
+                  currentSkill={artisan.primarySkill as SkillCategory | null}
+                />
               </dd>
             </div>
             <div className="flex justify-between">
