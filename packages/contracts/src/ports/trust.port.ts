@@ -32,6 +32,7 @@ export interface PendingCredentialSummary {
   artisanEmail: string | null;
   type: CredentialType;
   fileUrl: string;
+  status: string;
   createdAt: string;
 }
 

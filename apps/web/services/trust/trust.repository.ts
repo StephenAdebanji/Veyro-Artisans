@@ -37,17 +37,23 @@ export const trustRepository = {
   },
 
   async listPending() {
-    const credentials = await prisma.credential.findMany({
-      where: { status: "PENDING" },
-      orderBy: { createdAt: "asc" },
-    });
-
-    const artisanIds = [...new Set(credentials.map((c) => c.artisanId))];
+    // Drive the queue from artisan status, not credential status.
+    // An artisan stays in the queue until a final decision is recorded on their profile.
     const artisans = await prisma.artisanProfile.findMany({
-      where: { id: { in: artisanIds } },
+      where: { onboardingStatus: "PENDING_REVIEW", verificationStatus: "UNVERIFIED" },
       select: { id: true, firstName: true, lastName: true, user: { select: { email: true } } },
     });
+
+    if (artisans.length === 0) return [];
+
     const artisanMap = new Map(artisans.map((a) => [a.id, a]));
+
+    // Credential is in the `trust` schema with no Prisma relation to ArtisanProfile,
+    // so fetch credentials separately and join in memory.
+    const credentials = await prisma.credential.findMany({
+      where: { artisanId: { in: [...artisanMap.keys()] } },
+      orderBy: { createdAt: "asc" },
+    });
 
     return credentials.map((c) => ({
       ...c,
@@ -56,7 +62,9 @@ export const trustRepository = {
   },
 
   async countPending(): Promise<number> {
-    return prisma.credential.count({ where: { status: "PENDING" } });
+    return prisma.artisanProfile.count({
+      where: { onboardingStatus: "PENDING_REVIEW", verificationStatus: "UNVERIFIED" },
+    });
   },
 
   async getOrCreateTrustProfile(artisanId: string) {

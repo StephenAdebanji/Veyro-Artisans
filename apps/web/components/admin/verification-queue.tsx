@@ -13,6 +13,7 @@ import {
   ChevronUp,
   FileText,
   Eye,
+  AlertTriangle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -28,6 +29,12 @@ const TYPE_LABELS: Record<string, string> = {
   LICENSE: "Professional License",
   GOVERNMENT_ID: "Government ID",
   PROOF_OF_ADDRESS: "Proof of Address",
+};
+
+const STATUS_STYLE: Record<string, string> = {
+  APPROVED: "bg-emerald-100 text-emerald-700",
+  REJECTED: "bg-red-100 text-red-700",
+  PENDING: "bg-amber-100 text-amber-700",
 };
 
 function formatDateTime(iso: string) {
@@ -71,25 +78,22 @@ function groupByArtisan(items: PendingCredentialSummary[]): ArtisanGroup[] {
 
 function CredentialLine({
   credential,
-  onResolved,
+  onStatusChanged,
 }: {
   credential: PendingCredentialSummary;
-  onResolved: (id: string) => void;
+  onStatusChanged: (id: string, status: string) => void;
 }) {
   const [pending, startTransition] = useTransition();
-  const [done, setDone] = useState(false);
-
-  if (done) return null;
+  const isReviewed = credential.status !== "PENDING";
 
   function decide(decision: "APPROVED" | "REJECTED") {
     startTransition(async () => {
-      await fetch(`/api/trust/credentials/${credential.id}`, {
+      const res = await fetch(`/api/trust/credentials/${credential.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ decision }),
       });
-      setDone(true);
-      onResolved(credential.id);
+      if (res.ok) onStatusChanged(credential.id, decision);
     });
   }
 
@@ -100,6 +104,9 @@ function CredentialLine({
         <span className="text-sm font-medium">
           {TYPE_LABELS[credential.type] ?? credential.type}
         </span>
+        <Badge className={`text-xs ${STATUS_STYLE[credential.status] ?? "bg-muted text-muted-foreground"}`}>
+          {credential.status}
+        </Badge>
         <span className="text-xs text-muted-foreground">{formatDateTime(credential.createdAt)}</span>
       </div>
       <div className="flex items-center gap-2">
@@ -111,26 +118,30 @@ function CredentialLine({
         >
           <Eye className="h-3 w-3" /> View
         </a>
-        <Button
-          variant="outline"
-          size="sm"
-          className="h-7 border-green-300 text-green-700 hover:bg-green-50"
-          disabled={pending}
-          onClick={() => decide("APPROVED")}
-        >
-          {pending ? <Loader2 className="h-3 w-3 animate-spin" /> : <CheckCircle2 className="h-3 w-3" />}
-          Approve
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          className="h-7 border-red-300 text-red-700 hover:bg-red-50"
-          disabled={pending}
-          onClick={() => decide("REJECTED")}
-        >
-          {pending ? <Loader2 className="h-3 w-3 animate-spin" /> : <XCircle className="h-3 w-3" />}
-          Reject
-        </Button>
+        {!isReviewed && (
+          <>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 border-green-300 text-green-700 hover:bg-green-50"
+              disabled={pending}
+              onClick={() => decide("APPROVED")}
+            >
+              {pending ? <Loader2 className="h-3 w-3 animate-spin" /> : <CheckCircle2 className="h-3 w-3" />}
+              Approve
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 border-red-300 text-red-700 hover:bg-red-50"
+              disabled={pending}
+              onClick={() => decide("REJECTED")}
+            >
+              {pending ? <Loader2 className="h-3 w-3 animate-spin" /> : <XCircle className="h-3 w-3" />}
+              Reject
+            </Button>
+          </>
+        )}
       </div>
     </div>
   );
@@ -138,18 +149,19 @@ function CredentialLine({
 
 function ArtisanCard({
   group,
-  onResolved,
+  onStatusChanged,
 }: {
   group: ArtisanGroup;
-  onResolved: (credentialId: string) => void;
+  onStatusChanged: (credentialId: string, status: string) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
   const displayName = group.artisanName ?? `Artisan ${group.artisanId.slice(0, 8)}…`;
-  const count = group.credentials.length;
+  const total = group.credentials.length;
+  const pendingCount = group.credentials.filter((c) => c.status === "PENDING").length;
+  const allReviewed = pendingCount === 0;
 
   return (
     <div className="overflow-hidden rounded-xl border bg-card">
-      {/* Header — always visible */}
       <button
         type="button"
         onClick={() => setExpanded((v) => !v)}
@@ -162,8 +174,15 @@ function ArtisanCard({
               <span className="text-sm font-semibold">{displayName}</span>
             </div>
             <Badge variant="outline" className="text-xs">
-              {count} document{count !== 1 ? "s" : ""} pending
+              {total} document{total !== 1 ? "s" : ""}
             </Badge>
+            {allReviewed ? (
+              <Badge className="bg-amber-100 text-amber-700 text-xs">Awaiting final decision</Badge>
+            ) : (
+              <Badge className="bg-amber-100 text-amber-700 text-xs">
+                {pendingCount} pending
+              </Badge>
+            )}
           </div>
           {group.artisanEmail && (
             <a
@@ -195,12 +214,26 @@ function ArtisanCard({
         </div>
       </button>
 
-      {/* Expanded credentials */}
       {expanded && (
         <div className="flex flex-col gap-2 border-t px-4 pb-4 pt-3">
           {group.credentials.map((cred) => (
-            <CredentialLine key={cred.id} credential={cred} onResolved={onResolved} />
+            <CredentialLine key={cred.id} credential={cred} onStatusChanged={onStatusChanged} />
           ))}
+          {allReviewed && (
+            <div className="mt-1 flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs text-amber-800">
+              <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+              <span>
+                All documents have been individually reviewed.{" "}
+                <Link
+                  href={`/admin/artisans/${group.artisanId}?from=verifications`}
+                  className="font-semibold underline underline-offset-2"
+                >
+                  Go to their profile
+                </Link>{" "}
+                to record a final Approve or Reject decision.
+              </span>
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -210,8 +243,8 @@ function ArtisanCard({
 export function VerificationQueue({ initialItems }: { initialItems: PendingCredentialSummary[] }) {
   const [items, setItems] = useState(initialItems);
 
-  function handleResolved(id: string) {
-    setItems((prev) => prev.filter((i) => i.id !== id));
+  function handleStatusChanged(id: string, status: string) {
+    setItems((prev) => prev.map((i) => (i.id === id ? { ...i, status } : i)));
   }
 
   const groups = groupByArtisan(items);
@@ -228,7 +261,7 @@ export function VerificationQueue({ initialItems }: { initialItems: PendingCrede
   return (
     <div className="flex flex-col gap-3">
       {groups.map((group) => (
-        <ArtisanCard key={group.artisanId} group={group} onResolved={handleResolved} />
+        <ArtisanCard key={group.artisanId} group={group} onStatusChanged={handleStatusChanged} />
       ))}
     </div>
   );
