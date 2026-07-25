@@ -31,15 +31,16 @@ class AIRecommendationService implements AIRecommendationServicePort {
 
       const ranked: RankedArtisan[] = weightedResults.map(({ candidate, score, breakdown }) => {
         const s = semantic[candidate.artisanId];
-        // Final score: 60% formula + 40% Claude semantic relevance
-        const blended = s ? score * 0.6 + s.score * 0.4 : score;
+        const hasRealScore = s && !s.isFallback;
+        // Final score: 60% formula + 40% Claude semantic relevance (only when real)
+        const blended = hasRealScore ? score * 0.6 + s.score * 0.4 : score;
         return {
           artisanId: candidate.artisanId,
           artisanName: input.artisanNames?.[candidate.artisanId],
           score: blended,
           breakdown,
-          semanticScore: s ? Math.round(s.score * 100) : undefined,
-          semanticReason: s?.reason,
+          semanticScore: hasRealScore ? Math.round(s.score * 100) : undefined,
+          semanticReason: hasRealScore ? s.reason : undefined,
         };
       });
 

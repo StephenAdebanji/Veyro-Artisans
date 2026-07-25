@@ -5,6 +5,7 @@ import type { SkillCategory } from "@veyro/contracts";
 export interface SemanticResult {
   score: number; // 0-1
   reason: string;
+  isFallback?: boolean;
 }
 
 export async function getSemanticScore(
@@ -13,7 +14,7 @@ export async function getSemanticScore(
   artisanBio: string,
 ): Promise<SemanticResult> {
   if (!process.env.ANTHROPIC_API_KEY) {
-    return { score: 0.5, reason: "Matched by skill category" };
+    return { score: 0.5, reason: "Matched by skill category", isFallback: true };
   }
 
   const skillLabel = SKILL_LABELS[artisanSkill] ?? artisanSkill;
@@ -45,7 +46,7 @@ JSON format: {"score": <0-100>, "reason": "<one short sentence, max 12 words>"}`
       reason: parsed.reason ?? "Good skill match for this job",
     };
   } catch {
-    return { score: 0.5, reason: "Matched by skill category" };
+    return { score: 0.5, reason: "Matched by skill category", isFallback: true };
   }
 }
 
@@ -63,7 +64,7 @@ export async function scoreAllCandidates(
   jobDescription: string,
   candidates: Array<{ artisanId: string; skill: SkillCategory; bio: string }>,
 ): Promise<Record<string, SemanticResult>> {
-  const fallback: SemanticResult = { score: 0.5, reason: "Matched by skill category" };
+  const fallback: SemanticResult = { score: 0.5, reason: "Matched by skill category", isFallback: true };
   const out: Record<string, SemanticResult> = {};
 
   // Process in batches to avoid hammering the API with hundreds of parallel calls.
