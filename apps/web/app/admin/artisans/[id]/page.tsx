@@ -57,11 +57,11 @@ export default async function AdminArtisanDetailPage({
     <main className="mx-auto max-w-3xl flex-1 px-6 py-10">
       <div className="mb-6 flex items-center justify-between">
         <Link
-          href={from === "verifications" ? "/admin/verifications" : "/admin/artisans"}
+          href={from === "verifications" ? "/admin/verifications" : from === "users" ? "/admin/users" : "/admin/artisans"}
           className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft className="h-4 w-4" />
-          {from === "verifications" ? "Back to verification queue" : "Back to artisans"}
+          {from === "verifications" ? "Back to verification queue" : from === "users" ? "Back to All users" : "Back to artisans"}
         </Link>
         <ResetPasswordTrigger kind="artisan" id={artisan.id} name={fullName} />
       </div>

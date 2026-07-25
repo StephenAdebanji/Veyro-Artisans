@@ -20,13 +20,15 @@ const ROLE_STYLE: Record<string, string> = {
 
 export default async function AdminHomeownerDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ from?: string }>;
 }) {
   const session = await auth();
   if ((session?.user as { role?: string } | undefined)?.role !== "ADMIN") redirect("/sign-in");
 
-  const { id } = await params;
+  const [{ id }, { from }] = await Promise.all([params, searchParams]);
   const homeowner = await userRepository.findHomeownerProfileFull(id);
   if (!homeowner) notFound();
 
@@ -36,11 +38,11 @@ export default async function AdminHomeownerDetailPage({
     <main className="mx-auto max-w-2xl flex-1 px-6 py-10">
       <div className="mb-6 flex items-center justify-between">
         <Link
-          href="/admin/homeowners"
+          href={from === "users" ? "/admin/users" : "/admin/homeowners"}
           className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft className="h-4 w-4" />
-          Back to homeowners
+          {from === "users" ? "Back to All users" : "Back to homeowners"}
         </Link>
         <ResetPasswordTrigger kind="homeowner" id={homeowner.id} name={homeowner.fullName ?? "this homeowner"} />
       </div>

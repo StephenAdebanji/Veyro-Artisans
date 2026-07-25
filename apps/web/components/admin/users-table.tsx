@@ -73,7 +73,12 @@ function UserActionRow({ row, index }: { row: CombinedUserRow; index: number }) 
 
   const apiBase = data.kind === "artisan" ? "artisans" : data.kind === "homeowner" ? "homeowners" : null;
   const name = displayName(data);
-  const href = data.kind === "artisan" ? `/admin/artisans/${data.id}` : data.kind === "homeowner" ? `/admin/homeowners/${data.id}` : undefined;
+  const href =
+    data.kind === "artisan"
+      ? `/admin/artisans/${data.id}?from=users`
+      : data.kind === "homeowner"
+        ? `/admin/homeowners/${data.id}?from=users`
+        : undefined;
 
   function toggleSuspend() {
     if (!apiBase) return;
