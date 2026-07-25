@@ -6,6 +6,7 @@ import { userService } from "@/services/user/user.service";
 const registerSchema = z.object({
   fullName: z.string().min(1),
   email: z.string().email(),
+  phone: z.string().min(1).optional(),
   password: z.string().min(8),
 });
 
@@ -24,7 +25,7 @@ export async function POST(request: Request) {
       password: parsed.data.password,
       role: "HOMEOWNER",
     });
-    await userService.createHomeownerProfile(user.id, parsed.data.fullName);
+    await userService.createHomeownerProfile(user.id, parsed.data.fullName, parsed.data.phone);
 
     return NextResponse.json({ user }, { status: 201 });
   } catch (error) {

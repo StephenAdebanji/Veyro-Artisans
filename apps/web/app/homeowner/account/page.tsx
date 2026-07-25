@@ -9,26 +9,20 @@ export default async function HomeownerAccountPage() {
   const userId = (session?.user as { id?: string } | undefined)?.id;
   if (!userId) redirect("/sign-in");
 
-  const [homeowner, user] = await Promise.all([
+  const [homeowner, user, profile] = await Promise.all([
     userService.getHomeownerProfileByUserId(userId),
     prisma.user.findUnique({ where: { id: userId }, select: { email: true } }),
+    prisma.homeownerProfile.findUnique({ where: { userId } }),
   ]);
 
   if (!homeowner || !user) redirect("/sign-in");
-
-  const profile = await prisma.homeownerProfile.findUnique({ where: { userId } });
 
   return (
     <HomeownerAccount
       email={user.email}
       fullName={homeowner.fullName ?? ""}
       profilePhotoUrl={profile?.profilePhotoUrl ?? null}
-      initial={{
-        phone: profile?.phone ?? "",
-        address: profile?.address ?? "",
-        city: profile?.city ?? "",
-        state: profile?.state ?? "",
-      }}
+      initial={{ phone: profile?.phone ?? "" }}
     />
   );
 }

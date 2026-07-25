@@ -134,7 +134,14 @@ export default async function JobDetailPage({
             <StartChatButton homeownerId={job.homeownerId} jobId={job.id} />
           )}
 
-          <CallButton phone={homeowner.phone} />
+          {(job.status === "ACTIVE" || job.status === "IN_PROGRESS") ? (
+            <CallButton phone={homeowner.phone} />
+          ) : (
+            <span className="flex items-center justify-center gap-2 rounded-xl border bg-muted px-4 py-3 text-center text-xs font-medium text-muted-foreground">
+              <Phone className="h-4 w-4" />
+              Available after hire
+            </span>
+          )}
         </div>
       </div>
 

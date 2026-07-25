@@ -9,11 +9,12 @@ import { Label } from "@/components/ui/label";
 type FieldErrors = {
   fullName?: string;
   email?: string;
+  phone?: string;
   password?: string;
   general?: string;
 };
 
-function validate(fullName: string, email: string, password: string): FieldErrors {
+function validate(fullName: string, email: string, phone: string, password: string): FieldErrors {
   const errors: FieldErrors = {};
   if (!fullName.trim()) errors.fullName = "Full name is required.";
   if (!email.trim()) {
@@ -21,6 +22,7 @@ function validate(fullName: string, email: string, password: string): FieldError
   } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     errors.email = "Enter a valid email address (e.g. you@example.com).";
   }
+  if (!phone.trim()) errors.phone = "Phone number is required.";
   if (!password) {
     errors.password = "Password is required.";
   } else if (password.length < 8) {
@@ -33,13 +35,14 @@ export function SignUpForm() {
   const router = useRouter();
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState<FieldErrors>({});
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
-    const fieldErrors = validate(fullName, email, password);
+    const fieldErrors = validate(fullName, email, phone, password);
     if (Object.keys(fieldErrors).length > 0) {
       setErrors(fieldErrors);
       return;
@@ -50,7 +53,7 @@ export function SignUpForm() {
     const response = await fetch("/api/auth/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ fullName, email, password }),
+      body: JSON.stringify({ fullName, email, phone, password }),
     });
 
     if (!response.ok) {
@@ -93,6 +96,18 @@ export function SignUpForm() {
           onChange={(e) => { setEmail(e.target.value); setErrors((prev) => ({ ...prev, email: undefined })); }}
         />
         {errors.email && <p className="text-xs text-destructive">{errors.email}</p>}
+      </div>
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="phone">Phone number</Label>
+        <Input
+          id="phone"
+          type="tel"
+          autoComplete="tel"
+          placeholder="+234 800 000 0000"
+          value={phone}
+          onChange={(e) => { setPhone(e.target.value); setErrors((prev) => ({ ...prev, phone: undefined })); }}
+        />
+        {errors.phone && <p className="text-xs text-destructive">{errors.phone}</p>}
       </div>
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="password">Password</Label>

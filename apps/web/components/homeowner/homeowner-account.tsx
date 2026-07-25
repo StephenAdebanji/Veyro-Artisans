@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useTheme } from "next-themes";
 import {
   UserCircle,
@@ -16,11 +16,6 @@ import { ProfilePhotoUpload } from "@/components/shared/profile-photo-upload";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { SearchableSelect } from "@/components/ui/searchable-select";
-import { COUNTRIES, NIGERIAN_STATES, NIGERIAN_LGAS } from "@/lib/location-data";
-
-const COUNTRY_OPTIONS = COUNTRIES.map((c) => ({ value: c.code, label: c.name }));
-const NIGERIAN_STATE_OPTIONS = NIGERIAN_STATES.map((s) => ({ value: s, label: s }));
 
 type Tab = "profile" | "disputes" | "settings";
 
@@ -28,7 +23,7 @@ interface HomeownerAccountProps {
   email: string;
   fullName: string;
   profilePhotoUrl: string | null;
-  initial: { phone: string; address: string; city: string; state: string };
+  initial: { phone: string };
 }
 
 function LogDisputeSection() {
@@ -115,26 +110,9 @@ function AppearanceSection() {
 export function HomeownerAccount({ email, fullName, profilePhotoUrl, initial }: HomeownerAccountProps) {
   const [tab, setTab] = useState<Tab>("profile");
   const [phone, setPhone] = useState(initial.phone);
-  const [countryCode, setCountryCode] = useState("NG");
-  const [stateVal, setStateVal] = useState(initial.state);
-  const [lga, setLga] = useState(initial.city);
-  const [streetAddress, setStreetAddress] = useState(initial.address);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  const isNigeria = countryCode === "NG";
-  const lgaOptions = useMemo(
-    () => (stateVal && isNigeria ? (NIGERIAN_LGAS[stateVal] ?? []).map((l) => ({ value: l, label: l })) : []),
-    [stateVal, isNigeria],
-  );
-
-  function handleCountryChange(code: string) {
-    setCountryCode(code);
-    setStateVal("");
-    setLga("");
-    setSaved(false);
-  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -143,12 +121,7 @@ export function HomeownerAccount({ email, fullName, profilePhotoUrl, initial }: 
     const res = await fetch("/api/homeowners/profile", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        phone,
-        address: streetAddress,
-        city: lga || stateVal,
-        state: stateVal,
-      }),
+      body: JSON.stringify({ phone }),
     });
     setSaving(false);
     if (!res.ok) setError("Failed to save. Please try again.");
@@ -199,6 +172,7 @@ export function HomeownerAccount({ email, fullName, profilePhotoUrl, initial }: 
               </div>
             </section>
 
+            {/* Account info (read-only) */}
             <section className="rounded-xl border bg-card p-6">
               <h2 className="text-base font-semibold">Account information</h2>
               <p className="mt-0.5 text-sm text-muted-foreground">Your name and email cannot be changed.</p>
@@ -214,61 +188,23 @@ export function HomeownerAccount({ email, fullName, profilePhotoUrl, initial }: 
               </div>
             </section>
 
+            {/* Phone (editable) */}
             <form onSubmit={handleSubmit}>
               <section className="rounded-xl border bg-card p-6">
-                <h2 className="text-base font-semibold">Contact &amp; address</h2>
-                <p className="mt-0.5 text-sm text-muted-foreground">Used to match you with nearby artisans.</p>
-                <div className="mt-4 flex flex-col gap-4">
-                  <div className="flex flex-col gap-1.5">
-                    <Label htmlFor="phone">Phone number</Label>
-                    <Input id="phone" placeholder="+234 800 000 0000" value={phone} onChange={(e) => { setPhone(e.target.value); setSaved(false); }} autoComplete="tel" />
-                  </div>
-                  <div className="flex flex-col gap-1.5">
-                    <Label>Country of Residence</Label>
-                    <SearchableSelect
-                      options={COUNTRY_OPTIONS}
-                      value={countryCode}
-                      onChange={handleCountryChange}
-                      placeholder="Select country"
-                    />
-                  </div>
-                  <div className="flex flex-col gap-1.5">
-                    <Label>State</Label>
-                    {isNigeria ? (
-                      <SearchableSelect
-                        options={NIGERIAN_STATE_OPTIONS}
-                        value={stateVal}
-                        onChange={(s) => { setStateVal(s); setLga(""); setSaved(false); }}
-                        placeholder="Select state"
-                      />
-                    ) : (
-                      <Input
-                        placeholder="State / Province / Region"
-                        value={stateVal}
-                        onChange={(e) => { setStateVal(e.target.value); setSaved(false); }}
-                      />
-                    )}
-                  </div>
-                  {isNigeria && stateVal && (
-                    <div className="flex flex-col gap-1.5">
-                      <Label>Local Government Area</Label>
-                      <SearchableSelect
-                        options={lgaOptions}
-                        value={lga}
-                        onChange={(l) => { setLga(l); setSaved(false); }}
-                        placeholder="Select LGA"
-                      />
-                    </div>
-                  )}
-                  <div className="flex flex-col gap-1.5">
-                    <Label htmlFor="streetAddress">Address</Label>
-                    <Input
-                      id="streetAddress"
-                      placeholder="12 Adeola Odeku Street"
-                      value={streetAddress}
-                      onChange={(e) => { setStreetAddress(e.target.value); setSaved(false); }}
-                    />
-                  </div>
+                <h2 className="text-base font-semibold">Contact</h2>
+                <p className="mt-0.5 text-sm text-muted-foreground">
+                  Your phone number is shared with artisans only after they are hired.
+                </p>
+                <div className="mt-4 flex flex-col gap-1.5">
+                  <Label htmlFor="phone">Phone number</Label>
+                  <Input
+                    id="phone"
+                    type="tel"
+                    autoComplete="tel"
+                    placeholder="+234 800 000 0000"
+                    value={phone}
+                    onChange={(e) => { setPhone(e.target.value); setSaved(false); }}
+                  />
                 </div>
                 {error && <p className="mt-3 text-sm text-destructive">{error}</p>}
                 <div className="mt-4 flex items-center gap-3">

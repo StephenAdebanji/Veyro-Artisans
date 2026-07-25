@@ -19,8 +19,8 @@ import { userRepository } from "./user.repository";
  * synced via events (see services/user/user.events would live here if this
  * service subscribed to anything; today it only ever reads its own cache). */
 class UserService implements UserServicePort {
-  async createHomeownerProfile(userId: string, fullName?: string): Promise<string> {
-    const profile = await userRepository.createHomeownerProfile(userId, fullName);
+  async createHomeownerProfile(userId: string, fullName?: string, phone?: string): Promise<string> {
+    const profile = await userRepository.createHomeownerProfile(userId, fullName, phone);
     return profile.id;
   }
 
