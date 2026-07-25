@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/platform/auth-session";
 import { authRepository } from "@/services/auth/auth.repository";
 import { userRepository } from "@/services/user/user.repository";
-import { UsersTable, type UserRow } from "@/components/admin/users-table";
+import { UsersTable, type CombinedUserRow } from "@/components/admin/users-table";
 
 export default async function AdminUsersPage() {
   const session = await auth();
@@ -14,37 +14,50 @@ export default async function AdminUsersPage() {
     userRepository.listAllHomeowners(),
   ]);
 
-  const rows: UserRow[] = [
+  const withDates: { row: CombinedUserRow; createdAt: Date }[] = [
     ...admins.map((a) => ({
-      id: a.id,
-      name: a.name ?? "—",
-      email: a.email,
-      role: a.role,
-      status: a.status,
-      location: "—",
-      createdAt: a.createdAt.toISOString(),
+      row: {
+        kind: "admin" as const,
+        id: a.id,
+        name: a.name ?? "—",
+        email: a.email,
+        role: a.role,
+        status: a.status,
+        location: "—",
+      },
+      createdAt: a.createdAt,
     })),
     ...artisans.map((a) => ({
-      id: a.id,
-      name: [a.firstName, a.lastName].filter(Boolean).join(" ") || "—",
-      email: a.user.email,
-      role: a.user.role,
-      status: a.user.status,
-      location: [a.city, a.state].filter(Boolean).join(", ") || "—",
-      createdAt: a.user.createdAt.toISOString(),
-      href: `/admin/artisans/${a.id}`,
+      row: {
+        kind: "artisan" as const,
+        id: a.id,
+        firstName: a.firstName ?? "",
+        lastName: a.lastName ?? "",
+        email: a.user.email,
+        role: a.user.role,
+        status: a.user.status,
+        primarySkill: a.primarySkill,
+        location: [a.city, a.state].filter(Boolean).join(", ") || "—",
+      },
+      createdAt: a.user.createdAt,
     })),
     ...homeowners.map((h) => ({
-      id: h.id,
-      name: h.fullName ?? "—",
-      email: h.user.email,
-      role: h.user.role,
-      status: h.user.status,
-      location: [h.city, h.state].filter(Boolean).join(", ") || "—",
-      createdAt: h.user.createdAt.toISOString(),
-      href: `/admin/homeowners/${h.id}`,
+      row: {
+        kind: "homeowner" as const,
+        id: h.id,
+        fullName: h.fullName ?? "",
+        email: h.user.email,
+        role: h.user.role,
+        status: h.user.status,
+        location: [h.city, h.state].filter(Boolean).join(", ") || "—",
+      },
+      createdAt: h.user.createdAt,
     })),
-  ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  ];
+
+  const rows = withDates
+    .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+    .map(({ row }) => row);
 
   return (
     <main className="flex-1 px-6 py-10">
