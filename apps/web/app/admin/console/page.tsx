@@ -67,7 +67,7 @@ export default async function AdminConsolePage() {
       <p className="mt-1 text-sm text-muted-foreground">Platform overview — live data from all services.</p>
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <StatTile icon={Users}       value={totalUsers}      label="Total users"            href="/admin/artisans"      color="blue" />
+        <StatTile icon={Users}       value={totalUsers}      label="Total users"            href="/admin/users"         color="blue" />
         <StatTile icon={Hammer}      value={totalArtisans}   label="Total artisans"         href="/admin/artisans"      color="violet" />
         <StatTile icon={Home}        value={totalHomeowners} label="Total homeowners"        href="/admin/homeowners"    color="sky" />
         <StatTile icon={Briefcase}   value={activeRequests}  label="Active requests"                                   color="emerald" />

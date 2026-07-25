@@ -1,7 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowLeft, MapPin, Star, Briefcase, Shield, Clock } from "lucide-react";
+import { ArrowLeft, MapPin, Star, Briefcase, Shield, Clock, Calendar } from "lucide-react";
 import { auth } from "@/platform/auth-session";
 import { userRepository } from "@/services/user/user.repository";
 import { prisma } from "@/platform/prisma";
@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { SKILL_LABELS } from "@/components/shared/skill-labels";
 import { VerificationPanel } from "@/components/admin/verification-panel";
 import { ArtisanSkillEditor } from "@/components/admin/artisan-skill-editor";
+import { ResetPasswordTrigger } from "@/components/admin/reset-password-trigger";
 import type { SkillCategory } from "@veyro/contracts";
 
 const VERIFICATION_STYLE: Record<string, string> = {
@@ -54,13 +55,16 @@ export default async function AdminArtisanDetailPage({
 
   return (
     <main className="mx-auto max-w-3xl flex-1 px-6 py-10">
-      <Link
-        href={from === "verifications" ? "/admin/verifications" : "/admin/artisans"}
-        className="mb-6 flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground"
-      >
-        <ArrowLeft className="h-4 w-4" />
-        {from === "verifications" ? "Back to verification queue" : "Back to artisans"}
-      </Link>
+      <div className="mb-6 flex items-center justify-between">
+        <Link
+          href={from === "verifications" ? "/admin/verifications" : "/admin/artisans"}
+          className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          {from === "verifications" ? "Back to verification queue" : "Back to artisans"}
+        </Link>
+        <ResetPasswordTrigger kind="artisan" id={artisan.id} name={fullName} />
+      </div>
 
       {/* Header */}
       <div className="flex items-start gap-5 rounded-2xl border bg-card p-6">
@@ -93,6 +97,14 @@ export default async function AdminArtisanDetailPage({
               <MapPin className="h-3.5 w-3.5" /> {location}
             </p>
           )}
+          <p className="mt-1 flex items-center gap-1 text-sm text-muted-foreground">
+            <Calendar className="h-3.5 w-3.5" /> Joined{" "}
+            {new Date(artisan.user.createdAt).toLocaleDateString("en-GB", {
+              day: "numeric",
+              month: "long",
+              year: "numeric",
+            })}
+          </p>
         </div>
       </div>
 

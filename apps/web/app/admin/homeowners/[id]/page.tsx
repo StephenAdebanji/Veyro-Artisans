@@ -5,6 +5,7 @@ import { ArrowLeft, MapPin, Mail, Calendar, Shield } from "lucide-react";
 import { auth } from "@/platform/auth-session";
 import { userRepository } from "@/services/user/user.repository";
 import { Badge } from "@/components/ui/badge";
+import { ResetPasswordTrigger } from "@/components/admin/reset-password-trigger";
 
 const STATUS_STYLE: Record<string, string> = {
   ACTIVE: "bg-emerald-100 text-emerald-700",
@@ -33,13 +34,16 @@ export default async function AdminHomeownerDetailPage({
 
   return (
     <main className="mx-auto max-w-2xl flex-1 px-6 py-10">
-      <Link
-        href="/admin/homeowners"
-        className="mb-6 flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground"
-      >
-        <ArrowLeft className="h-4 w-4" />
-        Back to homeowners
-      </Link>
+      <div className="mb-6 flex items-center justify-between">
+        <Link
+          href="/admin/homeowners"
+          className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back to homeowners
+        </Link>
+        <ResetPasswordTrigger kind="homeowner" id={homeowner.id} name={homeowner.fullName ?? "this homeowner"} />
+      </div>
 
       {/* Header */}
       <div className="flex items-start gap-5 rounded-2xl border bg-card p-6">

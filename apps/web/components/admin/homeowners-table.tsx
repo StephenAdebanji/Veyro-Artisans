@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
-import { Eye, Pencil, Trash2, ShieldOff, ShieldCheck, KeyRound } from "lucide-react";
+import { Eye, Pencil, Trash2, ShieldOff, ShieldCheck, KeyRound, Search } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { EditHomeownerModal, type EditHomeownerData } from "./edit-user-modal";
 import { ResetPasswordModal } from "./reset-password-modal";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
@@ -177,30 +178,60 @@ function HomeownerActionRow({ row, index }: { row: HomeownerRow; index: number }
 }
 
 export function HomeownersTable({ initialRows }: { initialRows: HomeownerRow[] }) {
+  const [query, setQuery] = useState("");
+
+  const rows = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return initialRows;
+    return initialRows.filter((row) => {
+      const name = (row.fullName ?? "").toLowerCase();
+      return name.includes(q) || row.user.email.toLowerCase().includes(q);
+    });
+  }, [initialRows, query]);
+
   if (initialRows.length === 0) {
     return <p className="p-6 text-sm text-muted-foreground">No homeowners registered yet.</p>;
   }
 
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="border-b text-left text-xs uppercase text-muted-foreground">
-            <th className="py-3 pl-4 font-medium">#</th>
-            <th className="py-3 font-medium">Name</th>
-            <th className="py-3 font-medium">Email</th>
-            <th className="py-3 font-medium">Role</th>
-            <th className="py-3 font-medium">Status</th>
-            <th className="py-3 font-medium">Location</th>
-            <th className="py-3 pr-4 text-right font-medium">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {initialRows.map((row, i) => (
-            <HomeownerActionRow key={row.id} row={row} index={i + 1} />
-          ))}
-        </tbody>
-      </table>
+    <div>
+      <div className="border-b p-4">
+        <div className="relative max-w-xs">
+          <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search by name or email…"
+            className="pl-8"
+          />
+        </div>
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b text-left text-xs uppercase text-muted-foreground">
+              <th className="py-3 pl-4 font-medium">#</th>
+              <th className="py-3 font-medium">Name</th>
+              <th className="py-3 font-medium">Email</th>
+              <th className="py-3 font-medium">Role</th>
+              <th className="py-3 font-medium">Status</th>
+              <th className="py-3 font-medium">Location</th>
+              <th className="py-3 pr-4 text-right font-medium">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.length === 0 ? (
+              <tr>
+                <td colSpan={7} className="py-6 text-center text-sm text-muted-foreground">
+                  No homeowners match your search.
+                </td>
+              </tr>
+            ) : (
+              rows.map((row, i) => <HomeownerActionRow key={row.id} row={row} index={i + 1} />)
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
