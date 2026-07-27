@@ -39,15 +39,20 @@ const VERIFICATION_STYLE: Record<string, string> = {
   REJECTED: "bg-red-100 text-red-700",
 };
 
-function ArtisanActionRow({ row, index }: { row: ArtisanRow; index: number }) {
+function ArtisanActionRow({
+  row,
+  index,
+  onDeleted,
+}: {
+  row: ArtisanRow;
+  index: number;
+  onDeleted: (id: string) => void;
+}) {
   const [data, setData] = useState(row);
-  const [removed, setRemoved] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [resetOpen, setResetOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [pending, startTransition] = useTransition();
-
-  if (removed) return null;
 
   async function toggleSuspend() {
     const action = data.user.status === "SUSPENDED" ? "activate" : "suspend";
@@ -70,7 +75,7 @@ function ArtisanActionRow({ row, index }: { row: ArtisanRow; index: number }) {
     startTransition(async () => {
       await fetch(`/api/admin/artisans/${data.id}`, { method: "DELETE" });
       setConfirmDelete(false);
-      setRemoved(true);
+      onDeleted(data.id);
     });
   }
 
@@ -193,18 +198,23 @@ function ArtisanActionRow({ row, index }: { row: ArtisanRow; index: number }) {
 }
 
 export function ArtisansTable({ initialRows }: { initialRows: ArtisanRow[] }) {
+  const [allRows, setAllRows] = useState(initialRows);
   const [query, setQuery] = useState("");
+
+  function handleDeleted(id: string) {
+    setAllRows((prev) => prev.filter((r) => r.id !== id));
+  }
 
   const rows = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return initialRows;
-    return initialRows.filter((row) => {
+    if (!q) return allRows;
+    return allRows.filter((row) => {
       const name = [row.firstName, row.lastName].filter(Boolean).join(" ").toLowerCase();
       return name.includes(q) || row.user.email.toLowerCase().includes(q);
     });
-  }, [initialRows, query]);
+  }, [allRows, query]);
 
-  if (initialRows.length === 0) {
+  if (allRows.length === 0) {
     return <p className="p-6 text-sm text-muted-foreground">No artisans registered yet.</p>;
   }
 
@@ -242,7 +252,9 @@ export function ArtisansTable({ initialRows }: { initialRows: ArtisanRow[] }) {
                 </td>
               </tr>
             ) : (
-              rows.map((row, i) => <ArtisanActionRow key={row.id} row={row} index={i + 1} />)
+              rows.map((row, i) => (
+                <ArtisanActionRow key={row.id} row={row} index={i + 1} onDeleted={handleDeleted} />
+              ))
             )}
           </tbody>
         </table>

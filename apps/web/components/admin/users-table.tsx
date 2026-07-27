@@ -61,15 +61,20 @@ function displayName(row: CombinedUserRow): string {
   return row.name || "—";
 }
 
-function UserActionRow({ row, index }: { row: CombinedUserRow; index: number }) {
+function UserActionRow({
+  row,
+  index,
+  onDeleted,
+}: {
+  row: CombinedUserRow;
+  index: number;
+  onDeleted: (kind: CombinedUserRow["kind"], id: string) => void;
+}) {
   const [data, setData] = useState(row);
-  const [removed, setRemoved] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [resetOpen, setResetOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [pending, startTransition] = useTransition();
-
-  if (removed) return null;
 
   const apiBase = data.kind === "artisan" ? "artisans" : data.kind === "homeowner" ? "homeowners" : null;
   const name = displayName(data);
@@ -100,7 +105,7 @@ function UserActionRow({ row, index }: { row: CombinedUserRow; index: number }) 
     startTransition(async () => {
       await fetch(`/api/admin/${apiBase}/${data.id}`, { method: "DELETE" });
       setConfirmDelete(false);
-      setRemoved(true);
+      onDeleted(data.kind, data.id);
     });
   }
 
@@ -257,18 +262,23 @@ function UserActionRow({ row, index }: { row: CombinedUserRow; index: number }) 
 }
 
 export function UsersTable({ initialRows }: { initialRows: CombinedUserRow[] }) {
+  const [allRows, setAllRows] = useState(initialRows);
   const [query, setQuery] = useState("");
+
+  function handleDeleted(kind: CombinedUserRow["kind"], id: string) {
+    setAllRows((prev) => prev.filter((r) => !(r.kind === kind && r.id === id)));
+  }
 
   const rows = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return initialRows;
-    return initialRows.filter((row) => {
+    if (!q) return allRows;
+    return allRows.filter((row) => {
       const name = displayName(row).toLowerCase();
       return name.includes(q) || row.email.toLowerCase().includes(q);
     });
-  }, [initialRows, query]);
+  }, [allRows, query]);
 
-  if (initialRows.length === 0) {
+  if (allRows.length === 0) {
     return <p className="p-6 text-sm text-muted-foreground">No users registered yet.</p>;
   }
 
@@ -306,7 +316,9 @@ export function UsersTable({ initialRows }: { initialRows: CombinedUserRow[] }) 
                 </td>
               </tr>
             ) : (
-              rows.map((row, i) => <UserActionRow key={`${row.kind}-${row.id}`} row={row} index={i + 1} />)
+              rows.map((row, i) => (
+                <UserActionRow key={`${row.kind}-${row.id}`} row={row} index={i + 1} onDeleted={handleDeleted} />
+              ))
             )}
           </tbody>
         </table>

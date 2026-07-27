@@ -30,15 +30,20 @@ const ROLE_STYLE: Record<string, string> = {
   HOMEOWNER: "bg-sky-100 text-sky-700",
 };
 
-function HomeownerActionRow({ row, index }: { row: HomeownerRow; index: number }) {
+function HomeownerActionRow({
+  row,
+  index,
+  onDeleted,
+}: {
+  row: HomeownerRow;
+  index: number;
+  onDeleted: (id: string) => void;
+}) {
   const [data, setData] = useState(row);
-  const [removed, setRemoved] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [resetOpen, setResetOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [pending, startTransition] = useTransition();
-
-  if (removed) return null;
 
   async function toggleSuspend() {
     const action = data.user.status === "SUSPENDED" ? "activate" : "suspend";
@@ -61,7 +66,7 @@ function HomeownerActionRow({ row, index }: { row: HomeownerRow; index: number }
     startTransition(async () => {
       await fetch(`/api/admin/homeowners/${data.id}`, { method: "DELETE" });
       setConfirmDelete(false);
-      setRemoved(true);
+      onDeleted(data.id);
     });
   }
 
@@ -178,18 +183,23 @@ function HomeownerActionRow({ row, index }: { row: HomeownerRow; index: number }
 }
 
 export function HomeownersTable({ initialRows }: { initialRows: HomeownerRow[] }) {
+  const [allRows, setAllRows] = useState(initialRows);
   const [query, setQuery] = useState("");
+
+  function handleDeleted(id: string) {
+    setAllRows((prev) => prev.filter((r) => r.id !== id));
+  }
 
   const rows = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return initialRows;
-    return initialRows.filter((row) => {
+    if (!q) return allRows;
+    return allRows.filter((row) => {
       const name = (row.fullName ?? "").toLowerCase();
       return name.includes(q) || row.user.email.toLowerCase().includes(q);
     });
-  }, [initialRows, query]);
+  }, [allRows, query]);
 
-  if (initialRows.length === 0) {
+  if (allRows.length === 0) {
     return <p className="p-6 text-sm text-muted-foreground">No homeowners registered yet.</p>;
   }
 
@@ -227,7 +237,9 @@ export function HomeownersTable({ initialRows }: { initialRows: HomeownerRow[] }
                 </td>
               </tr>
             ) : (
-              rows.map((row, i) => <HomeownerActionRow key={row.id} row={row} index={i + 1} />)
+              rows.map((row, i) => (
+                <HomeownerActionRow key={row.id} row={row} index={i + 1} onDeleted={handleDeleted} />
+              ))
             )}
           </tbody>
         </table>
