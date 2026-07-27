@@ -12,9 +12,6 @@ export default async function AdminArtisansPage() {
   return (
     <main className="flex-1 px-6 py-10">
       <h1 className="text-2xl font-bold">Artisans</h1>
-      <p className="mt-1 text-sm text-muted-foreground">
-        All registered artisans — {artisans.length} total
-      </p>
       <div className="mt-6 rounded-xl border bg-card">
         <ArtisansTable initialRows={artisans.map((a) => ({ ...a, profilePhotoUrl: a.profilePhotoUrl ?? null }))} />
       </div>

@@ -75,7 +75,10 @@ function ArtisanActionRow({
     startTransition(async () => {
       await fetch(`/api/admin/artisans/${data.id}`, { method: "DELETE" });
       setConfirmDelete(false);
-      onDeleted(data.id);
+      // Let the dialog's exit animation finish before the row (and dialog) unmount,
+      // otherwise the fixed full-screen overlay can be orphaned mid-fade and swallow
+      // the next click on the page.
+      setTimeout(() => onDeleted(data.id), 200);
     });
   }
 
@@ -221,6 +224,9 @@ export function ArtisansTable({ initialRows }: { initialRows: ArtisanRow[] }) {
   return (
     <div>
       <div className="border-b p-4">
+        <p className="mb-3 text-sm text-muted-foreground">
+          All registered artisans — {allRows.length} total
+        </p>
         <div className="relative max-w-xs">
           <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input

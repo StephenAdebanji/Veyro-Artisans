@@ -29,4 +29,8 @@ export const authRepository = {
   async listByRole(role: Role) {
     return prisma.user.findMany({ where: { role }, orderBy: { createdAt: "desc" } });
   },
+
+  async countByRole(role: Role) {
+    return prisma.user.count({ where: { role } });
+  },
 };

@@ -50,9 +50,9 @@ function StatTile({
 }
 
 export default async function AdminConsolePage() {
-  const [totalUsers, verifiedArtisans, totalArtisans, totalHomeowners, activeRequests, openDisputes, pending] =
+  const [totalAdmins, verifiedArtisans, totalArtisans, totalHomeowners, activeRequests, openDisputes, pending] =
     await Promise.all([
-      authRepository.countAll(),
+      authRepository.countByRole("ADMIN"),
       userRepository.countVerifiedArtisans(),
       userRepository.countAllArtisans(),
       userRepository.countAllHomeowners(),
@@ -60,6 +60,12 @@ export default async function AdminConsolePage() {
       matchingRepository.countOpenDisputes(),
       trustService.listPendingCredentials(),
     ]);
+
+  // Deleting an artisan/homeowner suspends their User row rather than removing
+  // it (jobs/reviews/disputes still reference that id), so a raw User count
+  // never reflects deletions. Total users must instead match what the
+  // Artisans/Homeowners/All Users pages actually show: admins + profiles.
+  const totalUsers = totalAdmins + totalArtisans + totalHomeowners;
 
   return (
     <main className="flex-1 px-6 py-10">

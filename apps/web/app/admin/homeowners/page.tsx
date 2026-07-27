@@ -12,9 +12,6 @@ export default async function AdminHomeownersPage() {
   return (
     <main className="flex-1 px-6 py-10">
       <h1 className="text-2xl font-bold">Homeowners</h1>
-      <p className="mt-1 text-sm text-muted-foreground">
-        All registered homeowners — {homeowners.length} total
-      </p>
       <div className="mt-6 rounded-xl border bg-card">
         <HomeownersTable initialRows={homeowners.map((h) => ({ ...h, profilePhotoUrl: h.profilePhotoUrl ?? null }))} />
       </div>

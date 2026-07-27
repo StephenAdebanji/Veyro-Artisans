@@ -105,7 +105,10 @@ function UserActionRow({
     startTransition(async () => {
       await fetch(`/api/admin/${apiBase}/${data.id}`, { method: "DELETE" });
       setConfirmDelete(false);
-      onDeleted(data.kind, data.id);
+      // Let the dialog's exit animation finish before the row (and dialog) unmount,
+      // otherwise the fixed full-screen overlay can be orphaned mid-fade and swallow
+      // the next click on the page.
+      setTimeout(() => onDeleted(data.kind, data.id), 200);
     });
   }
 
@@ -285,6 +288,9 @@ export function UsersTable({ initialRows }: { initialRows: CombinedUserRow[] }) 
   return (
     <div>
       <div className="border-b p-4">
+        <p className="mb-3 text-sm text-muted-foreground">
+          All registered users across the platform — {allRows.length} total
+        </p>
         <div className="relative max-w-xs">
           <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
