@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { auth } from "@/platform/auth-session";
 import { trustService } from "@/services/trust/trust.service";
 
@@ -11,5 +12,6 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
 
   const { id: artisanId } = await params;
   await trustService.verifyIdentity(artisanId, adminUser.id ?? "admin");
+  revalidatePath("/admin", "layout");
   return NextResponse.json({ ok: true });
 }

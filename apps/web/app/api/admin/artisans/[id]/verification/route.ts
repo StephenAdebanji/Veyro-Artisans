@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { auth } from "@/platform/auth-session";
 import { trustService } from "@/services/trust/trust.service";
 import { trustRepository } from "@/services/trust/trust.repository";
@@ -60,5 +61,6 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     );
   }
 
+  revalidatePath("/admin", "layout");
   return NextResponse.json({ ok: true });
 }

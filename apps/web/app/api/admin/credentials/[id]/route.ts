@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { auth } from "@/platform/auth-session";
 import { trustService } from "@/services/trust/trust.service";
 import { prisma } from "@/platform/prisma";
@@ -21,6 +22,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   }
 
   await trustService.reviewCredential(id, body.decision, admin.id ?? "admin");
+  revalidatePath("/admin", "layout");
   return NextResponse.json({ ok: true });
 }
 
@@ -30,5 +32,6 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
 
   const { id } = await params;
   await prisma.credential.delete({ where: { id } });
+  revalidatePath("/admin", "layout");
   return NextResponse.json({ ok: true });
 }

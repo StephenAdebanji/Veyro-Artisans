@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { auth } from "@/platform/auth-session";
 import { matchingRepository } from "@/services/matching/matching.repository";
@@ -17,5 +18,6 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
 
   await matchingRepository.resolveDispute(id, parsed.data.resolution);
+  revalidatePath("/admin", "layout");
   return NextResponse.json({ ok: true });
 }

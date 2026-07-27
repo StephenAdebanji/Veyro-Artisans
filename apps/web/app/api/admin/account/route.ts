@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { auth } from "@/platform/auth-session";
 import { prisma } from "@/platform/prisma";
@@ -37,5 +38,6 @@ export async function PATCH(request: Request) {
     select: { name: true, email: true },
   });
 
+  revalidatePath("/admin", "layout");
   return NextResponse.json(updated);
 }

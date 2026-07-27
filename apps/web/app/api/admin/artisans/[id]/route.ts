@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { auth } from "@/platform/auth-session";
 import { userRepository } from "@/services/user/user.repository";
@@ -34,6 +35,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     });
   }
 
+  revalidatePath("/admin", "layout");
   return NextResponse.json({ ok: true });
 }
 
@@ -76,6 +78,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     }),
   ]);
 
+  revalidatePath("/admin", "layout");
   return NextResponse.json({ ok: true });
 }
 
@@ -83,5 +86,6 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
   if (!(await requireAdmin())) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { id } = await params;
   await userRepository.deleteArtisan(id);
+  revalidatePath("/admin", "layout");
   return NextResponse.json({ ok: true });
 }

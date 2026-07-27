@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { auth } from "@/platform/auth-session";
 import { userRepository } from "@/services/user/user.repository";
@@ -19,6 +20,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   if (!homeowner) return NextResponse.json({ error: "Not found" }, { status: 404 });
   if (body.action === "suspend") await userRepository.suspendUser(homeowner.userId);
   else if (body.action === "activate") await userRepository.activateUser(homeowner.userId);
+  revalidatePath("/admin", "layout");
   return NextResponse.json({ ok: true });
 }
 
@@ -55,6 +57,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     userRepository.updateHomeownerProfile(homeowner.userId, { fullName: parsed.data.fullName }),
   ]);
 
+  revalidatePath("/admin", "layout");
   return NextResponse.json({ ok: true });
 }
 
@@ -62,5 +65,6 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
   if (!(await requireAdmin())) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { id } = await params;
   await userRepository.deleteHomeowner(id);
+  revalidatePath("/admin", "layout");
   return NextResponse.json({ ok: true });
 }
