@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "(prisma migrate resolve --applied 20260702000000_add_job_in_progress_status || true) && (prisma migrate resolve --applied 20260703000001_add_job_in_progress_at || true) && (prisma migrate resolve --applied 20260725000001_add_match_decline_reason || true) && prisma migrate deploy && prisma generate && next build",
+    "build": "prisma migrate deploy && prisma generate && next build",
     "start": "next start",
     "lint": "eslint",
     "seed": "tsx prisma/seed.ts"
