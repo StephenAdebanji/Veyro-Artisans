@@ -4,6 +4,7 @@ import { z } from "zod";
 import { auth } from "@/platform/auth-session";
 import { userRepository } from "@/services/user/user.repository";
 import { authRepository } from "@/services/auth/auth.repository";
+import { withApiErrorHandling } from "@/platform/api-handler";
 import type { Role, UserStatus } from "@prisma/client";
 
 async function requireAdmin() {
@@ -12,7 +13,7 @@ async function requireAdmin() {
   return role === "ADMIN";
 }
 
-export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
+export const PATCH = withApiErrorHandling(async (req: Request, { params }: { params: Promise<{ id: string }> }) => {
   if (!(await requireAdmin())) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { id } = await params;
   const body = (await req.json()) as { action: "suspend" | "activate" };
@@ -22,9 +23,9 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   else if (body.action === "activate") await userRepository.activateUser(homeowner.userId);
   revalidatePath("/admin", "layout");
   return NextResponse.json({ ok: true });
-}
+});
 
-export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
+export const PUT = withApiErrorHandling(async (req: Request, { params }: { params: Promise<{ id: string }> }) => {
   if (!(await requireAdmin())) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { id } = await params;
 
@@ -59,12 +60,12 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
 
   revalidatePath("/admin", "layout");
   return NextResponse.json({ ok: true });
-}
+});
 
-export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+export const DELETE = withApiErrorHandling(async (_req: Request, { params }: { params: Promise<{ id: string }> }) => {
   if (!(await requireAdmin())) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { id } = await params;
   await userRepository.deleteHomeowner(id);
   revalidatePath("/admin", "layout");
   return NextResponse.json({ ok: true });
-}
+});

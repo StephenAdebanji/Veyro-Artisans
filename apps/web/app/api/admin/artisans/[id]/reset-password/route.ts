@@ -4,6 +4,7 @@ import bcrypt from "bcryptjs";
 import { auth } from "@/platform/auth-session";
 import { userRepository } from "@/services/user/user.repository";
 import { authRepository } from "@/services/auth/auth.repository";
+import { withApiErrorHandling } from "@/platform/api-handler";
 
 async function requireAdmin() {
   const session = await auth();
@@ -13,7 +14,7 @@ async function requireAdmin() {
 
 const schema = z.object({ password: z.string().min(8) });
 
-export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
+export const POST = withApiErrorHandling(async (req: Request, { params }: { params: Promise<{ id: string }> }) => {
   if (!(await requireAdmin())) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { id } = await params;
 
@@ -27,4 +28,4 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   await authRepository.setPassword(artisan.userId, passwordHash);
 
   return NextResponse.json({ ok: true });
-}
+});

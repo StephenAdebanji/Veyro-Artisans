@@ -4,8 +4,9 @@ import { authRepository } from "@/services/auth/auth.repository";
 import { userRepository } from "@/services/user/user.repository";
 import { matchingRepository } from "@/services/matching/matching.repository";
 import { trustService } from "@/services/trust/trust.service";
+import { withApiErrorHandling } from "@/platform/api-handler";
 
-export async function GET() {
+export const GET = withApiErrorHandling(async () => {
   const session = await auth();
   if ((session?.user as { role?: string } | undefined)?.role !== "ADMIN") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -26,4 +27,4 @@ export async function GET() {
     openDisputes,
     pendingVerifications: pending.length,
   });
-}
+});

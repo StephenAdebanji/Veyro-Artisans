@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { AlertTriangle, CheckCircle2, Loader2, Mail, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { apiFetch } from "@/lib/api-client";
 
 export interface DisputeItem {
   id: string;
@@ -49,6 +50,7 @@ function DisputeRow({
   const [resolution, setResolution] = useState("");
   const [expanded, setExpanded] = useState(false);
   const [done, setDone] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   if (done) return null;
 
@@ -127,13 +129,18 @@ function DisputeRow({
               disabled={pending || !resolution.trim()}
               onClick={() =>
                 startTransition(async () => {
-                  await fetch(`/api/admin/disputes/${item.id}`, {
-                    method: "PATCH",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ resolution }),
-                  });
-                  onResolved(item.id);
-                  setDone(true);
+                  setError(null);
+                  try {
+                    await apiFetch(`/api/admin/disputes/${item.id}`, {
+                      method: "PATCH",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ resolution }),
+                    });
+                    onResolved(item.id);
+                    setDone(true);
+                  } catch (err) {
+                    setError(err instanceof Error ? err.message : "Could not save. Please try again.");
+                  }
                 })
               }
             >
@@ -141,6 +148,7 @@ function DisputeRow({
               Mark resolved
             </Button>
           </div>
+          {error && <p className="mt-2 text-right text-xs text-destructive">{error}</p>}
         </div>
       )}
     </li>

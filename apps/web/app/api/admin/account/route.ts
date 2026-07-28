@@ -3,13 +3,14 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { auth } from "@/platform/auth-session";
 import { prisma } from "@/platform/prisma";
+import { withApiErrorHandling } from "@/platform/api-handler";
 
 const schema = z.object({
   name: z.string().min(1).optional(),
   email: z.string().email().optional(),
 });
 
-export async function PATCH(request: Request) {
+export const PATCH = withApiErrorHandling(async (request: Request) => {
   const session = await auth();
   const userId = (session?.user as { id?: string } | undefined)?.id;
   const role = (session?.user as { role?: string } | undefined)?.role;
@@ -40,4 +41,4 @@ export async function PATCH(request: Request) {
 
   revalidatePath("/admin", "layout");
   return NextResponse.json(updated);
-}
+});

@@ -3,10 +3,11 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { auth } from "@/platform/auth-session";
 import { matchingRepository } from "@/services/matching/matching.repository";
+import { withApiErrorHandling } from "@/platform/api-handler";
 
 const resolveSchema = z.object({ resolution: z.string().min(1) });
 
-export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
+export const PATCH = withApiErrorHandling(async (request: Request, { params }: { params: Promise<{ id: string }> }) => {
   const session = await auth();
   if ((session?.user as { role?: string } | undefined)?.role !== "ADMIN") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -20,4 +21,4 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   await matchingRepository.resolveDispute(id, parsed.data.resolution);
   revalidatePath("/admin", "layout");
   return NextResponse.json({ ok: true });
-}
+});

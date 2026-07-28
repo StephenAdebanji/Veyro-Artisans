@@ -16,6 +16,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
+import { apiFetch } from "@/lib/api-client";
 
 type CredentialItem = {
   id: string;
@@ -53,23 +54,34 @@ function CredentialRow({
 }) {
   const [pending, startTransition] = useTransition();
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   function decide(decision: "APPROVED" | "REJECTED") {
+    setError(null);
     startTransition(async () => {
-      const res = await fetch(`/api/admin/credentials/${cred.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ decision }),
-      });
-      if (res.ok) onReviewed(cred.id, decision);
+      try {
+        await apiFetch(`/api/admin/credentials/${cred.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ decision }),
+        });
+        onReviewed(cred.id, decision);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Could not save. Please try again.");
+      }
     });
   }
 
   function handleDelete() {
     startTransition(async () => {
-      await fetch(`/api/admin/credentials/${cred.id}`, { method: "DELETE" });
-      setConfirmDelete(false);
-      onDeleted(cred.id);
+      try {
+        await apiFetch(`/api/admin/credentials/${cred.id}`, { method: "DELETE" });
+        setConfirmDelete(false);
+        onDeleted(cred.id);
+      } catch (err) {
+        setConfirmDelete(false);
+        setError(err instanceof Error ? err.message : "Could not delete. Please try again.");
+      }
     });
   }
 
@@ -85,7 +97,8 @@ function CredentialRow({
         onConfirm={handleDelete}
         onCancel={() => setConfirmDelete(false)}
       />
-      <li className="flex items-center justify-between gap-4 rounded-lg border p-3">
+      <li className="rounded-lg border p-3">
+        <div className="flex items-center justify-between gap-4">
         <div className="flex min-w-0 items-center gap-2">
           <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
           <div className="min-w-0">
@@ -150,6 +163,8 @@ function CredentialRow({
             </>
           )}
         </div>
+        </div>
+        {error && <p className="mt-1.5 text-xs text-destructive">{error}</p>}
       </li>
     </>
   );
@@ -314,6 +329,7 @@ export function VerificationPanel({
   const [pending, startTransition] = useTransition();
   const [showApproveDialog, setShowApproveDialog] = useState(false);
   const [showRejectDialog, setShowRejectDialog] = useState(false);
+  const [decisionError, setDecisionError] = useState<string | null>(null);
 
   const decided = verificationStatus === "VERIFIED" || verificationStatus === "REJECTED";
   const approvedCount = credentials.filter((c) => c.status === "APPROVED").length;
@@ -329,13 +345,18 @@ export function VerificationPanel({
   }
 
   function submitDecision(decision: "APPROVED" | "REJECTED" | "REVOKED", reason?: string) {
+    setDecisionError(null);
     startTransition(async () => {
-      const res = await fetch(`/api/admin/artisans/${artisanId}/verification`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ decision, reason }),
-      });
-      if (!res.ok) return;
+      try {
+        await apiFetch(`/api/admin/artisans/${artisanId}/verification`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ decision, reason }),
+        });
+      } catch (err) {
+        setDecisionError(err instanceof Error ? err.message : "Could not save. Please try again.");
+        return;
+      }
 
       if (decision === "APPROVED") {
         setVerificationStatus("VERIFIED");
@@ -475,6 +496,7 @@ export function VerificationPanel({
             </Button>
           </div>
         )}
+        {decisionError && <p className="mt-3 text-sm text-destructive">{decisionError}</p>}
       </div>
     </>
   );

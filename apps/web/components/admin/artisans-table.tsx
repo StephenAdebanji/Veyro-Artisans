@@ -10,6 +10,7 @@ import { SKILL_LABELS } from "@/components/shared/skill-labels";
 import { EditArtisanModal, type EditArtisanData } from "./edit-user-modal";
 import { ResetPasswordModal } from "./reset-password-modal";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
+import { apiFetch } from "@/lib/api-client";
 import type { SkillCategory } from "@veyro/contracts";
 
 type ArtisanRow = {
@@ -52,33 +53,42 @@ function ArtisanActionRow({
   const [editOpen, setEditOpen] = useState(false);
   const [resetOpen, setResetOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
   async function toggleSuspend() {
     const action = data.user.status === "SUSPENDED" ? "activate" : "suspend";
+    setActionError(null);
     startTransition(async () => {
-      const res = await fetch(`/api/admin/artisans/${data.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action }),
-      });
-      if (res.ok) {
+      try {
+        await apiFetch(`/api/admin/artisans/${data.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action }),
+        });
         setData((prev) => ({
           ...prev,
           user: { ...prev.user, status: action === "suspend" ? "SUSPENDED" : "ACTIVE" },
         }));
+      } catch (err) {
+        setActionError(err instanceof Error ? err.message : "Could not update status.");
       }
     });
   }
 
   function handleDelete() {
     startTransition(async () => {
-      await fetch(`/api/admin/artisans/${data.id}`, { method: "DELETE" });
-      setConfirmDelete(false);
-      // Let the dialog's exit animation finish before the row (and dialog) unmount,
-      // otherwise the fixed full-screen overlay can be orphaned mid-fade and swallow
-      // the next click on the page.
-      setTimeout(() => onDeleted(data.id), 200);
+      try {
+        await apiFetch(`/api/admin/artisans/${data.id}`, { method: "DELETE" });
+        setConfirmDelete(false);
+        // Let the dialog's exit animation finish before the row (and dialog) unmount,
+        // otherwise the fixed full-screen overlay can be orphaned mid-fade and swallow
+        // the next click on the page.
+        setTimeout(() => onDeleted(data.id), 200);
+      } catch (err) {
+        setConfirmDelete(false);
+        setActionError(err instanceof Error ? err.message : "Could not delete artisan.");
+      }
     });
   }
 
@@ -182,6 +192,13 @@ function ArtisanActionRow({
           </div>
         </td>
       </tr>
+      {actionError && (
+        <tr className="border-b last:border-b-0">
+          <td colSpan={7} className="py-1.5 pl-4 pr-4 text-right text-xs text-destructive">
+            {actionError}
+          </td>
+        </tr>
+      )}
 
       <EditArtisanModal
         open={editOpen}

@@ -12,6 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { apiFetch } from "@/lib/api-client";
 
 interface ResetPasswordModalProps {
   open: boolean;
@@ -52,18 +53,17 @@ export function ResetPasswordModal({ open, kind, id, name, onClose }: ResetPassw
     }
 
     startTransition(async () => {
-      const res = await fetch(`/api/admin/${kind}s/${id}/reset-password`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password }),
-      });
-      if (!res.ok) {
-        const body = (await res.json()) as { error?: string };
-        setError(typeof body.error === "string" ? body.error : "Failed to reset password.");
-        return;
+      try {
+        await apiFetch(`/api/admin/${kind}s/${id}/reset-password`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ password }),
+        });
+        setDone(true);
+        setTimeout(handleClose, 1200);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to reset password.");
       }
-      setDone(true);
-      setTimeout(handleClose, 1200);
     });
   }
 

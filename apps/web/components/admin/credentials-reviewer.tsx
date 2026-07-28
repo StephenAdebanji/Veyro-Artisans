@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { CheckCircle2, XCircle, FileText, Lock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { apiFetch } from "@/lib/api-client";
 
 type CredentialItem = {
   id: string;
@@ -31,20 +32,27 @@ function CredentialRow({
   onReviewed: (id: string, decision: "APPROVED" | "REJECTED") => void;
 }) {
   const [pending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
 
   async function decide(decision: "APPROVED" | "REJECTED") {
+    setError(null);
     startTransition(async () => {
-      const res = await fetch(`/api/admin/credentials/${cred.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ decision }),
-      });
-      if (res.ok) onReviewed(cred.id, decision);
+      try {
+        await apiFetch(`/api/admin/credentials/${cred.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ decision }),
+        });
+        onReviewed(cred.id, decision);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Could not save. Please try again.");
+      }
     });
   }
 
   return (
-    <li className="flex items-center justify-between gap-4 rounded-lg border p-3">
+    <li className="rounded-lg border p-3">
+      <div className="flex items-center justify-between gap-4">
       <div className="flex items-center gap-2 min-w-0">
         <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
         <div className="min-w-0">
@@ -99,6 +107,8 @@ function CredentialRow({
           </>
         )}
       </div>
+      </div>
+      {error && <p className="mt-1.5 text-xs text-destructive">{error}</p>}
     </li>
   );
 }

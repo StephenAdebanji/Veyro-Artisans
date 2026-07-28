@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { EditArtisanModal, EditHomeownerModal, type EditArtisanData, type EditHomeownerData } from "./edit-user-modal";
 import { ResetPasswordModal } from "./reset-password-modal";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
+import { apiFetch } from "@/lib/api-client";
 
 type ArtisanCombinedRow = {
   kind: "artisan";
@@ -74,6 +75,7 @@ function UserActionRow({
   const [editOpen, setEditOpen] = useState(false);
   const [resetOpen, setResetOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
   const apiBase = data.kind === "artisan" ? "artisans" : data.kind === "homeowner" ? "homeowners" : null;
@@ -88,14 +90,17 @@ function UserActionRow({
   function toggleSuspend() {
     if (!apiBase) return;
     const action = data.status === "SUSPENDED" ? "activate" : "suspend";
+    setActionError(null);
     startTransition(async () => {
-      const res = await fetch(`/api/admin/${apiBase}/${data.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action }),
-      });
-      if (res.ok) {
+      try {
+        await apiFetch(`/api/admin/${apiBase}/${data.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action }),
+        });
         setData((prev) => ({ ...prev, status: action === "suspend" ? "SUSPENDED" : "ACTIVE" }));
+      } catch (err) {
+        setActionError(err instanceof Error ? err.message : "Could not update status.");
       }
     });
   }
@@ -103,12 +108,17 @@ function UserActionRow({
   function handleDelete() {
     if (!apiBase) return;
     startTransition(async () => {
-      await fetch(`/api/admin/${apiBase}/${data.id}`, { method: "DELETE" });
-      setConfirmDelete(false);
-      // Let the dialog's exit animation finish before the row (and dialog) unmount,
-      // otherwise the fixed full-screen overlay can be orphaned mid-fade and swallow
-      // the next click on the page.
-      setTimeout(() => onDeleted(data.kind, data.id), 200);
+      try {
+        await apiFetch(`/api/admin/${apiBase}/${data.id}`, { method: "DELETE" });
+        setConfirmDelete(false);
+        // Let the dialog's exit animation finish before the row (and dialog) unmount,
+        // otherwise the fixed full-screen overlay can be orphaned mid-fade and swallow
+        // the next click on the page.
+        setTimeout(() => onDeleted(data.kind, data.id), 200);
+      } catch (err) {
+        setConfirmDelete(false);
+        setActionError(err instanceof Error ? err.message : "Could not delete user.");
+      }
     });
   }
 
@@ -198,6 +208,13 @@ function UserActionRow({
           </div>
         </td>
       </tr>
+      {actionError && (
+        <tr className="border-b last:border-b-0">
+          <td colSpan={7} className="py-1.5 pl-4 pr-4 text-right text-xs text-destructive">
+            {actionError}
+          </td>
+        </tr>
+      )}
 
       {data.kind === "artisan" && (
         <EditArtisanModal

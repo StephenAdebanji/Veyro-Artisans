@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/platform/auth-session";
 import { userRepository } from "@/services/user/user.repository";
+import { withApiErrorHandling } from "@/platform/api-handler";
 
-export async function GET() {
+export const GET = withApiErrorHandling(async () => {
   const session = await auth();
   if ((session?.user as { role?: string } | undefined)?.role !== "ADMIN") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   const artisans = await userRepository.listAllArtisans();
   return NextResponse.json(artisans);
-}
+});

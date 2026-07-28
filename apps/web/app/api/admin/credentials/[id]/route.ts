@@ -3,6 +3,7 @@ import { revalidatePath } from "next/cache";
 import { auth } from "@/platform/auth-session";
 import { trustService } from "@/services/trust/trust.service";
 import { prisma } from "@/platform/prisma";
+import { withApiErrorHandling } from "@/platform/api-handler";
 
 async function requireAdmin() {
   const session = await auth();
@@ -11,7 +12,7 @@ async function requireAdmin() {
   return user;
 }
 
-export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
+export const PATCH = withApiErrorHandling(async (req: Request, { params }: { params: Promise<{ id: string }> }) => {
   const admin = await requireAdmin();
   if (!admin) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
@@ -24,9 +25,9 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   await trustService.reviewCredential(id, body.decision, admin.id ?? "admin");
   revalidatePath("/admin", "layout");
   return NextResponse.json({ ok: true });
-}
+});
 
-export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+export const DELETE = withApiErrorHandling(async (_req: Request, { params }: { params: Promise<{ id: string }> }) => {
   const admin = await requireAdmin();
   if (!admin) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
@@ -34,4 +35,4 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
   await prisma.credential.delete({ where: { id } });
   revalidatePath("/admin", "layout");
   return NextResponse.json({ ok: true });
-}
+});

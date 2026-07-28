@@ -20,6 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { SKILL_LABELS } from "@/components/shared/skill-labels";
+import { apiFetch } from "@/lib/api-client";
 import type { SkillCategory } from "@veyro/contracts";
 
 const ROLES = ["ADMIN", "ARTISAN", "HOMEOWNER"] as const;
@@ -68,25 +69,24 @@ export function EditArtisanModal({ open, initial, onClose, onSaved }: EditArtisa
   function handleSave() {
     setError(null);
     startTransition(async () => {
-      const res = await fetch(`/api/admin/artisans/${initial.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          firstName: form.firstName.trim(),
-          lastName: form.lastName.trim(),
-          email: form.email.trim(),
-          role: form.role,
-          status: form.status,
-          primarySkill: form.primarySkill || null,
-        }),
-      });
-      if (!res.ok) {
-        const body = (await res.json()) as { error?: string };
-        setError(typeof body.error === "string" ? body.error : "Failed to save changes.");
-        return;
+      try {
+        await apiFetch(`/api/admin/artisans/${initial.id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            firstName: form.firstName.trim(),
+            lastName: form.lastName.trim(),
+            email: form.email.trim(),
+            role: form.role,
+            status: form.status,
+            primarySkill: form.primarySkill || null,
+          }),
+        });
+        onSaved({ ...form });
+        onClose();
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to save changes.");
       }
-      onSaved({ ...form });
-      onClose();
     });
   }
 
@@ -218,23 +218,22 @@ export function EditHomeownerModal({ open, initial, onClose, onSaved }: EditHome
   function handleSave() {
     setError(null);
     startTransition(async () => {
-      const res = await fetch(`/api/admin/homeowners/${initial.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          fullName: form.fullName.trim(),
-          email: form.email.trim(),
-          role: form.role,
-          status: form.status,
-        }),
-      });
-      if (!res.ok) {
-        const body = (await res.json()) as { error?: string };
-        setError(typeof body.error === "string" ? body.error : "Failed to save changes.");
-        return;
+      try {
+        await apiFetch(`/api/admin/homeowners/${initial.id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            fullName: form.fullName.trim(),
+            email: form.email.trim(),
+            role: form.role,
+            status: form.status,
+          }),
+        });
+        onSaved({ ...form });
+        onClose();
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to save changes.");
       }
-      onSaved({ ...form });
-      onClose();
     });
   }
 

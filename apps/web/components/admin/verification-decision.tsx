@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { CheckCircle2, XCircle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { apiFetch } from "@/lib/api-client";
 
 type Status = "UNVERIFIED" | "PENDING" | "VERIFIED" | "REJECTED";
 
@@ -24,19 +25,23 @@ export function VerificationDecision({
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [status, setStatus] = useState<Status>(currentStatus);
+  const [error, setError] = useState<string | null>(null);
 
   const decided = status === "VERIFIED" || status === "REJECTED";
 
   async function decide(decision: "APPROVED" | "REJECTED") {
+    setError(null);
     startTransition(async () => {
-      const res = await fetch(`/api/admin/artisans/${artisanId}/verification`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ decision }),
-      });
-      if (res.ok) {
+      try {
+        await apiFetch(`/api/admin/artisans/${artisanId}/verification`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ decision }),
+        });
         setStatus(decision === "APPROVED" ? "VERIFIED" : "REJECTED");
         router.refresh();
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Could not save. Please try again.");
       }
     });
   }
@@ -80,6 +85,7 @@ export function VerificationDecision({
           </Button>
         </div>
       )}
+      {error && <p className="mt-3 text-sm text-destructive">{error}</p>}
     </div>
   );
 }

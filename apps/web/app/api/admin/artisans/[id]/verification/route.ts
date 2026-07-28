@@ -4,6 +4,7 @@ import { auth } from "@/platform/auth-session";
 import { trustService } from "@/services/trust/trust.service";
 import { trustRepository } from "@/services/trust/trust.repository";
 import { userRepository } from "@/services/user/user.repository";
+import { withApiErrorHandling } from "@/platform/api-handler";
 
 async function requireAdmin() {
   const session = await auth();
@@ -12,11 +13,14 @@ async function requireAdmin() {
   return user;
 }
 
-export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
+export const PATCH = withApiErrorHandling(async (req: Request, { params }: { params: Promise<{ id: string }> }) => {
   const admin = await requireAdmin();
   if (!admin) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const { id: artisanId } = await params;
+  const artisan = await userRepository.findArtisanProfileFull(artisanId);
+  if (!artisan) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
   const body = (await req.json()) as { decision: string; reason?: string };
   const adminId = admin.id ?? "admin";
 
@@ -63,4 +67,4 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
   revalidatePath("/admin", "layout");
   return NextResponse.json({ ok: true });
-}
+});
