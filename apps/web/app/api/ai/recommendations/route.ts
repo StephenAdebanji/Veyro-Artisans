@@ -3,9 +3,10 @@ import { prisma } from "@/platform/prisma";
 import { aiRecommendationService } from "@/services/ai-recommendation/ai-recommendation.service";
 import { matchingService } from "@/services/matching/matching.service";
 import { userService } from "@/services/user/user.service";
+import { withApiErrorHandling } from "@/platform/api-handler";
 import type { RankedArtisan } from "@veyro/contracts";
 
-export async function GET(request: Request) {
+export const GET = withApiErrorHandling(async (request: Request) => {
   const url = new URL(request.url);
   const serviceRequestId = url.searchParams.get("serviceRequestId");
   if (!serviceRequestId) {
@@ -53,4 +54,4 @@ export async function GET(request: Request) {
   });
 
   return NextResponse.json({ ranked, cached: false });
-}
+});

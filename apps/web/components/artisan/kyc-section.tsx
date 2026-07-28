@@ -15,6 +15,7 @@ import {
   FilePlus,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { apiFetch } from "@/lib/api-client";
 
 export type CredentialStatus = "PENDING" | "APPROVED" | "REJECTED";
 export type VerificationStatus = "UNVERIFIED" | "VERIFIED" | "REJECTED";
@@ -82,13 +83,11 @@ interface SignedUpload {
 }
 
 async function uploadToCloudinary(file: File, uploadType: UploadType): Promise<string> {
-  const signRes = await fetch("/api/uploads/sign", {
+  const signed = await apiFetch<SignedUpload>("/api/uploads/sign", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ uploadType }),
   });
-  if (!signRes.ok) throw new Error("Failed to get upload signature");
-  const signed: SignedUpload = await signRes.json();
 
   const form = new FormData();
   form.append("file", file);

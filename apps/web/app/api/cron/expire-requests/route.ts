@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { matchingRepository } from "@/services/matching/matching.repository";
+import { withApiErrorHandling } from "@/platform/api-handler";
 
-export async function POST(req: Request) {
+export const POST = withApiErrorHandling(async (req: Request) => {
   const secret = process.env.CRON_SECRET;
   if (!secret) {
     return NextResponse.json({ error: "CRON_SECRET not configured" }, { status: 500 });
@@ -14,4 +15,4 @@ export async function POST(req: Request) {
 
   const expired = await matchingRepository.expireStaleRequests();
   return NextResponse.json({ ok: true, expired });
-}
+});

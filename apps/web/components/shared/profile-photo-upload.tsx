@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Camera, Loader2 } from "lucide-react";
 import { Avatar } from "./avatar";
+import { apiFetch } from "@/lib/api-client";
 
 interface SignedUpload {
   timestamp: number;
@@ -44,15 +45,13 @@ export function ProfilePhotoUpload({
 
     try {
       // 1. Get signed upload params
-      const signRes = await fetch("/api/uploads/sign", {
+      const signed = await apiFetch<SignedUpload>("/api/uploads/sign", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ uploadType: "profile-photo" }),
       });
-      if (!signRes.ok) throw new Error("Failed to sign upload");
-      const signed: SignedUpload = await signRes.json();
 
-      // 2. Upload to Cloudinary
+      // 2. Upload to Cloudinary (third-party API, not ours — plain fetch)
       const form = new FormData();
       form.append("file", file);
       form.append("api_key", signed.apiKey);
@@ -69,12 +68,11 @@ export function ProfilePhotoUpload({
       const newUrl: string = cloudData.secure_url;
 
       // 3. Persist to DB
-      const saveRes = await fetch(endpoint, {
+      await apiFetch(endpoint, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ profilePhotoUrl: newUrl }),
       });
-      if (!saveRes.ok) throw new Error("Failed to save photo");
 
       setUrl(newUrl);
       onSaved?.(newUrl);

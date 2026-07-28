@@ -124,14 +124,17 @@ export function HomeownerAccount({ email, fullName, profilePhotoUrl, initial }: 
     e.preventDefault();
     setSaving(true);
     setError(null);
-    const res = await fetch("/api/homeowners/profile", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ phone }),
-    });
+    try {
+      await apiFetch("/api/homeowners/profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone }),
+      });
+      setSaved(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to save. Please try again.");
+    }
     setSaving(false);
-    if (!res.ok) setError("Failed to save. Please try again.");
-    else setSaved(true);
   }
 
   return (

@@ -57,9 +57,8 @@ export function MatchingScreen({
 
   // Fetch AI recommendation scores on mount.
   useEffect(() => {
-    fetch(`/api/ai/recommendations?serviceRequestId=${serviceRequestId}`)
-      .then((r) => r.json())
-      .then((data: { ranked?: RankedArtisan[] }) => {
+    apiFetch<{ ranked?: RankedArtisan[] }>(`/api/ai/recommendations?serviceRequestId=${serviceRequestId}`)
+      .then((data) => {
         if (data.ranked) setAiCandidates(data.ranked);
       })
       .catch(() => {})

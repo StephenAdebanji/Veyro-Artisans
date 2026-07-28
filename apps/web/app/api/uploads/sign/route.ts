@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/platform/auth-session";
 import { createSignedUpload } from "@/platform/cloudinary";
+import { withApiErrorHandling } from "@/platform/api-handler";
 
 const UPLOAD_TYPES = [
   "profile-photo",
@@ -16,7 +17,7 @@ const signSchema = z.object({ uploadType: z.enum(UPLOAD_TYPES) });
 /** Scopes every signed upload to the CALLER's own id (from the session), never
  * client-supplied — this is what stops a homeowner from signing an upload into
  * another artisan's credential folder. */
-export async function POST(request: Request) {
+export const POST = withApiErrorHandling(async (request: Request) => {
   const session = await auth();
   if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -33,4 +34,4 @@ export async function POST(request: Request) {
   const signedUpload = createSignedUpload(folder);
 
   return NextResponse.json(signedUpload);
-}
+});

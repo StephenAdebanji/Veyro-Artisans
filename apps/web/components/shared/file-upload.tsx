@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Check, Upload, Eye } from "lucide-react";
+import { apiFetch } from "@/lib/api-client";
 
 export type UploadType = "profile-photo" | "id-document" | "proof-of-address" | "credential" | "portfolio";
 
@@ -64,13 +65,11 @@ export function FileUpload({
     setStatus("uploading");
 
     try {
-      const signRes = await fetch("/api/uploads/sign", {
+      const signed = await apiFetch<SignedUpload>("/api/uploads/sign", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ uploadType }),
       });
-      if (!signRes.ok) throw new Error("sign failed");
-      const signed: SignedUpload = await signRes.json();
 
       const form = new FormData();
       form.append("file", file);

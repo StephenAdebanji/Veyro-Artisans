@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/platform/auth-session";
 import { userService } from "@/services/user/user.service";
+import { withApiErrorHandling } from "@/platform/api-handler";
 
 const updateSchema = z.object({
   phone: z.string().optional(),
@@ -11,7 +12,7 @@ const updateSchema = z.object({
   profilePhotoUrl: z.string().url().optional(),
 });
 
-export async function PATCH(request: Request) {
+export const PATCH = withApiErrorHandling(async (request: Request) => {
   const session = await auth();
   const userId = (session?.user as { id?: string } | undefined)?.id;
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -22,4 +23,4 @@ export async function PATCH(request: Request) {
 
   const updated = await userService.updateHomeownerProfile(userId, parsed.data);
   return NextResponse.json({ profile: updated });
-}
+});

@@ -7,6 +7,7 @@ import { Sun, Moon, Monitor, Check, Save, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { apiFetch } from "@/lib/api-client";
 
 export default function AdminSettingsPage() {
   const { data: session, update: updateSession } = useSession();
@@ -35,23 +36,21 @@ export default function AdminSettingsPage() {
     const trimmedName = name.trim() || undefined;
     const trimmedEmail = email.trim() || undefined;
 
-    const res = await fetch("/api/admin/account", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: trimmedName, email: trimmedEmail }),
-    });
-
-    if (!res.ok) {
-      const body = (await res.json()) as { error?: string };
-      setError(typeof body.error === "string" ? body.error : "Failed to save changes.");
-    } else {
+    try {
+      await apiFetch("/api/admin/account", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: trimmedName, email: trimmedEmail }),
+      });
       // Pass updated values into the session so they persist without re-login.
       await updateSession({ name: trimmedName, email: trimmedEmail });
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to save changes.");
+    } finally {
+      setSaving(false);
     }
-
-    setSaving(false);
   }
 
   return (
