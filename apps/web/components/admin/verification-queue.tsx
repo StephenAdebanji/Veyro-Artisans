@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { apiFetch } from "@/lib/api-client";
 import type { PendingCredentialSummary } from "@veyro/contracts";
 
 const TYPE_LABELS: Record<string, string> = {
@@ -84,21 +85,28 @@ function CredentialLine({
   onStatusChanged: (id: string, status: string) => void;
 }) {
   const [pending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
   const isReviewed = credential.status !== "PENDING";
 
   function decide(decision: "APPROVED" | "REJECTED") {
+    setError(null);
     startTransition(async () => {
-      const res = await fetch(`/api/trust/credentials/${credential.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ decision }),
-      });
-      if (res.ok) onStatusChanged(credential.id, decision);
+      try {
+        await apiFetch(`/api/trust/credentials/${credential.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ decision }),
+        });
+        onStatusChanged(credential.id, decision);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Could not save. Please try again.");
+      }
     });
   }
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-muted/30 px-3 py-2.5">
+    <div className="rounded-lg border bg-muted/30 px-3 py-2.5">
+      <div className="flex flex-wrap items-center justify-between gap-3">
       <div className="flex items-center gap-2">
         <FileText className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
         <span className="text-sm font-medium">
@@ -143,6 +151,8 @@ function CredentialLine({
           </>
         )}
       </div>
+      </div>
+      {error && <p className="mt-1.5 text-xs text-destructive">{error}</p>}
     </div>
   );
 }

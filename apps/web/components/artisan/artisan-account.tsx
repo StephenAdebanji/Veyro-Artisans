@@ -62,16 +62,18 @@ function LogDisputeSection() {
     e.preventDefault();
     setSubmitting(true);
     setError(null);
-    const res = await fetch("/api/disputes", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ description: description.trim() }),
-    });
-    setSubmitting(false);
-    if (!res.ok) setError("Failed to submit. Please try again.");
-    else {
+    try {
+      await apiFetch("/api/disputes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ description: description.trim() }),
+      });
       setSubmitted(true);
       setDescription("");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to submit. Please try again.");
+    } finally {
+      setSubmitting(false);
     }
   }
 

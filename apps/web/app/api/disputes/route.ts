@@ -2,13 +2,14 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/platform/auth-session";
 import { prisma } from "@/platform/prisma";
+import { withApiErrorHandling } from "@/platform/api-handler";
 
 const schema = z.object({
   description: z.string().min(10, "Please provide more detail (at least 10 characters)."),
   jobId: z.string().uuid().optional(),
 });
 
-export async function POST(request: Request) {
+export const POST = withApiErrorHandling(async (request: Request) => {
   const session = await auth();
   const userId = (session?.user as { id?: string } | undefined)?.id;
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -30,4 +31,4 @@ export async function POST(request: Request) {
   });
 
   return NextResponse.json({ ok: true });
-}
+});

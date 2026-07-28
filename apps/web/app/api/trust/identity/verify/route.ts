@@ -2,10 +2,11 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/platform/auth-session";
 import { trustService } from "@/services/trust/trust.service";
+import { withApiErrorHandling } from "@/platform/api-handler";
 
 const verifySchema = z.object({ artisanId: z.string() });
 
-export async function POST(request: Request) {
+export const POST = withApiErrorHandling(async (request: Request) => {
   const session = await auth();
   if ((session?.user as { role?: string } | undefined)?.role !== "ADMIN") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -20,4 +21,4 @@ export async function POST(request: Request) {
   const adminId = (session!.user as { id?: string }).id ?? "unknown-admin";
   await trustService.verifyIdentity(parsed.data.artisanId, adminId);
   return NextResponse.json({ ok: true });
-}
+});
