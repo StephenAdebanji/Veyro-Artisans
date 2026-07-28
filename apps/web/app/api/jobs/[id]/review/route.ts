@@ -4,10 +4,11 @@ import { auth } from "@/platform/auth-session";
 import { matchingService } from "@/services/matching/matching.service";
 import { trustService } from "@/services/trust/trust.service";
 import { userService } from "@/services/user/user.service";
+import { withApiErrorHandling } from "@/platform/api-handler";
 
 const reviewSchema = z.object({ rating: z.number().int().min(1).max(5), comment: z.string().optional() });
 
-export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
+export const POST = withApiErrorHandling(async (request: Request, { params }: { params: Promise<{ id: string }> }) => {
   const { id: jobId } = await params;
 
   const session = await auth();
@@ -34,4 +35,4 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   // in serverless/short-lived contexts where the handler might not complete.
   await trustService.applyNewReview(job.artisanId);
   return NextResponse.json({ reviewId }, { status: 201 });
-}
+});

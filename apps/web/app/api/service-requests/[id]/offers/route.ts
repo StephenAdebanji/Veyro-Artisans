@@ -3,6 +3,7 @@ import { z } from "zod";
 import { auth } from "@/platform/auth-session";
 import { matchingService } from "@/services/matching/matching.service";
 import { userService } from "@/services/user/user.service";
+import { withApiErrorHandling } from "@/platform/api-handler";
 
 const offerSchema = z.object({
   proposedPrice: z.number().positive(),
@@ -15,7 +16,7 @@ const REALTIME_URL = process.env.REALTIME_INTERNAL_URL ?? "http://localhost:4001
 /** List existing offers for a service request — used by the matching screen
  * on initial SSR load so the homeowner sees any offers that arrived before
  * the Socket.io connection was established. */
-export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+export const GET = withApiErrorHandling(async (_req: Request, { params }: { params: Promise<{ id: string }> }) => {
   const { id: serviceRequestId } = await params;
 
   const session = await auth();
@@ -44,12 +45,12 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   );
 
   return NextResponse.json({ offers: enriched });
-}
+});
 
 /** An artisan submits a price/ETA offer in response to a broadcasted request —
  * this renders as a live offer card on the homeowner's matching screen.
  * `artisanId` is resolved from the session server-side. */
-export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
+export const POST = withApiErrorHandling(async (request: Request, { params }: { params: Promise<{ id: string }> }) => {
   const { id: serviceRequestId } = await params;
 
   const session = await auth();
@@ -77,8 +78,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       ...parsed.data,
     });
   } catch (err) {
-    const msg = err instanceof Error ? err.message : "";
-    if (msg === "REQUEST_CANCELLED") {
+    if (err instanceof Error && err.message === "REQUEST_CANCELLED") {
       return NextResponse.json(
         {
           error:
@@ -87,7 +87,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
         { status: 409 },
       );
     }
-    return NextResponse.json({ error: "Could not send your offer. Please try again." }, { status: 400 });
+    throw err;
   }
 
   // Fetch the full profile for display stats (summary type has no rating/trust).
@@ -112,4 +112,4 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   }).catch(() => {});
 
   return NextResponse.json({ matchId }, { status: 201 });
-}
+});

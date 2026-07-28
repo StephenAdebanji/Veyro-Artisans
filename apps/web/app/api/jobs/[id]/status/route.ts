@@ -3,12 +3,13 @@ import { z } from "zod";
 import { auth } from "@/platform/auth-session";
 import { matchingService } from "@/services/matching/matching.service";
 import { userService } from "@/services/user/user.service";
+import { withApiErrorHandling } from "@/platform/api-handler";
 
 const schema = z.object({
   status: z.enum(["IN_PROGRESS", "COMPLETED"]),
 });
 
-export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
+export const PATCH = withApiErrorHandling(async (request: Request, { params }: { params: Promise<{ id: string }> }) => {
   const { id: jobId } = await params;
 
   const session = await auth();
@@ -24,11 +25,6 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   if (!parsed.success)
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
 
-  try {
-    await matchingService.updateJobStatus(jobId, artisan.id, parsed.data.status);
-    return NextResponse.json({ ok: true });
-  } catch (err) {
-    const message = err instanceof Error ? err.message : "Failed";
-    return NextResponse.json({ error: message }, { status: 400 });
-  }
-}
+  await matchingService.updateJobStatus(jobId, artisan.id, parsed.data.status);
+  return NextResponse.json({ ok: true });
+});

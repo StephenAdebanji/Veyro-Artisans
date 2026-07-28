@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { matchingService } from "@/services/matching/matching.service";
+import { withApiErrorHandling } from "@/platform/api-handler";
 
 const respondSchema = z.object({
   decision: z.enum(["ACCEPT", "DECLINE"]),
@@ -8,7 +9,7 @@ const respondSchema = z.object({
 });
 
 /** The homeowner's Accept/Decline click on one offer card. */
-export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
+export const POST = withApiErrorHandling(async (request: Request, { params }: { params: Promise<{ id: string }> }) => {
   const { id: matchId } = await params;
   const body = await request.json();
   const parsed = respondSchema.safeParse(body);
@@ -26,4 +27,4 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     parsed.data.reason?.trim(),
   );
   return NextResponse.json(result);
-}
+});

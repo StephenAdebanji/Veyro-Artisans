@@ -2,13 +2,14 @@ import { NextResponse } from "next/server";
 import { auth } from "@/platform/auth-session";
 import { matchingService } from "@/services/matching/matching.service";
 import { userService } from "@/services/user/user.service";
+import { withApiErrorHandling } from "@/platform/api-handler";
 
 const REALTIME_URL = process.env.REALTIME_INTERNAL_URL ?? "http://localhost:4001";
 
 /** Homeowner accepts a specific offer card — creates the Job, expires all other
  * pending offers for this request, and notifies apps/realtime so the matching
  * screen transitions to the accepted state. */
-export async function POST(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+export const POST = withApiErrorHandling(async (_req: Request, { params }: { params: Promise<{ id: string }> }) => {
   const { id: matchId } = await params;
 
   const session = await auth();
@@ -35,7 +36,7 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
   }).catch(() => {});
 
   return NextResponse.json({ jobId });
-}
+});
 
 async function getServiceRequestIdForMatch(matchId: string): Promise<string> {
   const { matchingRepository } = await import("@/services/matching/matching.repository");

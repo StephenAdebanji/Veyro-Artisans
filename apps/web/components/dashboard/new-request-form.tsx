@@ -16,6 +16,7 @@ import {
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import { SKILL_CATEGORIES, SKILL_LABELS } from "@/components/shared/skill-labels";
 import { COUNTRIES, NIGERIAN_STATES, NIGERIAN_LGAS } from "@/lib/location-data";
+import { apiFetch } from "@/lib/api-client";
 import type { SkillCategory } from "@veyro/contracts";
 
 const COUNTRY_OPTIONS = COUNTRIES.map((c) => ({ value: c.code, label: c.name }));
@@ -75,32 +76,28 @@ export function NewRequestForm() {
     setError(null);
     setLoading(true);
 
-    const response = await fetch("/api/service-requests", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        category,
-        description,
-        streetAddress: streetAddress.trim(),
-        lga: lga || undefined,
-        state,
-        country: selectedCountry?.name ?? "Nigeria",
-        countryCode,
-        budgetMin: budgetMin ? Number(budgetMin) : undefined,
-        budgetMax: budgetMax ? Number(budgetMax) : undefined,
-        preferredDate: preferredDate || undefined,
-      }),
-    });
-
-    if (!response.ok) {
-      const body = await response.json().catch(() => null);
-      setError(typeof body?.error === "string" ? body.error : "Could not create the request.");
+    try {
+      const { serviceRequestId } = await apiFetch<{ serviceRequestId: string }>("/api/service-requests", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          category,
+          description,
+          streetAddress: streetAddress.trim(),
+          lga: lga || undefined,
+          state,
+          country: selectedCountry?.name ?? "Nigeria",
+          countryCode,
+          budgetMin: budgetMin ? Number(budgetMin) : undefined,
+          budgetMax: budgetMax ? Number(budgetMax) : undefined,
+          preferredDate: preferredDate || undefined,
+        }),
+      });
+      router.push(`/homeowner/requests/${serviceRequestId}/matching`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not create the request.");
       setLoading(false);
-      return;
     }
-
-    const { serviceRequestId } = (await response.json()) as { serviceRequestId: string };
-    router.push(`/homeowner/requests/${serviceRequestId}/matching`);
   }
 
   return (

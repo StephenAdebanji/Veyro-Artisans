@@ -30,6 +30,7 @@ interface OfferCardProps {
 
 export function OfferCard({ offer, onAccept, onReject, disabled, isTopRecommendation }: OfferCardProps) {
   const [accepting, setAccepting] = useState(false);
+  const [acceptError, setAcceptError] = useState<string | null>(null);
   const [showRejectForm, setShowRejectForm] = useState(false);
   const [rejectReason, setRejectReason] = useState("");
   const [rejecting, setRejecting] = useState(false);
@@ -44,8 +45,11 @@ export function OfferCard({ offer, onAccept, onReject, disabled, isTopRecommenda
 
   async function handleAccept() {
     setAccepting(true);
+    setAcceptError(null);
     try {
       await onAccept(offer.matchId);
+    } catch (err) {
+      setAcceptError(err instanceof Error ? err.message : "Failed to accept offer. Please try again.");
     } finally {
       setAccepting(false);
     }
@@ -146,6 +150,7 @@ export function OfferCard({ offer, onAccept, onReject, disabled, isTopRecommenda
                   Reject
                 </Button>
               )}
+              {acceptError && <p className="text-xs text-destructive">{acceptError}</p>}
             </div>
           ) : (
             <Badge

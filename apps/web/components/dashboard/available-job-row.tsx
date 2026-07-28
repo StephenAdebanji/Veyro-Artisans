@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SKILL_LABELS } from "@/components/shared/skill-labels";
+import { apiFetch, ApiRequestError } from "@/lib/api-client";
 import type { AvailableRequestSummary } from "@veyro/contracts";
 
 export function AvailableJobRow({ job }: { job: AvailableRequestSummary }) {
@@ -22,31 +23,27 @@ export function AvailableJobRow({ job }: { job: AvailableRequestSummary }) {
     setError(null);
     setLoading(true);
 
-    const response = await fetch(`/api/service-requests/${job.id}/offers`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        proposedPrice: Number(price),
-        etaMinutes: Number(etaMinutes),
-        distanceKm: job.distanceKm,
-      }),
-    });
-
-    if (!response.ok) {
-      const body = await response.json().catch(() => null);
-      const msg = typeof body?.error === "string" ? body.error : "Could not send your offer.";
-      setError(msg);
-      if (response.status === 409) {
+    try {
+      await apiFetch(`/api/service-requests/${job.id}/offers`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          proposedPrice: Number(price),
+          etaMinutes: Number(etaMinutes),
+          distanceKm: job.distanceKm,
+        }),
+      });
+      setSent(true);
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not send your offer.");
+      if (err instanceof ApiRequestError && err.status === 409) {
         setUnavailable(true);
         setExpanded(false);
       }
+    } finally {
       setLoading(false);
-      return;
     }
-
-    setSent(true);
-    setLoading(false);
-    router.refresh();
   }
 
   return (

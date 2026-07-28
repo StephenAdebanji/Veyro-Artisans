@@ -1,9 +1,10 @@
 "use client";
 
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { CheckCircle2, Circle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { apiFetch } from "@/lib/api-client";
 
 type JobStatus = "ACTIVE" | "IN_PROGRESS" | "COMPLETED";
 
@@ -23,6 +24,7 @@ const NEXT: Record<JobStatus, "IN_PROGRESS" | "COMPLETED" | null> = {
 export function JobStatusStepper({ jobId, currentStatus }: { jobId: string; currentStatus: string }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
 
   const status = (currentStatus as JobStatus) ?? "ACTIVE";
   const nextStatus = NEXT[status];
@@ -30,13 +32,18 @@ export function JobStatusStepper({ jobId, currentStatus }: { jobId: string; curr
 
   function advance() {
     if (!nextStatus) return;
+    setError(null);
     startTransition(async () => {
-      await fetch(`/api/jobs/${jobId}/status`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: nextStatus }),
-      });
-      router.refresh();
+      try {
+        await apiFetch(`/api/jobs/${jobId}/status`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status: nextStatus }),
+        });
+        router.refresh();
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Could not update job status. Please try again.");
+      }
     });
   }
 
@@ -106,6 +113,7 @@ export function JobStatusStepper({ jobId, currentStatus }: { jobId: string; curr
             ) : null}
             {nextStatus === "IN_PROGRESS" ? "Mark as In Progress" : "Mark as Completed"}
           </Button>
+          {error && <p className="mt-2 text-center text-xs text-destructive">{error}</p>}
         </div>
       )}
 

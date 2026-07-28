@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Star, Loader2, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { apiFetch } from "@/lib/api-client";
 
 export function ReviewForm({ jobId }: { jobId: string }) {
   const router = useRouter();
@@ -12,19 +13,23 @@ export function ReviewForm({ jobId }: { jobId: string }) {
   const [hovered, setHovered] = useState(0);
   const [comment, setComment] = useState("");
   const [done, setDone] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
   function submit() {
     if (rating === 0) return;
+    setError(null);
     startTransition(async () => {
-      const res = await fetch(`/api/jobs/${jobId}/review`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ rating, comment: comment.trim() || undefined }),
-      });
-      if (res.ok) {
+      try {
+        await apiFetch(`/api/jobs/${jobId}/review`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ rating, comment: comment.trim() || undefined }),
+        });
         setDone(true);
         router.refresh();
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Could not submit your review. Please try again.");
       }
     });
   }
@@ -92,6 +97,7 @@ export function ReviewForm({ jobId }: { jobId: string }) {
         {pending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
         Submit Review
       </Button>
+      {error && <p className="mt-2 text-center text-sm text-destructive">{error}</p>}
     </div>
   );
 }

@@ -5,6 +5,7 @@ import { matchingService } from "@/services/matching/matching.service";
 import { userService } from "@/services/user/user.service";
 import { SKILL_CATEGORIES } from "@/components/shared/skill-labels";
 import { geocodeStructured } from "@/platform/mapbox";
+import { withApiErrorHandling } from "@/platform/api-handler";
 import type { GeoPoint, SkillCategory } from "@veyro/contracts";
 
 const LAGOS_FALLBACK: GeoPoint = { lat: 6.5244, lng: 3.3792 };
@@ -24,7 +25,7 @@ const createRequestSchema = z.object({
 
 const REALTIME_URL = process.env.REALTIME_INTERNAL_URL ?? "http://localhost:4001";
 
-export async function POST(request: Request) {
+export const POST = withApiErrorHandling(async (request: Request) => {
   const session = await auth();
   const userId = (session?.user as { id?: string } | undefined)?.id;
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -71,4 +72,4 @@ export async function POST(request: Request) {
   }).catch(() => {});
 
   return NextResponse.json({ serviceRequestId }, { status: 201 });
-}
+});

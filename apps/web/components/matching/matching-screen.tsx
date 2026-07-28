@@ -6,6 +6,7 @@ import { ArrowLeft, CheckCircle2, Loader2, Sparkles, XCircle } from "lucide-reac
 import { OfferCard, type OfferData } from "./offer-card";
 import type { RankedArtisan, SkillCategory } from "@veyro/contracts";
 import { SKILL_LABELS } from "@/components/shared/skill-labels";
+import { apiFetch } from "@/lib/api-client";
 
 const MATCH_WINDOW_SECONDS = 10 * 60; // 10 minutes
 
@@ -44,6 +45,7 @@ export function MatchingScreen({
   const [aiLoading, setAiLoading] = useState(true);
   const [cancelling, setCancelling] = useState(false);
   const [cancelled, setCancelled] = useState(false);
+  const [cancelError, setCancelError] = useState<string | null>(null);
   const socketRef = useRef<import("socket.io-client").Socket | null>(null);
 
   // Countdown tick.
@@ -124,9 +126,7 @@ export function MatchingScreen({
   }, [serviceRequestId]);
 
   async function handleAccept(matchId: string) {
-    const res = await fetch(`/api/matches/${matchId}/accept`, { method: "POST" });
-    if (!res.ok) return;
-    const { jobId: jid } = (await res.json()) as { jobId: string };
+    const { jobId: jid } = await apiFetch<{ jobId: string }>(`/api/matches/${matchId}/accept`, { method: "POST" });
     setAcceptedMatchId(matchId);
     setJobId(jid);
     setOffers((prev) =>
@@ -138,12 +138,11 @@ export function MatchingScreen({
   }
 
   async function handleReject(matchId: string, reason: string) {
-    const res = await fetch(`/api/matches/${matchId}/respond`, {
+    await apiFetch(`/api/matches/${matchId}/respond`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ decision: "DECLINE", reason }),
     });
-    if (!res.ok) throw new Error("Failed to reject offer");
     setOffers((prev) =>
       prev.map((o) => (o.matchId === matchId ? { ...o, status: "DECLINED" } : o)),
     );
@@ -152,9 +151,15 @@ export function MatchingScreen({
   async function handleCancel() {
     if (!confirm("Cancel this request?")) return;
     setCancelling(true);
-    await fetch(`/api/service-requests/${serviceRequestId}/cancel`, { method: "POST" });
-    setCancelling(false);
-    setCancelled(true);
+    setCancelError(null);
+    try {
+      await apiFetch(`/api/service-requests/${serviceRequestId}/cancel`, { method: "POST" });
+      setCancelled(true);
+    } catch (err) {
+      setCancelError(err instanceof Error ? err.message : "Could not cancel the request. Please try again.");
+    } finally {
+      setCancelling(false);
+    }
   }
 
   const mm = String(Math.floor(secondsLeft / 60)).padStart(2, "0");
@@ -248,6 +253,7 @@ export function MatchingScreen({
                 )}
                 Cancel request
               </button>
+              {cancelError && <p className="max-w-40 text-right text-xs text-destructive">{cancelError}</p>}
             </div>
           )}
         </div>
@@ -301,6 +307,7 @@ export function MatchingScreen({
               {cancelling ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
               Dismiss request
             </button>
+            {cancelError && <p className="text-xs text-destructive">{cancelError}</p>}
           </div>
         ) : (
           <>
