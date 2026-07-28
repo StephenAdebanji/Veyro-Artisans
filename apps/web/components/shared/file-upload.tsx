@@ -145,7 +145,7 @@ export function FileUpload({
       ) : (
         <Upload className="size-5" />
       )}
-      <span>
+      <span className={status === "error" ? "text-destructive" : undefined}>
         {status === "uploading"
           ? "Uploading…"
           : status === "error"
