@@ -2,13 +2,14 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/platform/prisma";
+import { withApiErrorHandling } from "@/platform/api-handler";
 
 const schema = z.object({
   token: z.string().min(1),
   password: z.string().min(8),
 });
 
-export async function POST(request: Request) {
+export const POST = withApiErrorHandling(async (request: Request) => {
   const body = await request.json();
   const parsed = schema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: "Invalid request" }, { status: 400 });
@@ -29,4 +30,4 @@ export async function POST(request: Request) {
   ]);
 
   return NextResponse.json({ ok: true });
-}
+});

@@ -3,10 +3,11 @@ import { z } from "zod";
 import crypto from "node:crypto";
 import { Resend } from "resend";
 import { prisma } from "@/platform/prisma";
+import { withApiErrorHandling } from "@/platform/api-handler";
 
 const schema = z.object({ email: z.string().email() });
 
-export async function POST(request: Request) {
+export const POST = withApiErrorHandling(async (request: Request) => {
   const body = await request.json();
   const parsed = schema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: "Invalid email" }, { status: 400 });
@@ -49,4 +50,4 @@ export async function POST(request: Request) {
   }
 
   return NextResponse.json({ ok: true });
-}
+});

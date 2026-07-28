@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { apiFetch } from "@/lib/api-client";
 
 type FieldErrors = {
   fullName?: string;
@@ -50,16 +51,16 @@ export function SignUpForm() {
     setErrors({});
     setLoading(true);
 
-    const response = await fetch("/api/auth/register", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ fullName, email, phone, password }),
-    });
-
-    if (!response.ok) {
-      const body = await response.json().catch(() => null);
-      const msg: string = typeof body?.error === "string" ? body.error : "";
-      if (msg.toLowerCase().includes("email") && msg.toLowerCase().includes("exist")) {
+    try {
+      await apiFetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fullName, email, phone, password }),
+      });
+      router.push("/sign-in?registered=1");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "";
+      if (msg.toLowerCase().includes("email") && msg.toLowerCase().includes("already")) {
         setErrors({ email: "An account with this email already exists." });
       } else if (msg.toLowerCase().includes("email")) {
         setErrors({ email: "Enter a valid email address." });
@@ -67,10 +68,7 @@ export function SignUpForm() {
         setErrors({ general: msg || "Something went wrong. Please try again." });
       }
       setLoading(false);
-      return;
     }
-
-    router.push("/sign-in?registered=1");
   }
 
   return (

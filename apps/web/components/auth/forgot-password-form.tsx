@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { apiFetch } from "@/lib/api-client";
 
 export function ForgotPasswordForm() {
   const [email, setEmail] = useState("");
@@ -16,16 +17,16 @@ export function ForgotPasswordForm() {
     e.preventDefault();
     setError(null);
     startTransition(async () => {
-      const res = await fetch("/api/auth/forgot-password", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
-      });
-      if (!res.ok) {
-        setError("Something went wrong. Please try again.");
-        return;
+      try {
+        await apiFetch("/api/auth/forgot-password", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email }),
+        });
+        setSent(true);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
       }
-      setSent(true);
     });
   }
 
@@ -39,7 +40,7 @@ export function ForgotPasswordForm() {
           <p className="font-semibold text-foreground">Check your inbox</p>
           <p className="mt-1 text-sm text-muted-foreground">
             We sent a password reset link to <strong>{email}</strong>.
-            If it doesn't arrive, check your spam folder.
+            If it doesn&apos;t arrive, check your spam folder.
           </p>
         </div>
         <Button asChild className="w-full mt-2">

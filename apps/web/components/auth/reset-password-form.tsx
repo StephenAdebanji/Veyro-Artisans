@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { apiFetch } from "@/lib/api-client";
 
 export function ResetPasswordForm({ token }: { token: string }) {
   const router = useRouter();
@@ -21,17 +22,16 @@ export function ResetPasswordForm({ token }: { token: string }) {
     }
     setError(null);
     startTransition(async () => {
-      const res = await fetch("/api/auth/reset-password", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token, password }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setError(data.error ?? "Something went wrong.");
-        return;
+      try {
+        await apiFetch("/api/auth/reset-password", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token, password }),
+        });
+        router.push("/sign-in?reset=1");
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Something went wrong.");
       }
-      router.push("/sign-in?reset=1");
     });
   }
 
