@@ -5,6 +5,7 @@ import { auth } from "@/platform/auth-session";
 import { geocodeStructured } from "@/platform/mapbox";
 import { trustService } from "@/services/trust/trust.service";
 import { userService } from "@/services/user/user.service";
+import { withApiErrorHandling } from "@/platform/api-handler";
 
 const stepSchema = z.object({
   step: z.number().int().min(1).max(8),
@@ -17,7 +18,7 @@ const stepSchema = z.object({
 const CREDENTIAL_STEPS = new Set([4, 5, 6]);
 
 /** Returns the artisan's full private profile for onboarding resume hydration. */
-export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
+export const GET = withApiErrorHandling(async (_request: Request, { params }: { params: Promise<{ id: string }> }) => {
   const { id: artisanId } = await params;
 
   const session = await auth();
@@ -29,9 +30,9 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
   if ((profile.userId as string) !== userId) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   return NextResponse.json({ profile });
-}
+});
 
-export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
+export const PATCH = withApiErrorHandling(async (request: Request, { params }: { params: Promise<{ id: string }> }) => {
   const { id: artisanId } = await params;
 
   const session = await auth();
@@ -87,4 +88,4 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   await userService.updateArtisanOnboardingStep(artisanId, step, data ?? {});
 
   return NextResponse.json({ ok: true });
-}
+});

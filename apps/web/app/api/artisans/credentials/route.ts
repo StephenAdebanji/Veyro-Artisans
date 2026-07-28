@@ -4,6 +4,7 @@ import { auth } from "@/platform/auth-session";
 import { userService } from "@/services/user/user.service";
 import { trustService } from "@/services/trust/trust.service";
 import { userRepository } from "@/services/user/user.repository";
+import { withApiErrorHandling } from "@/platform/api-handler";
 import type { CredentialType } from "@prisma/client";
 
 const body = z.object({
@@ -11,7 +12,7 @@ const body = z.object({
   fileUrl: z.string().url(),
 });
 
-export async function POST(req: Request) {
+export const POST = withApiErrorHandling(async (req: Request) => {
   const session = await auth();
   const userId = (session?.user as { id?: string } | undefined)?.id;
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -34,4 +35,4 @@ export async function POST(req: Request) {
   }
 
   return NextResponse.json({ credentialId }, { status: 201 });
-}
+});

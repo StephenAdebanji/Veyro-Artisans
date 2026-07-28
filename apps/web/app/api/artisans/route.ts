@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import type { SkillCategory } from "@veyro/contracts";
 import { userService } from "@/services/user/user.service";
+import { withApiErrorHandling } from "@/platform/api-handler";
 
-export async function GET(request: Request) {
+export const GET = withApiErrorHandling(async (request: Request) => {
   const url = new URL(request.url);
   const category = url.searchParams.get("category");
   const lat = url.searchParams.get("lat");
@@ -16,4 +17,4 @@ export async function GET(request: Request) {
   });
 
   return NextResponse.json({ artisans: candidates });
-}
+});

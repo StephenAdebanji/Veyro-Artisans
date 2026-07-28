@@ -26,6 +26,7 @@ import { KycSection, type StagedItem, type CredentialRecord, type VerificationSt
 import { ProfilePhotoUpload } from "@/components/shared/profile-photo-upload";
 import { COUNTRIES, NIGERIAN_STATES, NIGERIAN_LGAS } from "@/lib/location-data";
 import { SKILL_LABELS } from "@/components/shared/skill-labels";
+import { apiFetch } from "@/lib/api-client";
 import type { SkillCategory } from "@veyro/contracts";
 
 const COUNTRY_OPTIONS = COUNTRIES.map((c) => ({ value: c.code, label: c.name }));
@@ -203,15 +204,16 @@ export function ArtisanAccount({
           ...(phone.trim() ? { phone: phone.trim() } : {}),
         };
         if (serviceRadiusKm) body.serviceRadiusKm = Number(serviceRadiusKm);
-        const res = await fetch(`/api/artisans/${artisanId}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body),
-        });
-        if (!res.ok) setSaveError("Failed to save changes.");
-        else {
+        try {
+          await apiFetch(`/api/artisans/${artisanId}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body),
+          });
           setSaved(true);
           router.refresh();
+        } catch (err) {
+          setSaveError(err instanceof Error ? err.message : "Failed to save changes.");
         }
       });
       return;
@@ -223,14 +225,11 @@ export function ArtisanAccount({
       startSave(async () => {
         const results = await Promise.allSettled(
           items.map(([, item]) =>
-            fetch("/api/artisans/credentials", {
+            apiFetch("/api/artisans/credentials", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ type: item.type, fileUrl: item.fileUrl }),
-            }).then((res) => {
-              if (!res.ok) throw new Error();
-              return item;
-            }),
+            }).then(() => item),
           ),
         );
 

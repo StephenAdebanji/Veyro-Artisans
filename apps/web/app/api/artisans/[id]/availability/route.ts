@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/platform/auth-session";
 import { userService } from "@/services/user/user.service";
+import { withApiErrorHandling } from "@/platform/api-handler";
 
 const availabilitySchema = z.object({
   workingDays: z.array(z.string()).optional(),
@@ -10,7 +11,7 @@ const availabilitySchema = z.object({
   emergencyAvailable: z.boolean().optional(),
 });
 
-export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
+export const PATCH = withApiErrorHandling(async (request: Request, { params }: { params: Promise<{ id: string }> }) => {
   const { id: artisanId } = await params;
 
   const session = await auth();
@@ -32,4 +33,4 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
   await userService.updateAvailability(artisanId, parsed.data);
   return NextResponse.json({ ok: true });
-}
+});

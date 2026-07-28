@@ -3,6 +3,7 @@ import { z } from "zod";
 import { auth } from "@/platform/auth-session";
 import { userService } from "@/services/user/user.service";
 import { geocodeStructured } from "@/platform/mapbox";
+import { withApiErrorHandling } from "@/platform/api-handler";
 
 const editSchema = z.object({
   bio: z.string().optional(),
@@ -18,7 +19,7 @@ const editSchema = z.object({
 
 /** Public artisan profile. residentialAddress/gps are stripped unless the
  * requester is an authenticated admin — see UserServicePort.getArtisanProfile. */
-export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
+export const GET = withApiErrorHandling(async (_request: Request, { params }: { params: Promise<{ id: string }> }) => {
   const { id } = await params;
   const session = await auth();
   const isAdmin = (session?.user as { role?: string } | undefined)?.role === "ADMIN";
@@ -29,9 +30,9 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
   }
 
   return NextResponse.json({ artisan: profile });
-}
+});
 
-export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
+export const PATCH = withApiErrorHandling(async (request: Request, { params }: { params: Promise<{ id: string }> }) => {
   const { id } = await params;
   const session = await auth();
   const userId = (session?.user as { id?: string } | undefined)?.id;
@@ -65,4 +66,4 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   await userService.updateArtisanSettings(id, { ...rest, city: lga ?? city, state, gpsLat, gpsLng, phone });
 
   return NextResponse.json({ ok: true });
-}
+});

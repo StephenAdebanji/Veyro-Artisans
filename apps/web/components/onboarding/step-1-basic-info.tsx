@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { StepFooter } from "./step-footer";
 import { clearOnboardingArtisanId, getOnboardingArtisanId, setOnboardingArtisanId } from "./onboarding-storage";
 import { clearAllDrafts, loadDraft, saveDraft } from "./onboarding-draft";
+import { apiFetch } from "@/lib/api-client";
 
 type Step1Draft = {
   firstName: string;
@@ -97,25 +98,21 @@ export function Step1BasicInfo() {
     setError(null);
     setLoading(true);
 
-    const response = await fetch("/api/artisans/onboarding", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
-    });
+    try {
+      const { artisanId } = await apiFetch<{ artisanId: string }>("/api/artisans/onboarding", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+      setOnboardingArtisanId(artisanId);
 
-    if (!response.ok) {
-      const body = await response.json().catch(() => null);
-      setError(typeof body?.error === "string" ? body.error : "Could not create your account.");
+      await signIn("credentials", { email: form.email, password: form.password, redirect: false });
+
+      router.push("/join-artisan/steps/2");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not create your account.");
       setLoading(false);
-      return;
     }
-
-    const { artisanId } = await response.json();
-    setOnboardingArtisanId(artisanId);
-
-    await signIn("credentials", { email: form.email, password: form.password, redirect: false });
-
-    router.push("/join-artisan/steps/2");
   }
 
   // ── Returning user (back navigation) ──────────────────────────────────────

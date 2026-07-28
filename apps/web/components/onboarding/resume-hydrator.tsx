@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { saveDraft } from "./onboarding-draft";
 import { setOnboardingArtisanId } from "./onboarding-storage";
+import { apiFetch } from "@/lib/api-client";
 
 // DB enum → contract value (mirrors services/user/experience-level.map.ts)
 const EXP_FROM_DB: Record<string, string> = {
@@ -26,9 +27,8 @@ export function ResumeHydrator({ artisanId }: { artisanId: string }) {
   useEffect(() => {
     setOnboardingArtisanId(artisanId);
 
-    fetch(`/api/artisans/onboarding/${artisanId}`)
-      .then((res) => (res.ok ? res.json() : null))
-      .then((json: { profile: Record<string, unknown> } | null) => {
+    apiFetch<{ profile: Record<string, unknown> }>(`/api/artisans/onboarding/${artisanId}`)
+      .then((json) => {
         if (!json?.profile) return;
         const p = json.profile;
         const user = (p.user ?? {}) as Record<string, string>;

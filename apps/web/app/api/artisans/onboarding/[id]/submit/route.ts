@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/platform/auth-session";
 import { userService } from "@/services/user/user.service";
+import { withApiErrorHandling } from "@/platform/api-handler";
 
-export async function POST(_request: Request, { params }: { params: Promise<{ id: string }> }) {
+export const POST = withApiErrorHandling(async (_request: Request, { params }: { params: Promise<{ id: string }> }) => {
   const { id: artisanId } = await params;
 
   const session = await auth();
@@ -18,4 +19,4 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
 
   await userService.submitArtisanOnboarding(artisanId);
   return NextResponse.json({ ok: true });
-}
+});
