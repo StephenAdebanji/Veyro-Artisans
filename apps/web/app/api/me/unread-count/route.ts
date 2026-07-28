@@ -2,8 +2,9 @@ import { NextResponse } from "next/server";
 import { auth } from "@/platform/auth-session";
 import { chatService } from "@/services/chat/chat.service";
 import { userService } from "@/services/user/user.service";
+import { withApiErrorHandling } from "@/platform/api-handler";
 
-export async function GET() {
+export const GET = withApiErrorHandling(async () => {
   const session = await auth();
   const user = session?.user as { id?: string; role?: string } | undefined;
   if (!user?.id) return NextResponse.json({ count: 0 });
@@ -21,4 +22,4 @@ export async function GET() {
 
   const count = await chatService.countUnreadForUser(profileId);
   return NextResponse.json({ count });
-}
+});

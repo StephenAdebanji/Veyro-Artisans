@@ -71,9 +71,12 @@ export function MatchingScreen({
     let mounted = true;
 
     async function connect() {
-      const res = await fetch("/api/realtime-token");
-      if (!res.ok || !mounted) return;
-      const { token } = (await res.json()) as { token: string };
+      let token: string;
+      try {
+        ({ token } = await apiFetch<{ token: string }>("/api/realtime-token"));
+      } catch {
+        return;
+      }
       if (!mounted) return;
 
       const { io } = await import("socket.io-client");

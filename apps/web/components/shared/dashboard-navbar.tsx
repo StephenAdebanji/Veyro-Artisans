@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { signOut } from "next-auth/react";
 import { Briefcase, History, LogOut, MessageSquare, UserCircle } from "lucide-react";
+import { apiFetch } from "@/lib/api-client";
 
 interface DashboardNavbarProps {
   role: "artisan" | "homeowner";
@@ -34,12 +35,9 @@ export function DashboardNavbar({ role, userName: _userName, profilePhotoUrl: _p
   useEffect(() => {
     async function fetchCount() {
       try {
-        const res = await fetch("/api/me/unread-count");
-        if (res.ok) {
-          const { count } = await res.json() as { count: number };
-          setUnreadCount(count);
-        }
-      } catch { /* silent */ }
+        const { count } = await apiFetch<{ count: number }>("/api/me/unread-count");
+        setUnreadCount(count);
+      } catch { /* silent — background badge refresh, not worth surfacing */ }
     }
 
     fetchCount();

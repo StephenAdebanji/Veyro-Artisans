@@ -2,9 +2,10 @@ import { NextResponse } from "next/server";
 import { auth } from "@/platform/auth-session";
 import { chatService } from "@/services/chat/chat.service";
 import { userService } from "@/services/user/user.service";
+import { withApiErrorHandling } from "@/platform/api-handler";
 
 /** Get-or-create a conversation between the current artisan and a homeowner. */
-export async function POST(request: Request) {
+export const POST = withApiErrorHandling(async (request: Request) => {
   const session = await auth();
   const user = session?.user as { id?: string; role?: string } | undefined;
   if (!user?.id || user.role !== "ARTISAN")
@@ -18,11 +19,11 @@ export async function POST(request: Request) {
 
   const conversationId = await chatService.getOrCreateConversation(homeownerId, artisan.id, jobId);
   return NextResponse.json({ conversationId });
-}
+});
 
 /** List conversations for the authenticated user. profileId (homeownerId or
  * artisanId) is resolved from the session — never trusted from the client. */
-export async function GET() {
+export const GET = withApiErrorHandling(async () => {
   const session = await auth();
   const user = session?.user as { id?: string; role?: string } | undefined;
   if (!user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -40,4 +41,4 @@ export async function GET() {
 
   const conversations = await chatService.listConversations(profileId);
   return NextResponse.json({ conversations });
-}
+});

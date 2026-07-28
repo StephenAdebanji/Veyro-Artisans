@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import type { AvailableRequestSummary, SkillCategory } from "@veyro/contracts";
 import { haversineKm } from "@/platform/geo";
 import { AvailableJobRow } from "./available-job-row";
+import { apiFetch } from "@/lib/api-client";
 
 interface ArtisanJobFeedProps {
   initialJobs: AvailableRequestSummary[];
@@ -29,9 +30,12 @@ export function ArtisanJobFeed({
     let mounted = true;
 
     async function connect() {
-      const res = await fetch("/api/realtime-token");
-      if (!res.ok || !mounted) return;
-      const { token } = (await res.json()) as { token: string };
+      let token: string;
+      try {
+        ({ token } = await apiFetch<{ token: string }>("/api/realtime-token"));
+      } catch {
+        return;
+      }
       if (!mounted) return;
 
       const { io } = await import("socket.io-client");

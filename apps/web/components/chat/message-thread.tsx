@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { Send, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { apiFetch } from "@/lib/api-client";
 import type { MessageRecord } from "@veyro/contracts";
 
 interface MessageThreadProps {
@@ -45,6 +46,7 @@ export function MessageThread({
   const [messages, setMessages] = useState<MessageRecord[]>([]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
+  const [sendError, setSendError] = useState<string | null>(null);
   const [socketConnected, setSocketConnected] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const socketRef = useRef<import("socket.io-client").Socket | null>(null);
@@ -57,17 +59,18 @@ export function MessageThread({
     setMessages([]);
 
     async function init() {
-      const [msgsRes] = await Promise.all([
-        fetch(`/api/conversations/${conversationId}/messages`),
-        fetch(`/api/conversations/${conversationId}/read`, { method: "POST" }),
-      ]);
-      if (msgsRes.ok) {
-        const { messages: loaded } = (await msgsRes.json()) as { messages: MessageRecord[] };
-        setMessages(loaded);
+      try {
+        const [loaded] = await Promise.all([
+          apiFetch<{ messages: MessageRecord[] }>(`/api/conversations/${conversationId}/messages`),
+          apiFetch(`/api/conversations/${conversationId}/read`, { method: "POST" }).catch(() => {}),
+        ]);
+        setMessages(loaded.messages);
         onRead?.(conversationId);
+      } catch (err) {
+        console.error(err);
       }
     }
-    init().catch(console.error);
+    init();
   }, [conversationId, onRead]);
 
   // Socket connection (created once, room switched on conversationId change).
@@ -75,9 +78,12 @@ export function MessageThread({
     let mounted = true;
 
     async function connectSocket() {
-      const res = await fetch("/api/realtime-token");
-      if (!res.ok || !mounted) return;
-      const { token } = (await res.json()) as { token: string };
+      let token: string;
+      try {
+        ({ token } = await apiFetch<{ token: string }>("/api/realtime-token"));
+      } catch {
+        return;
+      }
       if (!mounted) return;
 
       const { io } = await import("socket.io-client");
@@ -98,7 +104,7 @@ export function MessageThread({
         if (msg.senderId === currentProfileId) return; // we already added it via HTTP
         setMessages((prev) => {
           if (prev.some((m) => m.id === msg.id)) return prev;
-          fetch(`/api/conversations/${msg.conversationId}/read`, { method: "POST" }).catch(() => {});
+          apiFetch(`/api/conversations/${msg.conversationId}/read`, { method: "POST" }).catch(() => {});
           return [...prev, msg];
         });
       });
@@ -125,9 +131,12 @@ export function MessageThread({
     if (socketConnected) return;
 
     const interval = setInterval(async () => {
-      const res = await fetch(`/api/conversations/${conversationIdRef.current}/messages`);
-      if (!res.ok) return;
-      const { messages: fresh } = (await res.json()) as { messages: MessageRecord[] };
+      let fresh: MessageRecord[];
+      try {
+        ({ messages: fresh } = await apiFetch<{ messages: MessageRecord[] }>(`/api/conversations/${conversationIdRef.current}/messages`));
+      } catch {
+        return;
+      }
       setMessages((prev) => {
         const ids = new Set(prev.filter((m) => !m.id.startsWith("temp:")).map((m) => m.id));
         const incoming = fresh.filter((m) => !ids.has(m.id));
@@ -151,10 +160,11 @@ export function MessageThread({
     }
   }
 
-  function send() {
+  async function send() {
     const text = input.trim();
     if (!text || sending) return;
     setSending(true);
+    setSendError(null);
     setInput("");
 
     const tempId = `temp:${Date.now()}`;
@@ -172,19 +182,19 @@ export function MessageThread({
     ]);
 
     // Always persist via HTTP — never depend on socket for own messages.
-    fetch(`/api/conversations/${conversationId}/messages`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ senderId: currentProfileId, type: "TEXT", content: text }),
-    })
-      .then((r) => r.json())
-      .then(({ message }: { message: MessageRecord }) => {
-        setMessages((prev) => prev.map((m) => (m.id === tempId ? message : m)));
-      })
-      .catch(() => {
-        setMessages((prev) => prev.filter((m) => m.id !== tempId));
-      })
-      .finally(() => setSending(false));
+    try {
+      const { message } = await apiFetch<{ message: MessageRecord }>(`/api/conversations/${conversationId}/messages`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ senderId: currentProfileId, type: "TEXT", content: text }),
+      });
+      setMessages((prev) => prev.map((m) => (m.id === tempId ? message : m)));
+    } catch (err) {
+      setMessages((prev) => prev.filter((m) => m.id !== tempId));
+      setSendError(err instanceof Error ? err.message : "Could not send message. Please try again.");
+    } finally {
+      setSending(false);
+    }
   }
 
   // Group messages by day for date separators.
@@ -265,6 +275,7 @@ export function MessageThread({
 
       {/* Input */}
       <div className="border-t px-4 py-3">
+        {sendError && <p className="mb-1.5 text-xs text-destructive">{sendError}</p>}
         <div className="flex items-end gap-2">
           <Textarea
             className="min-h-[2.5rem] max-h-32 resize-none py-2"

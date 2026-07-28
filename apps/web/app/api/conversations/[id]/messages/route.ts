@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { chatService } from "@/services/chat/chat.service";
+import { withApiErrorHandling } from "@/platform/api-handler";
 
 const sendMessageSchema = z.object({
   senderId: z.string(),
@@ -12,13 +13,13 @@ const sendMessageSchema = z.object({
 // REST is the persistence path; Socket.io (apps/realtime) is the live delivery
 // path — see docs/ARCHITECTURE.md. The realtime gateway calls this same route
 // internally so there is exactly one place messages are written.
-export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
+export const GET = withApiErrorHandling(async (_request: Request, { params }: { params: Promise<{ id: string }> }) => {
   const { id: conversationId } = await params;
   const messages = await chatService.listMessages(conversationId);
   return NextResponse.json({ messages });
-}
+});
 
-export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
+export const POST = withApiErrorHandling(async (request: Request, { params }: { params: Promise<{ id: string }> }) => {
   const { id: conversationId } = await params;
   const body = await request.json();
   const parsed = sendMessageSchema.safeParse(body);
@@ -28,4 +29,4 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 
   const message = await chatService.sendMessage({ conversationId, ...parsed.data });
   return NextResponse.json({ message }, { status: 201 });
-}
+});
