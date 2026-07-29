@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, CheckCircle2, Loader2, MessageCircle, Sparkles, XCircle } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Loader2, Sparkles, XCircle } from "lucide-react";
 import { OfferCard, type OfferData } from "./offer-card";
 import type { RankedArtisan, SkillCategory } from "@veyro/contracts";
 import { SKILL_LABELS } from "@/components/shared/skill-labels";
@@ -37,6 +37,9 @@ export function MatchingScreen({
     initialOffers.find((o) => o.status === "ACCEPTED")?.matchId ?? null,
   );
   const [jobId, setJobId] = useState<string | null>(null);
+  const [artisanPhone, setArtisanPhone] = useState<string | null>(null);
+  const [chatPending, setChatPending] = useState(false);
+  const [chatError, setChatError] = useState<string | null>(null);
   const [secondsLeft, setSecondsLeft] = useState(() => {
     const elapsed = Math.floor((Date.now() - new Date(createdAt).getTime()) / 1000);
     return Math.max(0, MATCH_WINDOW_SECONDS - elapsed);
@@ -105,19 +108,28 @@ export function MatchingScreen({
         });
       });
 
-      socket.on("offer-responded", ({ matchId, decision, jobId: jid }: { matchId: string; decision: string; jobId: string | null }) => {
-        if (!mounted) return;
-        if (decision === "ACCEPT") {
-          setAcceptedMatchId(matchId);
-          setJobId(jid);
-          setOffers((prev) =>
-            prev.map((o) => ({
-              ...o,
-              status: o.matchId === matchId ? "ACCEPTED" : o.status === "PENDING" ? "EXPIRED" : o.status,
-            })),
-          );
-        }
-      });
+      socket.on(
+        "offer-responded",
+        ({
+          matchId,
+          decision,
+          jobId: jid,
+          artisanPhone: phone,
+        }: { matchId: string; decision: string; jobId: string | null; artisanPhone?: string | null }) => {
+          if (!mounted) return;
+          if (decision === "ACCEPT") {
+            setAcceptedMatchId(matchId);
+            setJobId(jid);
+            setArtisanPhone(phone ?? null);
+            setOffers((prev) =>
+              prev.map((o) => ({
+                ...o,
+                status: o.matchId === matchId ? "ACCEPTED" : o.status === "PENDING" ? "EXPIRED" : o.status,
+              })),
+            );
+          }
+        },
+      );
     }
 
     connect().catch(console.error);
@@ -128,15 +140,35 @@ export function MatchingScreen({
   }, [serviceRequestId]);
 
   async function handleAccept(matchId: string) {
-    const { jobId: jid } = await apiFetch<{ jobId: string }>(`/api/matches/${matchId}/accept`, { method: "POST" });
+    const { jobId: jid, artisanPhone: phone } = await apiFetch<{
+      jobId: string;
+      artisanPhone: string | null;
+    }>(`/api/matches/${matchId}/accept`, { method: "POST" });
     setAcceptedMatchId(matchId);
     setJobId(jid);
+    setArtisanPhone(phone);
     setOffers((prev) =>
       prev.map((o) => ({
         ...o,
         status: o.matchId === matchId ? "ACCEPTED" : o.status === "PENDING" ? "EXPIRED" : o.status,
       })),
     );
+  }
+
+  async function handleStartChat(artisanId: string) {
+    setChatError(null);
+    setChatPending(true);
+    try {
+      const { conversationId } = await apiFetch<{ conversationId: string }>("/api/conversations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ artisanId, jobId: jobId ?? undefined }),
+      });
+      router.push(`/homeowner/messages?c=${conversationId}`);
+    } catch (err) {
+      setChatError(err instanceof Error ? err.message : "Could not start chat. Please try again.");
+      setChatPending(false);
+    }
   }
 
   async function handleReject(matchId: string, reason: string) {
@@ -268,25 +300,17 @@ export function MatchingScreen({
           <div>
             <p className="text-lg font-semibold text-emerald-800">Artisan confirmed!</p>
             <p className="text-sm text-emerald-700">
-              Your artisan is on the way. You can message them from your Messages tab.
+              Your artisan is on the way. You can chat or call them below.
             </p>
           </div>
-          <div className="mt-1 flex items-center gap-4">
+          {jobId && (
             <button
-              onClick={() => router.push("/homeowner/messages")}
-              className="flex items-center gap-1.5 text-sm font-medium text-emerald-700 underline underline-offset-2"
+              onClick={() => router.push("/homeowner/dashboard")}
+              className="mt-1 text-sm font-medium text-emerald-700 underline underline-offset-2"
             >
-              <MessageCircle className="h-3.5 w-3.5" /> Messages
+              Back to dashboard →
             </button>
-            {jobId && (
-              <button
-                onClick={() => router.push("/homeowner/dashboard")}
-                className="text-sm font-medium text-emerald-700 underline underline-offset-2"
-              >
-                Back to dashboard →
-              </button>
-            )}
-          </div>
+          )}
         </div>
       )}
 
@@ -401,6 +425,14 @@ export function MatchingScreen({
                         onReject={handleReject}
                         disabled={!!acceptedMatchId}
                         isTopRecommendation={offer.artisanId === topArtisanId && !!ai}
+                        artisanPhone={offer.matchId === acceptedMatchId ? artisanPhone : null}
+                        onChat={
+                          offer.matchId === acceptedMatchId
+                            ? () => handleStartChat(offer.artisanId)
+                            : undefined
+                        }
+                        chatPending={offer.matchId === acceptedMatchId ? chatPending : false}
+                        chatError={offer.matchId === acceptedMatchId ? chatError : null}
                       />
                     );
                   })}

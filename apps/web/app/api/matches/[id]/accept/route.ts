@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/platform/auth-session";
 import { matchingService } from "@/services/matching/matching.service";
+import { matchingRepository } from "@/services/matching/matching.repository";
 import { userService } from "@/services/user/user.service";
 import { withApiErrorHandling } from "@/platform/api-handler";
 
@@ -8,7 +9,8 @@ const REALTIME_URL = process.env.REALTIME_INTERNAL_URL ?? "http://localhost:4001
 
 /** Homeowner accepts a specific offer card — creates the Job, expires all other
  * pending offers for this request, and notifies apps/realtime so the matching
- * screen transitions to the accepted state. */
+ * screen transitions to the accepted state. Returns the artisan's phone so the
+ * homeowner's client can offer a "Call" action once confirmed. */
 export const POST = withApiErrorHandling(async (_req: Request, { params }: { params: Promise<{ id: string }> }) => {
   const { id: matchId } = await params;
 
@@ -19,28 +21,27 @@ export const POST = withApiErrorHandling(async (_req: Request, { params }: { par
   const homeowner = await userService.getHomeownerProfileByUserId(userId);
   if (!homeowner) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
+  const match = await matchingRepository.findMatch(matchId);
+  if (!match) return NextResponse.json({ error: "Match not found" }, { status: 404 });
+
   // Ownership check: the match's service request must belong to this homeowner.
-  const serviceRequest = await matchingService.getServiceRequest(
-    await getServiceRequestIdForMatch(matchId),
-  );
+  const serviceRequest = await matchingService.getServiceRequest(match.serviceRequestId);
   if (!serviceRequest || serviceRequest.homeownerId !== homeowner.id) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   const { jobId } = await matchingService.respondToOffer(matchId, "ACCEPT");
 
+  const artisan = (await userService.getArtisanProfile(match.artisanId)) as
+    | { user?: { phone?: string | null } }
+    | null;
+  const artisanPhone = artisan?.user?.phone ?? null;
+
   fetch(`${REALTIME_URL}/internal/matching/${serviceRequest.id}/responded`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ matchId, decision: "ACCEPT", jobId }),
+    body: JSON.stringify({ matchId, decision: "ACCEPT", jobId, artisanId: match.artisanId, artisanPhone }),
   }).catch(() => {});
 
-  return NextResponse.json({ jobId });
+  return NextResponse.json({ jobId, artisanId: match.artisanId, artisanPhone });
 });
-
-async function getServiceRequestIdForMatch(matchId: string): Promise<string> {
-  const { matchingRepository } = await import("@/services/matching/matching.repository");
-  const match = await matchingRepository.findMatch(matchId);
-  if (!match) throw new Error("Match not found");
-  return match.serviceRequestId;
-}

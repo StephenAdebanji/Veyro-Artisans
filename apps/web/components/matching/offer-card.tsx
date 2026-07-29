@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Star, Clock, MapPin, Sparkles } from "lucide-react";
+import { Star, Clock, MapPin, Sparkles, MessageCircle, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
@@ -26,9 +26,25 @@ interface OfferCardProps {
   onReject?: (matchId: string, reason: string) => Promise<void>;
   disabled?: boolean;
   isTopRecommendation?: boolean;
+  /** Only populated for the accepted offer — enables the Call button. */
+  artisanPhone?: string | null;
+  /** Only called for the accepted offer — starts/opens the chat with this artisan. */
+  onChat?: () => void;
+  chatPending?: boolean;
+  chatError?: string | null;
 }
 
-export function OfferCard({ offer, onAccept, onReject, disabled, isTopRecommendation }: OfferCardProps) {
+export function OfferCard({
+  offer,
+  onAccept,
+  onReject,
+  disabled,
+  isTopRecommendation,
+  artisanPhone,
+  onChat,
+  chatPending,
+  chatError,
+}: OfferCardProps) {
   const [accepting, setAccepting] = useState(false);
   const [acceptError, setAcceptError] = useState<string | null>(null);
   const [showRejectForm, setShowRejectForm] = useState(false);
@@ -103,7 +119,24 @@ export function OfferCard({ offer, onAccept, onReject, disabled, isTopRecommenda
                 AI {offer.aiScore}%
               </span>
             )}
+            {offer.status === "ACCEPTED" && (
+              <div className="ml-auto flex items-center gap-2">
+                {onChat && (
+                  <Button size="sm" variant="outline" onClick={onChat} disabled={chatPending}>
+                    <MessageCircle className="h-3.5 w-3.5" /> {chatPending ? "Opening…" : "Chat"}
+                  </Button>
+                )}
+                {artisanPhone && (
+                  <a href={`tel:${artisanPhone}`}>
+                    <Button size="sm" variant="outline">
+                      <Phone className="h-3.5 w-3.5" /> Call
+                    </Button>
+                  </a>
+                )}
+              </div>
+            )}
           </div>
+          {chatError && <p className="mt-1 text-xs text-destructive">{chatError}</p>}
 
           <div className="mt-2 flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
             <span className="flex items-center gap-1.5">
