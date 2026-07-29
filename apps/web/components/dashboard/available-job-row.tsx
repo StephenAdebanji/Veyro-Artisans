@@ -4,11 +4,21 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Sparkles } from "lucide-react";
 import { SKILL_LABELS } from "@/components/shared/skill-labels";
 import { apiFetch, ApiRequestError } from "@/lib/api-client";
 import type { AvailableRequestSummary } from "@veyro/contracts";
 
-export function AvailableJobRow({ job }: { job: AvailableRequestSummary }) {
+interface AvailableJobRowProps {
+  job: AvailableRequestSummary;
+  /** True while this job hasn't been acknowledged yet — arrived live via
+   * socket since the feed mounted, rather than being part of the initial load. */
+  isNew?: boolean;
+  /** Called once the artisan engages with the row, clearing the "new" highlight. */
+  onSeen?: () => void;
+}
+
+export function AvailableJobRow({ job, isNew, onSeen }: AvailableJobRowProps) {
   const router = useRouter();
   const [expanded, setExpanded] = useState(false);
   const [price, setPrice] = useState("");
@@ -47,12 +57,25 @@ export function AvailableJobRow({ job }: { job: AvailableRequestSummary }) {
   }
 
   return (
-    <div className="rounded-xl border bg-card p-4">
+    <div
+      className={`rounded-xl border p-4 transition-colors ${
+        isNew
+          ? "border-primary/50 bg-primary/5 ring-2 ring-primary/20 dark:bg-primary/10"
+          : "bg-card"
+      }`}
+    >
       <div className="flex items-center justify-between">
         <div>
-          {job.homeownerName && (
-            <p className="text-xs font-medium text-muted-foreground">{job.homeownerName}</p>
-          )}
+          <div className="flex items-center gap-2">
+            {isNew && (
+              <span className="flex items-center gap-1 rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold text-primary-foreground">
+                <Sparkles className="h-2.5 w-2.5" /> New
+              </span>
+            )}
+            {job.homeownerName && (
+              <p className="text-xs font-medium text-muted-foreground">{job.homeownerName}</p>
+            )}
+          </div>
           <p className="font-semibold">{job.description || SKILL_LABELS[job.category]}</p>
           <p className="text-sm text-muted-foreground">
             {job.address} · {job.distanceKm.toFixed(1)} km away
@@ -60,7 +83,15 @@ export function AvailableJobRow({ job }: { job: AvailableRequestSummary }) {
           </p>
         </div>
         {!sent && !unavailable && (
-          <Button type="button" size="sm" variant={expanded ? "outline" : "default"} onClick={() => setExpanded((v) => !v)}>
+          <Button
+            type="button"
+            size="sm"
+            variant={expanded ? "outline" : "default"}
+            onClick={() => {
+              setExpanded((v) => !v);
+              onSeen?.();
+            }}
+          >
             {expanded ? "Cancel" : "Send offer"}
           </Button>
         )}

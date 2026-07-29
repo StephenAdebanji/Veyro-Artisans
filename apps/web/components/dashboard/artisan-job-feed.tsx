@@ -24,7 +24,17 @@ export function ArtisanJobFeed({
   serviceRadiusKm,
 }: ArtisanJobFeedProps) {
   const [jobs, setJobs] = useState<AvailableRequestSummary[]>(initialJobs);
+  const [newJobIds, setNewJobIds] = useState<Set<string>>(new Set());
   const socketRef = useRef<import("socket.io-client").Socket | null>(null);
+
+  function markSeen(jobId: string) {
+    setNewJobIds((prev) => {
+      if (!prev.has(jobId)) return prev;
+      const next = new Set(prev);
+      next.delete(jobId);
+      return next;
+    });
+  }
 
   useEffect(() => {
     let mounted = true;
@@ -53,7 +63,7 @@ export function ArtisanJobFeed({
           if (!mounted) return;
 
           // Compute distance from artisan's GPS to the job location.
-          let distanceKm =
+          const distanceKm =
             artisanLat !== undefined && artisanLng !== undefined && job.lat !== undefined && job.lng !== undefined
               ? haversineKm({ lat: artisanLat, lng: artisanLng }, { lat: job.lat, lng: job.lng })
               : (job.distanceKm ?? 0);
@@ -76,6 +86,7 @@ export function ArtisanJobFeed({
             };
             return [newJob, ...prev];
           });
+          setNewJobIds((prev) => new Set(prev).add(job.id));
         },
       );
     }
@@ -95,7 +106,12 @@ export function ArtisanJobFeed({
   return (
     <div className="space-y-3">
       {jobs.map((job) => (
-        <AvailableJobRow key={job.id} job={job} />
+        <AvailableJobRow
+          key={job.id}
+          job={job}
+          isNew={newJobIds.has(job.id)}
+          onSeen={() => markSeen(job.id)}
+        />
       ))}
     </div>
   );
