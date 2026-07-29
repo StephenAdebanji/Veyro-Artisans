@@ -10,6 +10,7 @@ import { SKILL_LABELS } from "@/components/shared/skill-labels";
 import { VerificationPanel } from "@/components/admin/verification-panel";
 import { ArtisanSkillEditor } from "@/components/admin/artisan-skill-editor";
 import { ResetPasswordTrigger } from "@/components/admin/reset-password-trigger";
+import { trustService } from "@/services/trust/trust.service";
 import type { SkillCategory } from "@veyro/contracts";
 
 const VERIFICATION_STYLE: Record<string, string> = {
@@ -49,6 +50,14 @@ export default async function AdminArtisanDetailPage({
     where: { artisanId: id },
     orderBy: { createdAt: "desc" },
   });
+
+  // ArtisanProfile.trustScore/ratingAvg/etc. are a cache synced via an
+  // in-process event bus — that sync can silently miss (e.g. across
+  // serverless invocations), leaving this admin view stale relative to what
+  // the artisan's own dashboard shows (which reads trust.TrustProfile
+  // directly). Read the same live source of truth here so the two never
+  // disagree.
+  const trustProfile = await trustService.getTrustProfile(id);
 
   const fullName = [artisan.firstName, artisan.lastName].filter(Boolean).join(" ") || "No name";
   const location = [artisan.city, artisan.state, artisan.country].filter(Boolean).join(", ");
@@ -160,29 +169,29 @@ export default async function AdminArtisanDetailPage({
                 <Star className="h-3.5 w-3.5" /> Rating
               </dt>
               <dd className="font-medium">
-                {artisan.ratingAvg.toFixed(1)} ({artisan.ratingCount} reviews)
+                {(trustProfile?.ratingAvg ?? artisan.ratingAvg).toFixed(1)} ({trustProfile?.ratingCount ?? artisan.ratingCount} reviews)
               </dd>
             </div>
             <div className="flex items-center justify-between">
               <dt className="flex items-center gap-1.5 text-muted-foreground">
                 <Briefcase className="h-3.5 w-3.5" /> Completed jobs
               </dt>
-              <dd className="font-medium">{artisan.completedJobs}</dd>
+              <dd className="font-medium">{trustProfile?.completedJobs ?? artisan.completedJobs}</dd>
             </div>
             <div className="flex items-center justify-between">
               <dt className="flex items-center gap-1.5 text-muted-foreground">
                 <Shield className="h-3.5 w-3.5" /> Trust score
               </dt>
-              <dd className="font-medium">{artisan.trustScore.toFixed(0)}/100</dd>
+              <dd className="font-medium">{(trustProfile?.score ?? artisan.trustScore).toFixed(0)}/100</dd>
             </div>
-            {artisan.responseTimeAvgSeconds && (
+            {(trustProfile?.responseTimeAvgSeconds ?? artisan.responseTimeAvgSeconds) ? (
               <div className="flex items-center justify-between">
                 <dt className="flex items-center gap-1.5 text-muted-foreground">
                   <Clock className="h-3.5 w-3.5" /> Avg. response
                 </dt>
-                <dd className="font-medium">{Math.round(artisan.responseTimeAvgSeconds / 60)} min</dd>
+                <dd className="font-medium">{Math.round((trustProfile?.responseTimeAvgSeconds ?? artisan.responseTimeAvgSeconds ?? 0) / 60)} min</dd>
               </div>
-            )}
+            ) : null}
           </dl>
         </div>
       </div>
