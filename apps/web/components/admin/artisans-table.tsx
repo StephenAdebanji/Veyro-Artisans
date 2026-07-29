@@ -230,7 +230,10 @@ export function ArtisansTable({ initialRows }: { initialRows: ArtisanRow[] }) {
     if (!q) return allRows;
     return allRows.filter((row) => {
       const name = [row.firstName, row.lastName].filter(Boolean).join(" ").toLowerCase();
-      return name.includes(q) || row.user.email.toLowerCase().includes(q);
+      const category = row.primarySkill
+        ? (SKILL_LABELS[row.primarySkill as SkillCategory] ?? row.primarySkill).toLowerCase()
+        : "";
+      return name.includes(q) || row.user.email.toLowerCase().includes(q) || category.includes(q);
     });
   }, [allRows, query]);
 
@@ -249,7 +252,7 @@ export function ArtisansTable({ initialRows }: { initialRows: ArtisanRow[] }) {
           <Input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search by name or email…"
+            placeholder="Search by name, email, or category…"
             className="pl-8"
           />
         </div>
