@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, CheckCircle2, Loader2, Sparkles, XCircle } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Loader2, MessageCircle, Sparkles, XCircle } from "lucide-react";
 import { OfferCard, type OfferData } from "./offer-card";
 import type { RankedArtisan, SkillCategory } from "@veyro/contracts";
 import { SKILL_LABELS } from "@/components/shared/skill-labels";
@@ -268,17 +268,25 @@ export function MatchingScreen({
           <div>
             <p className="text-lg font-semibold text-emerald-800">Artisan confirmed!</p>
             <p className="text-sm text-emerald-700">
-              Your artisan is on the way. You can chat with them below.
+              Your artisan is on the way. You can message them from your Messages tab.
             </p>
           </div>
-          {jobId && (
+          <div className="mt-1 flex items-center gap-4">
             <button
-              onClick={() => router.push("/homeowner/dashboard")}
-              className="mt-1 text-sm font-medium text-emerald-700 underline underline-offset-2"
+              onClick={() => router.push("/homeowner/messages")}
+              className="flex items-center gap-1.5 text-sm font-medium text-emerald-700 underline underline-offset-2"
             >
-              Back to dashboard →
+              <MessageCircle className="h-3.5 w-3.5" /> Messages
             </button>
-          )}
+            {jobId && (
+              <button
+                onClick={() => router.push("/homeowner/dashboard")}
+                className="text-sm font-medium text-emerald-700 underline underline-offset-2"
+              >
+                Back to dashboard →
+              </button>
+            )}
+          </div>
         </div>
       )}
 
