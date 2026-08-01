@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { apiFetch } from "@/lib/api-client";
@@ -12,10 +14,17 @@ type FieldErrors = {
   email?: string;
   phone?: string;
   password?: string;
+  consent?: string;
   general?: string;
 };
 
-function validate(fullName: string, email: string, phone: string, password: string): FieldErrors {
+function validate(
+  fullName: string,
+  email: string,
+  phone: string,
+  password: string,
+  agreedToTerms: boolean,
+): FieldErrors {
   const errors: FieldErrors = {};
   if (!fullName.trim()) errors.fullName = "Full name is required.";
   if (!email.trim()) {
@@ -29,6 +38,9 @@ function validate(fullName: string, email: string, phone: string, password: stri
   } else if (password.length < 8) {
     errors.password = "Password must be at least 8 characters.";
   }
+  if (!agreedToTerms) {
+    errors.consent = "You must agree to the Terms of Use and Privacy Policy to continue.";
+  }
   return errors;
 }
 
@@ -38,12 +50,13 @@ export function SignUpForm() {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [errors, setErrors] = useState<FieldErrors>({});
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
-    const fieldErrors = validate(fullName, email, phone, password);
+    const fieldErrors = validate(fullName, email, phone, password, agreedToTerms);
     if (Object.keys(fieldErrors).length > 0) {
       setErrors(fieldErrors);
       return;
@@ -118,6 +131,31 @@ export function SignUpForm() {
           onChange={(e) => { setPassword(e.target.value); setErrors((prev) => ({ ...prev, password: undefined })); }}
         />
         {errors.password && <p className="text-xs text-destructive">{errors.password}</p>}
+      </div>
+      <div className="flex flex-col gap-1.5">
+        <label className="flex items-start gap-2 text-sm text-muted-foreground">
+          <Checkbox
+            checked={agreedToTerms}
+            onCheckedChange={(checked) => {
+              setAgreedToTerms(checked === true);
+              setErrors((prev) => ({ ...prev, consent: undefined }));
+            }}
+            aria-invalid={!!errors.consent}
+            className="mt-0.5"
+          />
+          <span>
+            I agree to VEYRO&apos;s{" "}
+            <Link href="/terms" target="_blank" className="font-medium text-primary hover:underline">
+              Terms of Use
+            </Link>{" "}
+            and{" "}
+            <Link href="/privacy" target="_blank" className="font-medium text-primary hover:underline">
+              Privacy Policy
+            </Link>
+            , including the collection and use of my personal data as described.
+          </span>
+        </label>
+        {errors.consent && <p className="text-xs text-destructive">{errors.consent}</p>}
       </div>
       {errors.general && <p className="text-sm text-destructive">{errors.general}</p>}
       <Button type="submit" disabled={loading} className="mt-2">

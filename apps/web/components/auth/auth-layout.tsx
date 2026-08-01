@@ -70,17 +70,6 @@ export function AuthLayout({
               Join as artisan
             </Link>
           </p>
-          <p className="mt-4 text-center text-xs text-muted-foreground">
-            By continuing, you agree to VEYRO&apos;s{" "}
-            <Link href="/terms" className="font-medium text-primary hover:underline">
-              Terms of Use
-            </Link>{" "}
-            and{" "}
-            <Link href="/privacy" className="font-medium text-primary hover:underline">
-              Privacy Policy
-            </Link>
-            .
-          </p>
         </div>
       </div>
     </div>

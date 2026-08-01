@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { signIn, useSession } from "next-auth/react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { StepFooter } from "./step-footer";
@@ -39,6 +41,8 @@ export function Step1BasicInfo() {
     password: "",
   });
   const [draftLoaded, setDraftLoaded] = useState(false);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [consentError, setConsentError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -96,6 +100,11 @@ export function Step1BasicInfo() {
     }
 
     setError(null);
+    setConsentError(null);
+    if (!agreedToTerms) {
+      setConsentError("You must agree to the Terms of Use and Privacy Policy to continue.");
+      return;
+    }
     setLoading(true);
 
     try {
@@ -191,6 +200,31 @@ export function Step1BasicInfo() {
           onChange={update("password")}
           required
         />
+      </div>
+      <div className="flex flex-col gap-1.5 sm:col-span-2">
+        <label className="flex items-start gap-2 text-sm text-muted-foreground">
+          <Checkbox
+            checked={agreedToTerms}
+            onCheckedChange={(checked) => {
+              setAgreedToTerms(checked === true);
+              setConsentError(null);
+            }}
+            aria-invalid={!!consentError}
+            className="mt-0.5"
+          />
+          <span>
+            I agree to VEYRO&apos;s{" "}
+            <Link href="/terms" target="_blank" className="font-medium text-primary hover:underline">
+              Terms of Use
+            </Link>{" "}
+            and{" "}
+            <Link href="/privacy" target="_blank" className="font-medium text-primary hover:underline">
+              Privacy Policy
+            </Link>
+            , including the collection and use of my personal data as described.
+          </span>
+        </label>
+        {consentError && <p className="text-xs text-destructive">{consentError}</p>}
       </div>
       {error && <p className="text-sm text-destructive sm:col-span-2">{error}</p>}
       <div className="sm:col-span-2">
