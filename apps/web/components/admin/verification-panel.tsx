@@ -17,6 +17,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { apiFetch } from "@/lib/api-client";
+import { findMissingCompulsoryCredentials, type CredentialType } from "@veyro/contracts";
 
 type CredentialItem = {
   id: string;
@@ -27,8 +28,6 @@ type CredentialItem = {
 };
 
 type VerificationStatus = "UNVERIFIED" | "PENDING" | "VERIFIED" | "REJECTED";
-
-const GOVT_ID_TYPES = ["NIN", "NATIONAL_ID", "DRIVERS_LICENSE", "PASSPORT"];
 
 const CREDENTIAL_STATUS_STYLE: Record<string, string> = {
   APPROVED: "bg-emerald-100 text-emerald-700",
@@ -340,16 +339,14 @@ export function VerificationPanel({
   const total = credentials.length;
   const pendingCredentials = credentials.filter((c) => c.status === "PENDING");
 
-  // Steps 4 (Government ID) and 5 (Utility bill / proof of address) are the
-  // only two required uploads in the onboarding wizard — every other step,
-  // including trade credentials, is optional. In principle an artisan who
-  // reached PENDING_REVIEW (clicked Submit) should always have both, but the
-  // wizard's submit step doesn't actually enforce that server-side, so in
-  // practice plenty of real profiles reach PENDING_REVIEW — even step 8 —
-  // with zero documents. Key the warning off whether a final decision has
-  // been made rather than onboardingStatus, so it still surfaces for those.
-  const missingGovtId = !credentials.some((c) => GOVT_ID_TYPES.includes(c.type));
-  const missingProofOfAddress = !credentials.some((c) => c.type === "UTILITY_BILL");
+  // The submit endpoint now enforces these two uploads server-side, but
+  // profiles that reached PENDING_REVIEW before that check existed (or had a
+  // credential deleted afterward) can still be missing them — key the
+  // warning off whether a final decision has been made rather than
+  // onboardingStatus, so it still surfaces for those.
+  const { missingGovtId, missingProofOfAddress } = findMissingCompulsoryCredentials(
+    credentials.map((c) => c.type as CredentialType),
+  );
   const missingCompulsoryDocs = !decided && (missingGovtId || missingProofOfAddress);
   const missingLabels = [
     missingGovtId ? "Government ID" : null,

@@ -36,6 +36,11 @@ export const trustRepository = {
     return prisma.credential.count({ where: { artisanId, status: "APPROVED" } });
   },
 
+  async listCredentialTypes(artisanId: string): Promise<CredentialType[]> {
+    const rows = await prisma.credential.findMany({ where: { artisanId }, select: { type: true } });
+    return rows.map((r) => r.type);
+  },
+
   async listPending() {
     // Drive the queue from artisan status, not credential status.
     // An artisan stays in the queue until a final decision is recorded on their profile.

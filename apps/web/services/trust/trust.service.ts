@@ -1,9 +1,10 @@
-import type {
-  PendingCredentialSummary,
-  SubmitCredentialInput,
-  TrustProfileSnapshot,
-  TrustScoreBreakdown,
-  TrustServicePort,
+import {
+  findMissingCompulsoryCredentials,
+  type PendingCredentialSummary,
+  type SubmitCredentialInput,
+  type TrustProfileSnapshot,
+  type TrustScoreBreakdown,
+  type TrustServicePort,
 } from "@veyro/contracts";
 import { eventBus } from "@/platform/event-bus";
 import { prisma } from "@/platform/prisma";
@@ -174,6 +175,16 @@ class TrustService implements TrustServicePort {
   async getScoreHistory(artisanId: string): Promise<Array<{ score: number; createdAt: string }>> {
     const history = await trustRepository.listScoreHistory(artisanId);
     return history.map((entry) => ({ score: entry.score, createdAt: entry.createdAt.toISOString() }));
+  }
+
+  /** Government ID and proof of address are the two uploads onboarding
+   * requires before an artisan can submit for review — checked server-side
+   * here rather than trusted from the client's step-by-step progress. */
+  async getMissingCompulsoryCredentials(
+    artisanId: string,
+  ): Promise<{ missingGovtId: boolean; missingProofOfAddress: boolean }> {
+    const types = await trustRepository.listCredentialTypes(artisanId);
+    return findMissingCompulsoryCredentials(types);
   }
 
   async listPendingCredentials(): Promise<PendingCredentialSummary[]> {

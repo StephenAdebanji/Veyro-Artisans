@@ -57,6 +57,28 @@ export type CredentialType =
   | "LICENSE"
   | "OTHER";
 
+/** Any one of these satisfies the "Government ID" onboarding requirement. */
+export const GOVT_ID_CREDENTIAL_TYPES: CredentialType[] = [
+  "NIN",
+  "NATIONAL_ID",
+  "DRIVERS_LICENSE",
+  "PASSPORT",
+];
+
+/** The two uploads onboarding step 4 and 5 require before an artisan can
+ * submit for review (step 8) — every other credential type is optional.
+ * Shared between the submit endpoint's server-side gate and the admin
+ * "missing compulsory documents" warning, so they can never drift apart. */
+export function findMissingCompulsoryCredentials(uploadedTypes: CredentialType[]): {
+  missingGovtId: boolean;
+  missingProofOfAddress: boolean;
+} {
+  return {
+    missingGovtId: !uploadedTypes.some((t) => GOVT_ID_CREDENTIAL_TYPES.includes(t)),
+    missingProofOfAddress: !uploadedTypes.some((t) => t === "UTILITY_BILL"),
+  };
+}
+
 export type CredentialStatus = "PENDING" | "APPROVED" | "REJECTED";
 
 export type ServiceRequestStatus =
