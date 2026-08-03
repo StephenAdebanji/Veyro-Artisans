@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { getSession, signIn } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 
 const ROLE_REDIRECT: Record<string, string> = {
@@ -60,9 +61,8 @@ export function SignInForm() {
       </div>
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="password">Password</Label>
-        <Input
+        <PasswordInput
           id="password"
-          type="password"
           // "new-password" (not "current-password") is the well-known trick
           // that stops Chrome/most browsers from auto-filling this field
           // with a previously saved credential for the domain.

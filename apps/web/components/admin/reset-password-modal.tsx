@@ -10,7 +10,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { apiFetch } from "@/lib/api-client";
 
@@ -82,8 +82,7 @@ export function ResetPasswordModal({ open, kind, id, name, onClose }: ResetPassw
           <div className="flex flex-col gap-4 py-2">
             <div className="flex flex-col gap-1.5">
               <Label>New password</Label>
-              <Input
-                type="password"
+              <PasswordInput
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="At least 8 characters"
@@ -93,8 +92,7 @@ export function ResetPasswordModal({ open, kind, id, name, onClose }: ResetPassw
 
             <div className="flex flex-col gap-1.5">
               <Label>Confirm password</Label>
-              <Input
-                type="password"
+              <PasswordInput
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="Re-enter password"
