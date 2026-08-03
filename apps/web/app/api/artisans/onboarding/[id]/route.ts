@@ -13,6 +13,14 @@ const stepSchema = z.object({
   credentials: z.array(z.object({ type: z.string(), fileUrl: z.string() })).optional(),
 });
 
+// Surfaces when the artisanId cached in the browser (localStorage) no longer
+// matches the signed-in session — e.g. a second tab restarted the wizard
+// (which signs the browser into a new account) while this tab, still holding
+// the old artisanId, tries to keep submitting under it. A bare "Forbidden"
+// gives the user nothing to do; this tells them how to recover.
+const SESSION_MISMATCH_MESSAGE =
+  "This application belongs to a different account than the one you're signed in as. Please go to “Join as artisan” again to start fresh.";
+
 // Steps 4 (verification/ID), 5 (proof of address), 6 (credentials) are file
 // uploads owned by Trust Service, not User Service — see docs/API.md.
 const CREDENTIAL_STEPS = new Set([4, 5, 6]);
@@ -27,7 +35,7 @@ export const GET = withApiErrorHandling(async (_request: Request, { params }: { 
 
   const profile = await userService.getArtisanProfile(artisanId, { includePrivate: true }) as Record<string, unknown> | null;
   if (!profile) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  if ((profile.userId as string) !== userId) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  if ((profile.userId as string) !== userId) return NextResponse.json({ error: SESSION_MISMATCH_MESSAGE }, { status: 403 });
 
   return NextResponse.json({ profile });
 });
@@ -43,7 +51,7 @@ export const PATCH = withApiErrorHandling(async (request: Request, { params }: {
 
   const profile = await userService.getArtisanProfile(artisanId, { includePrivate: true });
   if (!profile || profile.userId !== userId) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    return NextResponse.json({ error: SESSION_MISMATCH_MESSAGE }, { status: 403 });
   }
 
   const body = await request.json();

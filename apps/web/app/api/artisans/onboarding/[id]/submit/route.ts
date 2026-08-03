@@ -15,7 +15,14 @@ export const POST = withApiErrorHandling(async (_request: Request, { params }: {
 
   const profile = await userService.getArtisanProfile(artisanId, { includePrivate: true });
   if (!profile || profile.userId !== userId) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    // Cached artisanId (localStorage) no longer matches the signed-in session —
+    // e.g. a second tab restarted the wizard and signed this browser into a
+    // different account while this tab kept the old artisanId. Tell the user
+    // how to recover instead of a bare "Forbidden".
+    return NextResponse.json(
+      { error: "This application belongs to a different account than the one you're signed in as. Please go to “Join as artisan” again to start fresh." },
+      { status: 403 },
+    );
   }
 
   // Steps 4/5 are meant to be required, but nothing before this point actually
