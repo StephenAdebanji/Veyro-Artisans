@@ -22,6 +22,7 @@ export function AuthLayout({
           fill
           className="object-cover"
           priority
+          unoptimized
         />
         <div className="absolute inset-0 bg-[#1E3A8A]/70" />
         <div className="absolute inset-0 flex flex-col justify-between p-10 text-white">

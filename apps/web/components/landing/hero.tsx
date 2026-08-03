@@ -42,6 +42,7 @@ export function Hero() {
           height={600}
           className="rounded-2xl object-cover w-full"
           priority
+          unoptimized
         />
         <div className="absolute left-1/2 top-4 -translate-x-1/2 rounded-xl border bg-card px-4 py-3 shadow-lg md:left-auto md:right-4 md:translate-x-0">
           <p className="text-xs font-medium text-muted-foreground">MATCH FOUND</p>
