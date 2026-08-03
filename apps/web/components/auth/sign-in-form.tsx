@@ -45,13 +45,13 @@ export function SignInForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+    <form onSubmit={handleSubmit} className="flex flex-col gap-4" autoComplete="off">
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="email">Email</Label>
         <Input
           id="email"
           type="email"
-          autoComplete="email"
+          autoComplete="off"
           placeholder="you@home.com"
           value={email}
           onChange={(event) => setEmail(event.target.value)}
@@ -63,7 +63,10 @@ export function SignInForm() {
         <Input
           id="password"
           type="password"
-          autoComplete="current-password"
+          // "new-password" (not "current-password") is the well-known trick
+          // that stops Chrome/most browsers from auto-filling this field
+          // with a previously saved credential for the domain.
+          autoComplete="new-password"
           value={password}
           onChange={(event) => setPassword(event.target.value)}
           required
