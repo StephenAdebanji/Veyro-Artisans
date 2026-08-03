@@ -28,6 +28,8 @@ type CredentialItem = {
 
 type VerificationStatus = "UNVERIFIED" | "PENDING" | "VERIFIED" | "REJECTED";
 
+const GOVT_ID_TYPES = ["NIN", "NATIONAL_ID", "DRIVERS_LICENSE", "PASSPORT"];
+
 const CREDENTIAL_STATUS_STYLE: Record<string, string> = {
   APPROVED: "bg-emerald-100 text-emerald-700",
   REJECTED: "bg-red-100 text-red-700",
@@ -288,7 +290,7 @@ function RejectReasonDialog({
         />
         <p className="mt-1.5 text-xs text-muted-foreground">
           A standard reminder will be appended automatically:{" "}
-          <em>"Please review the file and make sure it is correct, clear, and not outdated."</em>
+          <em>&ldquo;Please review the file and make sure it is correct, clear, and not outdated.&rdquo;</em>
         </p>
 
         <div className="mt-5 flex justify-end gap-3">
@@ -316,10 +318,12 @@ export function VerificationPanel({
   artisanId,
   initialVerificationStatus,
   initialCredentials,
+  onboardingStatus,
 }: {
   artisanId: string;
   initialVerificationStatus: VerificationStatus;
   initialCredentials: CredentialItem[];
+  onboardingStatus: string;
 }) {
   const router = useRouter();
   const [verificationStatus, setVerificationStatus] = useState<VerificationStatus>(
@@ -335,6 +339,20 @@ export function VerificationPanel({
   const approvedCount = credentials.filter((c) => c.status === "APPROVED").length;
   const total = credentials.length;
   const pendingCredentials = credentials.filter((c) => c.status === "PENDING");
+
+  // Steps 4 (Government ID) and 5 (Utility bill / proof of address) are the
+  // only two required uploads in the onboarding wizard — every other step,
+  // including trade credentials, is optional. An artisan stuck on DRAFT is
+  // one who never reached step 8 (Submit), so if either is still missing
+  // they dropped off mid-registration rather than being genuinely awaiting
+  // review.
+  const missingGovtId = !credentials.some((c) => GOVT_ID_TYPES.includes(c.type));
+  const missingProofOfAddress = !credentials.some((c) => c.type === "UTILITY_BILL");
+  const droppedOff = onboardingStatus === "DRAFT" && (missingGovtId || missingProofOfAddress);
+  const missingLabels = [
+    missingGovtId ? "Government ID" : null,
+    missingProofOfAddress ? "Proof of address (utility bill)" : null,
+  ].filter((label): label is string => label !== null);
 
   function handleCredentialReviewed(id: string, decision: "APPROVED" | "REJECTED") {
     setCredentials((prev) => prev.map((c) => (c.id === id ? { ...c, status: decision } : c)));
@@ -431,6 +449,21 @@ export function VerificationPanel({
               />
             ))}
           </ul>
+        </div>
+      )}
+
+      {droppedOff && (
+        <div className="mt-5 flex items-start gap-3 rounded-2xl border border-amber-300 bg-amber-50 p-4 dark:border-amber-900 dark:bg-amber-950/30">
+          <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600 dark:text-amber-500" />
+          <div>
+            <p className="text-sm font-semibold text-amber-800 dark:text-amber-300">
+              Dropped off during registration
+            </p>
+            <p className="mt-1 text-sm text-amber-700 dark:text-amber-400">
+              This artisan never completed onboarding and is yet to upload the compulsory KYC
+              document{missingLabels.length > 1 ? "s" : ""}: <strong>{missingLabels.join(" and ")}</strong>.
+            </p>
+          </div>
         </div>
       )}
 

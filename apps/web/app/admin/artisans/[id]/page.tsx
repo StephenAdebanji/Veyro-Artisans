@@ -266,6 +266,7 @@ export default async function AdminArtisanDetailPage({
           status: c.status,
           createdAt: c.createdAt.toISOString(),
         }))}
+        onboardingStatus={artisan.onboardingStatus}
       />
     </main>
   );
