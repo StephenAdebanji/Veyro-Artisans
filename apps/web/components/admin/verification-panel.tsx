@@ -342,13 +342,15 @@ export function VerificationPanel({
 
   // Steps 4 (Government ID) and 5 (Utility bill / proof of address) are the
   // only two required uploads in the onboarding wizard — every other step,
-  // including trade credentials, is optional. An artisan stuck on DRAFT is
-  // one who never reached step 8 (Submit), so if either is still missing
-  // they dropped off mid-registration rather than being genuinely awaiting
-  // review.
+  // including trade credentials, is optional. In principle an artisan who
+  // reached PENDING_REVIEW (clicked Submit) should always have both, but the
+  // wizard's submit step doesn't actually enforce that server-side, so in
+  // practice plenty of real profiles reach PENDING_REVIEW — even step 8 —
+  // with zero documents. Key the warning off whether a final decision has
+  // been made rather than onboardingStatus, so it still surfaces for those.
   const missingGovtId = !credentials.some((c) => GOVT_ID_TYPES.includes(c.type));
   const missingProofOfAddress = !credentials.some((c) => c.type === "UTILITY_BILL");
-  const droppedOff = onboardingStatus === "DRAFT" && (missingGovtId || missingProofOfAddress);
+  const missingCompulsoryDocs = !decided && (missingGovtId || missingProofOfAddress);
   const missingLabels = [
     missingGovtId ? "Government ID" : null,
     missingProofOfAddress ? "Proof of address (utility bill)" : null,
@@ -452,16 +454,19 @@ export function VerificationPanel({
         </div>
       )}
 
-      {droppedOff && (
+      {missingCompulsoryDocs && (
         <div className="mt-5 flex items-start gap-3 rounded-2xl border border-amber-300 bg-amber-50 p-4 dark:border-amber-900 dark:bg-amber-950/30">
           <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600 dark:text-amber-500" />
           <div>
             <p className="text-sm font-semibold text-amber-800 dark:text-amber-300">
-              Dropped off during registration
+              {onboardingStatus === "DRAFT" ? "Dropped off during registration" : "Missing compulsory documents"}
             </p>
             <p className="mt-1 text-sm text-amber-700 dark:text-amber-400">
-              This artisan never completed onboarding and is yet to upload the compulsory KYC
-              document{missingLabels.length > 1 ? "s" : ""}: <strong>{missingLabels.join(" and ")}</strong>.
+              {onboardingStatus === "DRAFT"
+                ? "This artisan never completed onboarding and is"
+                : "This artisan is"}{" "}
+              yet to upload the compulsory KYC document{missingLabels.length > 1 ? "s" : ""}:{" "}
+              <strong>{missingLabels.join(" and ")}</strong>.
             </p>
           </div>
         </div>
