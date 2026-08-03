@@ -136,20 +136,20 @@ function UserActionRow({
       />
 
       <tr className="border-b last:border-b-0 hover:bg-muted/30">
-        <td className="py-3 pl-4 text-sm text-muted-foreground">{index}</td>
-        <td className="py-3 font-medium">{name}</td>
-        <td className="py-3 text-sm text-muted-foreground">{data.email}</td>
-        <td className="py-3">
+        <td className="py-3 pl-4 pr-4 text-sm text-muted-foreground">{index}</td>
+        <td className="py-3 pr-4 font-medium">{name}</td>
+        <td className="py-3 pr-4 text-sm text-muted-foreground">{data.email}</td>
+        <td className="py-3 pr-4">
           <Badge className={ROLE_STYLE[data.role] ?? "bg-muted text-muted-foreground"}>
             {data.role.charAt(0) + data.role.slice(1).toLowerCase()}
           </Badge>
         </td>
-        <td className="py-3">
+        <td className="py-3 pr-4">
           <Badge className={STATUS_STYLE[data.status] ?? ""}>
             {data.status.charAt(0) + data.status.slice(1).toLowerCase()}
           </Badge>
         </td>
-        <td className="py-3 text-sm text-muted-foreground">{data.location}</td>
+        <td className="py-3 pr-4 text-sm text-muted-foreground">{data.location}</td>
         <td className="py-3 pr-4">
           <div className="flex items-center justify-end gap-1">
             {data.kind === "admin" ? (
@@ -322,12 +322,12 @@ export function UsersTable({ initialRows }: { initialRows: CombinedUserRow[] }) 
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b text-left text-xs uppercase text-muted-foreground">
-              <th className="py-3 pl-4 font-medium">#</th>
-              <th className="py-3 font-medium">Name</th>
-              <th className="py-3 font-medium">Email</th>
-              <th className="py-3 font-medium">Role</th>
-              <th className="py-3 font-medium">Status</th>
-              <th className="py-3 font-medium">Location</th>
+              <th className="py-3 pl-4 pr-4 font-medium">#</th>
+              <th className="py-3 pr-4 font-medium">Name</th>
+              <th className="py-3 pr-4 font-medium">Email</th>
+              <th className="py-3 pr-4 font-medium">Role</th>
+              <th className="py-3 pr-4 font-medium">Status</th>
+              <th className="py-3 pr-4 font-medium">Location</th>
               <th className="py-3 pr-4 text-right font-medium">Actions</th>
             </tr>
           </thead>
