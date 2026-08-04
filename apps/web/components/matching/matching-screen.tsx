@@ -219,13 +219,22 @@ export function MatchingScreen({
   const mm = String(Math.floor(secondsLeft / 60)).padStart(2, "0");
   const ss = String(secondsLeft % 60).padStart(2, "0");
 
+  // Declined offers are dropped from view entirely (indrive-style) — the
+  // search keeps running and other artisans keep showing until the offer
+  // window elapses, rather than leaving a "Declined" card cluttering the list.
+  const visibleOffers = offers.filter((o) => o.status !== "DECLINED");
+
   if (cancelled) {
     return (
       <div className="mx-auto max-w-2xl px-6 py-10">
         <div className="flex flex-col items-center gap-6 rounded-xl border bg-card py-16 text-center">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted text-3xl">
+          <button
+            onClick={() => router.push("/homeowner/dashboard")}
+            aria-label="Dismiss and return to dashboard"
+            className="flex h-16 w-16 items-center justify-center rounded-full bg-muted text-3xl transition-colors hover:bg-muted/70"
+          >
             ✕
-          </div>
+          </button>
           <div>
             <h2 className="text-xl font-semibold">Request cancelled</h2>
             <p className="mt-1 text-sm text-muted-foreground">
@@ -342,7 +351,7 @@ export function MatchingScreen({
 
       {/* Offers */}
       <div>
-        {secondsLeft === 0 && !acceptedMatchId && offers.length === 0 ? (
+        {secondsLeft === 0 && !acceptedMatchId && visibleOffers.length === 0 ? (
           <div className="flex flex-col items-center gap-6 rounded-xl border bg-card py-16 text-center">
             <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted text-3xl">
               ⏱
@@ -381,7 +390,7 @@ export function MatchingScreen({
         ) : (
           <>
             {/* AI Selecting panel — shown while waiting for offers */}
-            {offers.length === 0 && !acceptedMatchId && secondsLeft > 0 && (
+            {visibleOffers.length === 0 && !acceptedMatchId && secondsLeft > 0 && (
               <div className="mb-5 rounded-xl border border-violet-200 bg-violet-50 p-5 dark:border-violet-900 dark:bg-violet-950/30">
                 <div className="mb-3 flex items-center gap-2">
                   <Sparkles className="h-4 w-4 text-violet-600 dark:text-violet-400" />
@@ -443,21 +452,21 @@ export function MatchingScreen({
             )}
 
             <h2 className="mb-3 text-lg font-semibold">
-              {offers.length === 0
+              {visibleOffers.length === 0
                 ? "Waiting for artisans…"
-                : `${offers.length} offer${offers.length === 1 ? "" : "s"} received`}
+                : `${visibleOffers.length} offer${visibleOffers.length === 1 ? "" : "s"} received`}
             </h2>
 
-            {offers.length === 0 && !acceptedMatchId && (
+            {visibleOffers.length === 0 && !acceptedMatchId && (
               <div className="flex flex-col items-center gap-3 py-8 text-center text-muted-foreground">
                 <Loader2 className="h-8 w-8 animate-spin" />
                 <p className="text-sm">Nearby artisans are being notified. Offers appear here live.</p>
               </div>
             )}
 
-            {offers.length > 0 && (() => {
+            {visibleOffers.length > 0 && (() => {
               const aiMap = Object.fromEntries(aiCandidates.map((a) => [a.artisanId, a]));
-              const sortedOffers = [...offers].sort(
+              const sortedOffers = [...visibleOffers].sort(
                 (a, b) => (aiMap[b.artisanId]?.score ?? 0) - (aiMap[a.artisanId]?.score ?? 0),
               );
               const topArtisanId = sortedOffers[0]?.artisanId;
@@ -468,6 +477,7 @@ export function MatchingScreen({
                     return (
                       <OfferCard
                         key={offer.matchId}
+                        category={category}
                         offer={{
                           ...offer,
                           aiScore: ai?.semanticScore ?? offer.aiScore,

@@ -62,6 +62,7 @@ export const POST = withApiErrorHandling(async (request: Request, { params }: { 
       category: serviceRequest.category,
       description: serviceRequest.description,
       address: serviceRequest.address,
+      homeownerName: homeowner.fullName,
       budgetMin: serviceRequest.budgetMin ?? null,
       budgetMax: serviceRequest.budgetMax ?? null,
       lat: serviceRequest.location.lat,

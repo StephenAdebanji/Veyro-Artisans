@@ -67,7 +67,7 @@ export function AvailableJobRow({ job, isNew, isInvited, onSeen }: AvailableJobR
         isInvited
           ? "border-violet-400/60 bg-violet-50 ring-2 ring-violet-300/40 dark:bg-violet-950/30"
           : isNew
-            ? "border-primary/50 bg-primary/5 ring-2 ring-primary/20 dark:bg-primary/10"
+            ? "border-emerald-400 bg-emerald-100 ring-2 ring-emerald-300 dark:border-emerald-500 dark:bg-emerald-900/50"
             : "bg-card"
       }`}
     >
@@ -80,16 +80,18 @@ export function AvailableJobRow({ job, isNew, isInvited, onSeen }: AvailableJobR
               </span>
             ) : (
               isNew && (
-                <span className="flex items-center gap-1 rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold text-primary-foreground">
+                <span className="flex items-center gap-1 rounded-full bg-emerald-600 px-2 py-0.5 text-[10px] font-bold text-white">
                   <Sparkles className="h-2.5 w-2.5" /> New
                 </span>
               )
             )}
-            {job.homeownerName && (
-              <p className="text-xs font-medium text-muted-foreground">{job.homeownerName}</p>
-            )}
           </div>
-          <p className="font-semibold">{job.description || SKILL_LABELS[job.category]}</p>
+          <p className="font-semibold">
+            {job.homeownerName ?? "Someone"} is looking for a {SKILL_LABELS[job.category]}
+          </p>
+          {job.description && (
+            <p className="text-sm text-muted-foreground">{job.description}</p>
+          )}
           <p className="text-sm text-muted-foreground">
             {job.address} · {job.distanceKm.toFixed(1)} km away
             {job.budgetMin || job.budgetMax

@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { Star, Clock, MapPin, Sparkles, MessageCircle, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import type { SkillCategory } from "@veyro/contracts";
 
 export interface OfferData {
   matchId: string;
@@ -16,12 +18,49 @@ export interface OfferData {
   etaMinutes: number;
   distanceKm: number;
   status: string;
+  profilePhotoUrl?: string | null;
+  city?: string | null;
+  state?: string | null;
   aiScore?: number;
   aiReason?: string;
 }
 
+// Best-effort visual fallback when an artisan hasn't uploaded a profile
+// photo — a trade-specific emoji reads better than blank initials.
+const SKILL_EMOJI: Partial<Record<SkillCategory, string>> = {
+  ELECTRICIAN: "⚡",
+  PLUMBER: "🔧",
+  CARPENTER: "🪚",
+  PAINTER: "🎨",
+  WELDER: "🔥",
+  AC_TECHNICIAN: "❄️",
+  GENERATOR_TECHNICIAN: "⚙️",
+  SOLAR_TECHNICIAN: "☀️",
+  CCTV_INSTALLER: "📷",
+  AUTO_MECHANIC: "🚗",
+  TILER: "🧱",
+  FURNITURE_MAKER: "🪑",
+  INTERIOR_DECORATOR: "🖼️",
+  CLEANER: "🧹",
+  PHONE_REPAIR_TECHNICIAN: "📱",
+  COMPUTER_TECHNICIAN: "💻",
+  REFRIGERATOR_TECHNICIAN: "🧊",
+  BARBER: "💈",
+  HAIR_STYLIST: "💇",
+  MAKEUP_ARTIST: "💄",
+  TAILOR: "🧵",
+  PHOTOGRAPHER: "📸",
+  CATERER: "🍽️",
+  BAKER: "🍞",
+  LOCKSMITH: "🔑",
+};
+const DEFAULT_EMOJI = "🛠️";
+
 interface OfferCardProps {
   offer: OfferData;
+  /** Every offer on a request is for the same category — used only for the
+   * emoji fallback when the artisan has no profile photo. */
+  category: SkillCategory;
   onAccept: (matchId: string) => Promise<void>;
   onReject?: (matchId: string, reason: string) => Promise<void>;
   disabled?: boolean;
@@ -36,6 +75,7 @@ interface OfferCardProps {
 
 export function OfferCard({
   offer,
+  category,
   onAccept,
   onReject,
   disabled,
@@ -52,12 +92,7 @@ export function OfferCard({
   const [rejecting, setRejecting] = useState(false);
   const [rejectError, setRejectError] = useState<string | null>(null);
 
-  const initials = offer.artisanName
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
+  const location = [offer.city, offer.state].filter(Boolean).join(", ");
 
   async function handleAccept() {
     setAccepting(true);
@@ -103,9 +138,19 @@ export function OfferCard({
       )}
 
       <div className="flex items-start gap-5">
-        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-primary/10 text-base font-bold text-primary">
-          {initials || "?"}
-        </div>
+        {offer.profilePhotoUrl ? (
+          <Image
+            src={offer.profilePhotoUrl}
+            alt={offer.artisanName}
+            width={56}
+            height={56}
+            className="h-14 w-14 shrink-0 rounded-full object-cover"
+          />
+        ) : (
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-primary/10 text-2xl">
+            {SKILL_EMOJI[category] ?? DEFAULT_EMOJI}
+          </div>
+        )}
 
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
@@ -137,6 +182,9 @@ export function OfferCard({
             )}
           </div>
           {chatError && <p className="mt-1 text-xs text-destructive">{chatError}</p>}
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            Trust score based on verified identity, credentials, ratings, reviews, completion rate and response time.
+          </p>
 
           <div className="mt-2 flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
             <span className="flex items-center gap-1.5">
@@ -149,6 +197,7 @@ export function OfferCard({
             </span>
             <span className="flex items-center gap-1.5">
               <MapPin className="h-4 w-4" />
+              {location ? `${location} · ` : ""}
               {offer.distanceKm.toFixed(1)} km away
             </span>
           </div>
