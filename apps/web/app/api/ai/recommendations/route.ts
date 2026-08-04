@@ -4,6 +4,7 @@ import { aiRecommendationService } from "@/services/ai-recommendation/ai-recomme
 import { matchingService } from "@/services/matching/matching.service";
 import { userService } from "@/services/user/user.service";
 import { withApiErrorHandling } from "@/platform/api-handler";
+import { haversineKm } from "@/platform/geo";
 import type { RankedArtisan } from "@veyro/contracts";
 
 export const GET = withApiErrorHandling(async (request: Request) => {
@@ -27,7 +28,16 @@ export const GET = withApiErrorHandling(async (request: Request) => {
     return NextResponse.json({ error: "Service request not found" }, { status: 404 });
   }
 
-  const candidates = await userService.getArtisanCandidates({ category: serviceRequest.category });
+  const allCandidates = await userService.getArtisanCandidates({ category: serviceRequest.category });
+
+  // getArtisanCandidates only filters by category — it doesn't know about this
+  // specific request's location, so distance never factored into ranking at
+  // all. Filter here to each candidate's own service radius from the request,
+  // the same "would they actually take this job" check the artisan's own job
+  // feed already applies (matchingService.listAvailableRequests).
+  const candidates = allCandidates.filter(
+    (c) => haversineKm(serviceRequest.location, c.location) <= c.serviceRadiusKm,
+  );
 
   // Enrich candidates with bios and names for Claude semantic scoring.
   const profiles = await Promise.all(
