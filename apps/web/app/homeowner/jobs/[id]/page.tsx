@@ -1,11 +1,13 @@
 import { notFound, redirect } from "next/navigation";
+import Image from "next/image";
 import Link from "next/link";
-import { ArrowLeft, Star, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, MapPin, ShieldCheck, Star, CheckCircle2 } from "lucide-react";
 import { auth } from "@/platform/auth-session";
 import { matchingService } from "@/services/matching/matching.service";
 import { userService } from "@/services/user/user.service";
 import { Badge } from "@/components/ui/badge";
-import { SKILL_LABELS } from "@/components/shared/skill-labels";
+import { EXPERIENCE_LABELS, SKILL_LABELS } from "@/components/shared/skill-labels";
+import { EXPERIENCE_FROM_DB } from "@/services/user/experience-level.map";
 import { ReviewForm } from "@/components/homeowner/review-form";
 import { StartChatButton } from "@/components/homeowner/start-chat-button";
 import { CallButton } from "@/components/homeowner/call-button";
@@ -61,6 +63,14 @@ export default async function HomeownerJobDetailPage({
     firstName?: string | null;
     lastName?: string | null;
     primarySkill?: string | null;
+    experienceLevel?: keyof typeof EXPERIENCE_FROM_DB | null;
+    bio?: string | null;
+    city?: string | null;
+    state?: string | null;
+    profilePhotoUrl?: string | null;
+    verificationStatus?: string | null;
+    trustScore?: number;
+    completedJobs?: number;
     ratingAvg?: number;
     ratingCount?: number;
     user?: { phone?: string | null };
@@ -69,6 +79,9 @@ export default async function HomeownerJobDetailPage({
   const artisanName = artisan
     ? [artisan.firstName, artisan.lastName].filter(Boolean).join(" ") || "Artisan"
     : "Artisan";
+  const artisanLocation = [artisan?.city, artisan?.state].filter(Boolean).join(", ");
+  const artisanExperience = artisan?.experienceLevel ? EXPERIENCE_FROM_DB[artisan.experienceLevel] : null;
+  const isVerified = artisan?.verificationStatus === "VERIFIED";
 
   return (
     <main className="mx-auto max-w-xl flex-1 px-6 py-10">
@@ -108,31 +121,71 @@ export default async function HomeownerJobDetailPage({
         <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
           Artisan
         </h2>
-        <div className="flex items-center gap-4">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary/10 text-lg font-bold text-primary">
-            {artisanName[0]?.toUpperCase() ?? "A"}
-          </div>
-          <div>
-            <p className="font-semibold">{artisanName}</p>
-            {artisan?.primarySkill && (
-              <p className="text-sm text-muted-foreground">
-                {SKILL_LABELS[artisan.primarySkill as SkillCategory] ?? artisan.primarySkill}
+        <div className="flex items-start gap-4">
+          {artisan?.profilePhotoUrl ? (
+            <Image
+              src={artisan.profilePhotoUrl}
+              alt={artisanName}
+              width={56}
+              height={56}
+              className="h-14 w-14 shrink-0 rounded-full object-cover"
+            />
+          ) : (
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-primary/10 text-lg font-bold text-primary">
+              {artisanName[0]?.toUpperCase() ?? "A"}
+            </div>
+          )}
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-1.5">
+              <p className="font-semibold">{artisanName}</p>
+              {isVerified && (
+                <Badge variant="secondary" className="gap-1 text-emerald-700">
+                  <ShieldCheck className="size-3" /> Verified
+                </Badge>
+              )}
+            </div>
+            <p className="text-sm text-muted-foreground">
+              {artisan?.primarySkill && (SKILL_LABELS[artisan.primarySkill as SkillCategory] ?? artisan.primarySkill)}
+              {artisanExperience && ` · ${EXPERIENCE_LABELS[artisanExperience]}`}
+            </p>
+            {artisanLocation && (
+              <p className="mt-0.5 flex items-center gap-1 text-sm text-muted-foreground">
+                <MapPin className="h-3.5 w-3.5" /> {artisanLocation}
               </p>
             )}
-            {artisan?.ratingAvg !== undefined && artisan.ratingCount ? (
-              <div className="mt-0.5 flex items-center gap-1.5">
-                <StarDisplay rating={Math.round(artisan.ratingAvg)} />
-                <span className="text-xs text-muted-foreground">
-                  {artisan.ratingAvg.toFixed(1)} ({artisan.ratingCount})
-                </span>
-              </div>
-            ) : null}
+            <div className="mt-1 flex flex-wrap items-center gap-3">
+              {artisan?.ratingAvg !== undefined && artisan.ratingCount ? (
+                <div className="flex items-center gap-1.5">
+                  <StarDisplay rating={Math.round(artisan.ratingAvg)} />
+                  <span className="text-xs text-muted-foreground">
+                    {artisan.ratingAvg.toFixed(1)} ({artisan.ratingCount})
+                  </span>
+                </div>
+              ) : null}
+              {artisan?.trustScore !== undefined && (
+                <Badge className="bg-primary/10 text-primary">{Math.round(artisan.trustScore)}/100 Trust</Badge>
+              )}
+            </div>
           </div>
         </div>
+
+        {artisan?.bio && <p className="mt-3 text-sm text-muted-foreground">{artisan.bio}</p>}
+
+        <p className="mt-3 text-xs text-muted-foreground">
+          {artisan?.completedJobs ?? 0} job{artisan?.completedJobs === 1 ? "" : "s"} completed on VEYRO
+        </p>
+
         <div className="mt-4 grid grid-cols-2 gap-3">
           <StartChatButton artisanId={job.artisanId} jobId={jobId} />
           <CallButton phone={artisanPhone} />
         </div>
+
+        <Link
+          href={`/artisans/${job.artisanId}`}
+          className="mt-3 block text-center text-sm font-medium text-primary hover:underline"
+        >
+          View full profile →
+        </Link>
       </div>
 
       {/* Review section */}
