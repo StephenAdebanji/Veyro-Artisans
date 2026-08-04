@@ -70,6 +70,10 @@ export function NewRequestForm() {
       setError("Minimum budget cannot be less than ₦500.");
       return;
     }
+    if (budgetMin && budgetMax && Number(budgetMax) < Number(budgetMin)) {
+      setError("Maximum budget cannot be less than the minimum budget.");
+      return;
+    }
     if (preferredDate && preferredDate < todayISO) {
       setError("Preferred date cannot be in the past.");
       return;

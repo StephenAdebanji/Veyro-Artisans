@@ -10,18 +10,23 @@ import type { GeoPoint, SkillCategory } from "@veyro/contracts";
 
 const LAGOS_FALLBACK: GeoPoint = { lat: 6.5244, lng: 3.3792 };
 
-const createRequestSchema = z.object({
-  category: z.enum(SKILL_CATEGORIES as unknown as [string, ...string[]]).transform((v) => v as SkillCategory),
-  description: z.string().min(1),
-  streetAddress: z.string().min(1),
-  lga: z.string().optional(),
-  state: z.string().min(1),
-  country: z.string().min(1).default("Nigeria"),
-  countryCode: z.string().optional().default("NG"),
-  budgetMin: z.number().optional(),
-  budgetMax: z.number().optional(),
-  preferredDate: z.string().optional(),
-});
+const createRequestSchema = z
+  .object({
+    category: z.enum(SKILL_CATEGORIES as unknown as [string, ...string[]]).transform((v) => v as SkillCategory),
+    description: z.string().min(1),
+    streetAddress: z.string().min(1),
+    lga: z.string().optional(),
+    state: z.string().min(1),
+    country: z.string().min(1).default("Nigeria"),
+    countryCode: z.string().optional().default("NG"),
+    budgetMin: z.number().optional(),
+    budgetMax: z.number().optional(),
+    preferredDate: z.string().optional(),
+  })
+  .refine(
+    (data) => data.budgetMin === undefined || data.budgetMax === undefined || data.budgetMax >= data.budgetMin,
+    { message: "Maximum budget cannot be less than the minimum budget." },
+  );
 
 const REALTIME_URL = process.env.REALTIME_INTERNAL_URL ?? "http://localhost:4001";
 
