@@ -140,6 +140,8 @@ export function HomeownerAccount({ email, fullName, profilePhotoUrl, initial }: 
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (!state) { setError("Choose your state of residence."); return; }
+    if (!address.trim()) { setError("Enter your address."); return; }
     setSaving(true);
     setError(null);
     try {
@@ -235,7 +237,9 @@ export function HomeownerAccount({ email, fullName, profilePhotoUrl, initial }: 
                 </div>
                 <div className="mt-4 grid gap-4 sm:grid-cols-2">
                   <div className="flex flex-col gap-1.5">
-                    <Label>State of residence</Label>
+                    <Label>
+                      State of residence <span className="text-destructive">*</span>
+                    </Label>
                     <SearchableSelect
                       options={NIGERIAN_STATE_OPTIONS}
                       value={state}
@@ -256,7 +260,9 @@ export function HomeownerAccount({ email, fullName, profilePhotoUrl, initial }: 
                   </div>
                 </div>
                 <div className="mt-4 flex flex-col gap-1.5">
-                  <Label htmlFor="address">Address</Label>
+                  <Label htmlFor="address">
+                    Address <span className="text-destructive">*</span>
+                  </Label>
                   <Input
                     id="address"
                     placeholder="12 Admiralty Way, Lekki Phase 1"

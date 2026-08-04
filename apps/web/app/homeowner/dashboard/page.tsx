@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { ActiveRequestCard } from "@/components/dashboard/active-request-card";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { CategoryPicker } from "@/components/dashboard/category-picker";
+import { CompleteProfileBanner } from "@/components/homeowner/complete-profile-banner";
 import { auth } from "@/platform/auth-session";
 import { chatService } from "@/services/chat/chat.service";
 import { matchingService } from "@/services/matching/matching.service";
@@ -50,8 +51,12 @@ export default async function HomeownerDashboardPage() {
   const completedCount = completedJobs.length;
   const pendingReviewCount = completedJobs.filter((j) => !j.hasReview).length;
 
+  const profileIncomplete = !homeowner.address || !homeowner.state;
+
   return (
     <main className="flex-1 px-6 py-10">
+      {profileIncomplete && <CompleteProfileBanner />}
+
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold">Welcome back, {homeowner.fullName?.split(" ")[0] ?? "there"}</h1>
