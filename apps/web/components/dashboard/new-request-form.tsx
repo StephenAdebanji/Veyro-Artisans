@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { SearchableSelect } from "@/components/ui/searchable-select";
+import { CurrencyInput } from "@/components/ui/currency-input";
 import { SKILL_CATEGORIES, SKILL_LABELS } from "@/components/shared/skill-labels";
 import { COUNTRIES, NIGERIAN_STATES, NIGERIAN_LGAS } from "@/lib/location-data";
 import { apiFetch } from "@/lib/api-client";
@@ -195,23 +196,11 @@ export function NewRequestForm() {
       <div className="grid grid-cols-2 gap-4">
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="budgetMin">Budget min (₦)</Label>
-          <Input
-            id="budgetMin"
-            type="number"
-            min={500}
-            value={budgetMin}
-            onChange={(event) => setBudgetMin(event.target.value)}
-          />
+          <CurrencyInput id="budgetMin" value={budgetMin} onValueChange={setBudgetMin} />
         </div>
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="budgetMax">Budget max (₦)</Label>
-          <Input
-            id="budgetMax"
-            type="number"
-            min={0}
-            value={budgetMax}
-            onChange={(event) => setBudgetMax(event.target.value)}
-          />
+          <CurrencyInput id="budgetMax" value={budgetMax} onValueChange={setBudgetMax} />
         </div>
       </div>
 
