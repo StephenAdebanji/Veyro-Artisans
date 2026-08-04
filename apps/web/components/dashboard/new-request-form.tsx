@@ -55,7 +55,11 @@ export function NewRequestForm({ defaultAddress }: { defaultAddress?: DefaultAdd
   const [streetAddress, setStreetAddress] = useState(searchParams.get("streetAddress") ?? "");
   const [budgetMin, setBudgetMin] = useState(searchParams.get("budgetMin") ?? "");
   const [budgetMax, setBudgetMax] = useState(searchParams.get("budgetMax") ?? "");
-  const [preferredDate, setPreferredDate] = useState("");
+  // Defaults to today so the field is genuinely filled from the start —
+  // native date inputs visually hint at today's date before it's actually
+  // picked, which made the field look filled while still being empty and
+  // failing "required" validation on submit.
+  const [preferredDate, setPreferredDate] = useState(() => new Date().toISOString().split("T")[0]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
