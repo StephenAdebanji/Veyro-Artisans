@@ -19,19 +19,46 @@ import { userRepository } from "./user.repository";
  * synced via events (see services/user/user.events would live here if this
  * service subscribed to anything; today it only ever reads its own cache). */
 class UserService implements UserServicePort {
-  async createHomeownerProfile(userId: string, fullName?: string, phone?: string): Promise<string> {
-    const profile = await userRepository.createHomeownerProfile(userId, fullName, phone);
+  async createHomeownerProfile(
+    userId: string,
+    fullName?: string,
+    phone?: string,
+    location?: { address?: string; city?: string; state?: string },
+  ): Promise<string> {
+    const profile = await userRepository.createHomeownerProfile(userId, fullName, phone, location);
     return profile.id;
   }
 
   async getHomeownerProfileByUserId(userId: string): Promise<HomeownerProfileSummary | null> {
     const profile = await userRepository.findHomeownerProfileByUserId(userId);
-    return profile ? { id: profile.id, userId: profile.userId, fullName: profile.fullName, phone: profile.phone ?? null, profilePhotoUrl: profile.profilePhotoUrl ?? null } : null;
+    return profile
+      ? {
+          id: profile.id,
+          userId: profile.userId,
+          fullName: profile.fullName,
+          phone: profile.phone ?? null,
+          profilePhotoUrl: profile.profilePhotoUrl ?? null,
+          address: profile.address ?? null,
+          city: profile.city ?? null,
+          state: profile.state ?? null,
+        }
+      : null;
   }
 
   async getHomeownerProfile(homeownerId: string): Promise<HomeownerProfileSummary | null> {
     const profile = await userRepository.findHomeownerProfile(homeownerId);
-    return profile ? { id: profile.id, userId: profile.userId, fullName: profile.fullName, phone: profile.phone ?? null, profilePhotoUrl: profile.profilePhotoUrl ?? null } : null;
+    return profile
+      ? {
+          id: profile.id,
+          userId: profile.userId,
+          fullName: profile.fullName,
+          phone: profile.phone ?? null,
+          profilePhotoUrl: profile.profilePhotoUrl ?? null,
+          address: profile.address ?? null,
+          city: profile.city ?? null,
+          state: profile.state ?? null,
+        }
+      : null;
   }
 
   async updateHomeownerProfile(

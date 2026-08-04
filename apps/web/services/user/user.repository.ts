@@ -2,8 +2,15 @@ import type { Prisma, SkillCategory } from "@prisma/client";
 import { prisma } from "@/platform/prisma";
 
 export const userRepository = {
-  async createHomeownerProfile(userId: string, fullName?: string, phone?: string) {
-    return prisma.homeownerProfile.create({ data: { userId, fullName, phone } });
+  async createHomeownerProfile(
+    userId: string,
+    fullName?: string,
+    phone?: string,
+    location?: { address?: string; city?: string; state?: string },
+  ) {
+    return prisma.homeownerProfile.create({
+      data: { userId, fullName, phone, address: location?.address, city: location?.city, state: location?.state },
+    });
   },
 
   async findHomeownerProfile(id: string) {

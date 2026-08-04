@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useTheme } from "next-themes";
 import {
   UserCircle,
@@ -16,7 +16,11 @@ import { ProfilePhotoUpload } from "@/components/shared/profile-photo-upload";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { SearchableSelect } from "@/components/ui/searchable-select";
+import { NIGERIAN_STATES, NIGERIAN_LGAS } from "@/lib/location-data";
 import { apiFetch } from "@/lib/api-client";
+
+const NIGERIAN_STATE_OPTIONS = NIGERIAN_STATES.map((s) => ({ value: s, label: s }));
 
 type Tab = "profile" | "disputes" | "settings";
 
@@ -24,7 +28,7 @@ interface HomeownerAccountProps {
   email: string;
   fullName: string;
   profilePhotoUrl: string | null;
-  initial: { phone: string };
+  initial: { phone: string; address: string; city: string; state: string };
 }
 
 function LogDisputeSection() {
@@ -116,9 +120,23 @@ function AppearanceSection() {
 export function HomeownerAccount({ email, fullName, profilePhotoUrl, initial }: HomeownerAccountProps) {
   const [tab, setTab] = useState<Tab>("profile");
   const [phone, setPhone] = useState(initial.phone);
+  const [state, setState] = useState(initial.state);
+  const [lga, setLga] = useState(initial.city);
+  const [address, setAddress] = useState(initial.address);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const lgaOptions = useMemo(
+    () => (state ? (NIGERIAN_LGAS[state] ?? []).map((l) => ({ value: l, label: l })) : []),
+    [state],
+  );
+
+  function handleStateChange(s: string) {
+    setState(s);
+    setLga("");
+    setSaved(false);
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -128,7 +146,7 @@ export function HomeownerAccount({ email, fullName, profilePhotoUrl, initial }: 
       await apiFetch("/api/homeowners/profile", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone }),
+        body: JSON.stringify({ phone, address: address.trim(), city: lga || undefined, state }),
       });
       setSaved(true);
     } catch (err) {
@@ -213,6 +231,37 @@ export function HomeownerAccount({ email, fullName, profilePhotoUrl, initial }: 
                     placeholder="+234 800 000 0000"
                     value={phone}
                     onChange={(e) => { setPhone(e.target.value); setSaved(false); }}
+                  />
+                </div>
+                <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                  <div className="flex flex-col gap-1.5">
+                    <Label>State</Label>
+                    <SearchableSelect
+                      options={NIGERIAN_STATE_OPTIONS}
+                      value={state}
+                      onChange={handleStateChange}
+                      placeholder="Select state"
+                      searchPlaceholder="Search states…"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <Label>Local Government Area</Label>
+                    <SearchableSelect
+                      options={lgaOptions}
+                      value={lga}
+                      onChange={(value) => { setLga(value); setSaved(false); }}
+                      placeholder="Select LGA"
+                      searchPlaceholder="Search LGAs…"
+                    />
+                  </div>
+                </div>
+                <div className="mt-4 flex flex-col gap-1.5">
+                  <Label htmlFor="address">Address</Label>
+                  <Input
+                    id="address"
+                    placeholder="12 Admiralty Way, Lekki Phase 1"
+                    value={address}
+                    onChange={(e) => { setAddress(e.target.value); setSaved(false); }}
                   />
                 </div>
                 {error && <p className="mt-3 text-sm text-destructive">{error}</p>}

@@ -22,7 +22,12 @@ export default async function HomeownerAccountPage() {
       email={user.email}
       fullName={homeowner.fullName ?? ""}
       profilePhotoUrl={profile?.profilePhotoUrl ?? null}
-      initial={{ phone: profile?.phone ?? "" }}
+      initial={{
+        phone: profile?.phone ?? "",
+        address: profile?.address ?? "",
+        city: profile?.city ?? "",
+        state: profile?.state ?? "",
+      }}
     />
   );
 }

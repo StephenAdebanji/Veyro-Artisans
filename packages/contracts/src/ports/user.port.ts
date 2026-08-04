@@ -32,6 +32,9 @@ export interface HomeownerProfileSummary {
   fullName: string | null;
   phone: string | null;
   profilePhotoUrl: string | null;
+  address: string | null;
+  city: string | null;
+  state: string | null;
 }
 
 export interface ArtisanProfileSummary {
@@ -63,7 +66,12 @@ export interface FeaturedArtisan {
 
 /** Owns: HomeownerProfile, ArtisanProfile, ArtisanAvailability, PortfolioItem. Does NOT own credentials/passwords (see AuthServicePort) or trust/score data (see TrustServicePort). */
 export interface UserServicePort {
-  createHomeownerProfile(userId: string, fullName?: string): Promise<string>;
+  createHomeownerProfile(
+    userId: string,
+    fullName?: string,
+    phone?: string,
+    location?: { address?: string; city?: string; state?: string },
+  ): Promise<string>;
   getHomeownerProfileByUserId(userId: string): Promise<HomeownerProfileSummary | null>;
   getHomeownerProfile(homeownerId: string): Promise<HomeownerProfileSummary | null>;
   createArtisanDraft(userId: string): Promise<string>;

@@ -10,6 +10,9 @@ const registerSchema = z.object({
   email: z.string().email(),
   phone: z.string().min(1).optional(),
   password: z.string().min(8),
+  address: z.string().min(1),
+  city: z.string().optional(),
+  state: z.string().min(1),
 });
 
 /** Homeowner self-registration. Artisan registration goes through the
@@ -35,6 +38,10 @@ export const POST = withApiErrorHandling(async (request: Request) => {
     throw new ApiError(error instanceof Error ? error.message : "Registration failed", 409);
   }
 
-  await userService.createHomeownerProfile(user.id, parsed.data.fullName, parsed.data.phone);
+  await userService.createHomeownerProfile(user.id, parsed.data.fullName, parsed.data.phone, {
+    address: parsed.data.address,
+    city: parsed.data.city,
+    state: parsed.data.state,
+  });
   return NextResponse.json({ user }, { status: 201 });
 });
