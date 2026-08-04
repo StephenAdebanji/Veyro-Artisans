@@ -44,6 +44,8 @@ export const POST = withApiErrorHandling(async (request: Request, { params }: { 
     return NextResponse.json({ error: "This artisan is not yet verified." }, { status: 400 });
   }
 
+  await matchingService.createJobInvite(serviceRequestId, parsed.data.artisanId);
+
   await notificationService.notify(artisan.userId!, "JOB_INVITE", {
     serviceRequestId,
     category: serviceRequest.category,

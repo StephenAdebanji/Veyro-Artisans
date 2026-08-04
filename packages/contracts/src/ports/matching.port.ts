@@ -83,6 +83,10 @@ export interface AvailableRequestSummary {
   distanceKm: number;
   createdAt: string;
   homeownerName: string | null;
+  /** True when the homeowner invited this artisan directly from the AI
+   * recommendation panel — persisted, so it survives logout/reconnect and
+   * only goes away when the request is cancelled or the offer window closes. */
+  isInvited: boolean;
 }
 
 export interface JobHistoryItem {
@@ -145,6 +149,9 @@ export interface MatchingServicePort {
     near: GeoPoint | null;
     radiusKm: number;
   }): Promise<AvailableRequestSummary[]>;
+  /** Persists a homeowner's direct invite of one artisan (from the AI recommendation
+   * panel) so it survives logout/reconnect — see JobInvite in schema.prisma. */
+  createJobInvite(serviceRequestId: string, artisanId: string): Promise<void>;
   /** Backs the artisan dashboard's "Jobs" table — merges this artisan's PENDING offers with their ACTIVE/COMPLETED jobs into one feed. */
   listJobsFeedForArtisan(artisanId: string): Promise<JobFeedItem[]>;
   /** Backs the artisan dashboard's "Active jobs" stat card. */

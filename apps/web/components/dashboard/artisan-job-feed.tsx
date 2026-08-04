@@ -39,17 +39,19 @@ export function ArtisanJobFeed({
 }: ArtisanJobFeedProps) {
   const [jobs, setJobs] = useState<AvailableRequestSummary[]>(initialJobs);
   const [newJobIds, setNewJobIds] = useState<Set<string>>(new Set());
-  const [invitedJobIds, setInvitedJobIds] = useState<Set<string>>(new Set());
+  // Seeded from the server-persisted invite records (survives logout/reload)
+  // rather than starting empty and relying purely on a live socket event.
+  const [invitedJobIds, setInvitedJobIds] = useState<Set<string>>(
+    () => new Set(initialJobs.filter((j) => j.isInvited).map((j) => j.id)),
+  );
   const socketRef = useRef<import("socket.io-client").Socket | null>(null);
 
+  // Only clears the "new" highlight — "invited" is a persisted fact about
+  // the request (see JobInvite in schema.prisma) and must stay shown until
+  // the request itself is cancelled or its offer window closes, not just
+  // because the artisan engaged with the row.
   function markSeen(jobId: string) {
     setNewJobIds((prev) => {
-      if (!prev.has(jobId)) return prev;
-      const next = new Set(prev);
-      next.delete(jobId);
-      return next;
-    });
-    setInvitedJobIds((prev) => {
       if (!prev.has(jobId)) return prev;
       const next = new Set(prev);
       next.delete(jobId);
@@ -102,6 +104,7 @@ export function ArtisanJobFeed({
             distanceKm,
             createdAt: job.createdAt,
             homeownerName: job.homeownerName ?? null,
+            isInvited: false,
           };
           return [newJob, ...prev];
         });
@@ -131,6 +134,7 @@ export function ArtisanJobFeed({
             distanceKm,
             createdAt: job.createdAt,
             homeownerName: job.homeownerName ?? null,
+            isInvited: true,
           };
           return [newJob, ...prev];
         });

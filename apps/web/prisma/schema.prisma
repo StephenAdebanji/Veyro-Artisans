@@ -321,6 +321,7 @@ model ServiceRequest {
 
   matches Match[]
   job     Job?
+  invites JobInvite[]
 
   @@schema("matching")
 }
@@ -339,6 +340,24 @@ model Match {
   respondedAt      DateTime?
   createdAt        DateTime       @default(now())
 
+  @@schema("matching")
+}
+
+/// A homeowner directly inviting a specific artisan to offer (from the AI
+/// recommendation panel). Persisted so the "invited" badge on the artisan's
+/// job feed survives logout/reconnect — it's a DB fact, not just a live
+/// socket event the client happened to be connected for. It naturally stops
+/// applying once the underlying ServiceRequest leaves SEARCHING (cancelled)
+/// or falls outside the offer window, since queries join against that row.
+model JobInvite {
+  id               String         @id @default(uuid())
+  serviceRequestId String
+  serviceRequest   ServiceRequest @relation(fields: [serviceRequestId], references: [id])
+  /// Logical ref -> user.ArtisanProfile.id
+  artisanId        String
+  createdAt        DateTime       @default(now())
+
+  @@unique([serviceRequestId, artisanId])
   @@schema("matching")
 }
 

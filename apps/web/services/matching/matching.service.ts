@@ -292,20 +292,26 @@ class MatchingService implements MatchingServicePort {
     near: GeoPoint | null;
     radiusKm: number;
   }): Promise<AvailableRequestSummary[]> {
-    const requests = await matchingRepository.listSearchingRequests(
-      filter.category as DbSkillCategory,
-      filter.artisanId,
-    );
+    const [requests, invitedRequests] = await Promise.all([
+      matchingRepository.listSearchingRequests(filter.category as DbSkillCategory, filter.artisanId),
+      matchingRepository.listInvitedRequests(filter.artisanId),
+    ]);
+
+    const invitedIds = new Set(invitedRequests.map((r) => r.id));
+    // Invited requests bypass the category broadcast entirely (a deliberate
+    // homeowner pick, not a category match) — merge in the ones not already
+    // present from the generic query.
+    const allRequests = [...requests, ...invitedRequests.filter((r) => !requests.some((req) => req.id === r.id))];
 
     // Fetch homeowner names in one batch.
-    const homeownerIds = [...new Set(requests.map((r) => r.homeownerId))];
+    const homeownerIds = [...new Set(allRequests.map((r) => r.homeownerId))];
     const homeowners = await prisma.homeownerProfile.findMany({
       where: { id: { in: homeownerIds } },
       select: { id: true, fullName: true },
     });
     const nameById = new Map(homeowners.map((h) => [h.id, h.fullName]));
 
-    const mapped = requests.map((request) => ({
+    const mapped = allRequests.map((request) => ({
       id: request.id,
       category: request.category,
       description: request.description,
@@ -317,14 +323,20 @@ class MatchingService implements MatchingServicePort {
         : 0,
       createdAt: request.createdAt.toISOString(),
       homeownerName: nameById.get(request.homeownerId) ?? null,
+      isInvited: invitedIds.has(request.id),
     }));
 
-    // If artisan has no GPS we can't filter by radius — show all in category.
+    // If artisan has no GPS we can't filter by radius — show all in category
+    // (invited requests always pass through regardless).
     if (!filter.near) return mapped.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
     return mapped
-      .filter((r) => r.distanceKm <= filter.radiusKm)
+      .filter((r) => r.isInvited || r.distanceKm <= filter.radiusKm)
       .sort((a, b) => a.distanceKm - b.distanceKm);
+  }
+
+  async createJobInvite(serviceRequestId: string, artisanId: string): Promise<void> {
+    await matchingRepository.createJobInvite(serviceRequestId, artisanId);
   }
 
   async listJobsFeedForArtisan(artisanId: string): Promise<JobFeedItem[]> {

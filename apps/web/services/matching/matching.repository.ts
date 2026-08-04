@@ -190,6 +190,34 @@ export const matchingRepository = {
     });
   },
 
+  async createJobInvite(serviceRequestId: string, artisanId: string) {
+    await prisma.jobInvite.upsert({
+      where: { serviceRequestId_artisanId: { serviceRequestId, artisanId } },
+      create: { serviceRequestId, artisanId },
+      update: {},
+    });
+  },
+
+  /** Requests this artisan was directly invited to, still within the same
+   * SEARCHING + offer-window bounds as the generic feed — bypasses category
+   * and radius since a deliberate homeowner pick overrides those. */
+  async listInvitedRequests(artisanId: string) {
+    const windowStart = new Date(Date.now() - MATCH_WINDOW_MS);
+    const invites = await prisma.jobInvite.findMany({
+      where: { artisanId },
+      select: { serviceRequestId: true },
+    });
+    if (invites.length === 0) return [];
+    return prisma.serviceRequest.findMany({
+      where: {
+        id: { in: invites.map((i) => i.serviceRequestId) },
+        status: "SEARCHING",
+        createdAt: { gte: windowStart },
+        matches: { none: { artisanId, status: { in: ["PENDING", "ACCEPTED", "EXPIRED"] } } },
+      },
+    });
+  },
+
   async listPendingMatchesForArtisan(artisanId: string) {
     return prisma.match.findMany({
       where: { artisanId, status: "PENDING", serviceRequest: { status: { not: "CANCELLED" } } },
