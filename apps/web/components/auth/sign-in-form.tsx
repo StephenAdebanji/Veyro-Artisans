@@ -46,13 +46,16 @@ export function SignInForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-4" autoComplete="off">
+    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="email">Email</Label>
         <Input
           id="email"
           type="email"
-          autoComplete="off"
+          // "username" (the WHATWG-recommended token for a login identifier)
+          // is what tells the browser this is the field to anchor its saved-
+          // credentials dropdown to — pairs with "current-password" below.
+          autoComplete="username"
           placeholder="you@home.com"
           value={email}
           onChange={(event) => setEmail(event.target.value)}
@@ -63,10 +66,12 @@ export function SignInForm() {
         <Label htmlFor="password">Password</Label>
         <PasswordInput
           id="password"
-          // "new-password" (not "current-password") is the well-known trick
-          // that stops Chrome/most browsers from auto-filling this field
-          // with a previously saved credential for the domain.
-          autoComplete="new-password"
+          // "current-password", not "new-password" — this is a sign-in form,
+          // not account creation. "new-password" was actively wrong here: it
+          // told the browser not to treat this as a fillable login field, so
+          // it fell back to showing its account-picker on the password field
+          // instead of the email field where it belongs.
+          autoComplete="current-password"
           value={password}
           onChange={(event) => setPassword(event.target.value)}
           required
