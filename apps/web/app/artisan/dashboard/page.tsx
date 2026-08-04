@@ -4,6 +4,9 @@ import { Briefcase, CheckCircle2, ListChecks } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { ArtisanJobFeed } from "@/components/dashboard/artisan-job-feed";
+import { AvailableJobsCountProvider } from "@/components/dashboard/available-jobs-count-context";
+import { AvailableJobsCount } from "@/components/dashboard/available-jobs-count";
+import { AvailableJobsSummaryText } from "@/components/dashboard/available-jobs-summary-text";
 import { JobsTable, type JobsTableRow } from "@/components/dashboard/jobs-table";
 import { auth } from "@/platform/auth-session";
 import { getTimeOfDayGreeting } from "@/lib/greeting";
@@ -147,12 +150,12 @@ export default async function ArtisanDashboardPage() {
         </div>
       )}
 
+      <AvailableJobsCountProvider initialCount={availableJobs.length}>
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold">{getTimeOfDayGreeting()}, {profile.firstName ?? "there"}</h1>
           <p className="text-muted-foreground">
-            You have {availableJobs.length} new request{availableJobs.length === 1 ? "" : "s"} within{" "}
-            {profile.serviceRadiusKm} km.
+            <AvailableJobsSummaryText serviceRadiusKm={profile.serviceRadiusKm} fallback={availableJobs.length} />
           </p>
         </div>
         <Badge variant="secondary" className="text-emerald-700">
@@ -161,7 +164,11 @@ export default async function ArtisanDashboardPage() {
       </div>
 
       <div className="mt-6 grid gap-4 sm:grid-cols-4">
-        <StatCard icon={ListChecks} value={availableJobs.length} label="Available jobs" />
+        <StatCard
+          icon={ListChecks}
+          value={<AvailableJobsCount fallback={availableJobs.length} />}
+          label="Available jobs"
+        />
         <StatCard icon={Briefcase} value={activeJobsCount} label="Active jobs" href="/artisan/history?tab=active" />
         <StatCard icon={CheckCircle2} value={profile.completedJobs} label="Completed" href="/artisan/history?tab=completed" />
         <RatingCard reviews={reviews} />
@@ -246,6 +253,7 @@ export default async function ArtisanDashboardPage() {
 
         </div>
       </div>
+      </AvailableJobsCountProvider>
     </main>
   );
 }

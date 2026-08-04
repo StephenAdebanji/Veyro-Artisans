@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import type { AvailableRequestSummary, SkillCategory } from "@veyro/contracts";
 import { haversineKm } from "@/platform/geo";
 import { AvailableJobRow } from "./available-job-row";
+import { useAvailableJobsCount } from "./available-jobs-count-context";
 import { apiFetch } from "@/lib/api-client";
 
 type IncomingJob = {
@@ -38,13 +39,27 @@ export function ArtisanJobFeed({
   serviceRadiusKm,
 }: ArtisanJobFeedProps) {
   const [jobs, setJobs] = useState<AvailableRequestSummary[]>(initialJobs);
-  const [newJobIds, setNewJobIds] = useState<Set<string>>(new Set());
+  // Seeded from every job already on the page, not just ones that arrive
+  // live after mount — every available job commands attention on login,
+  // regardless of whether it was already there on page load.
+  const [newJobIds, setNewJobIds] = useState<Set<string>>(
+    () => new Set(initialJobs.filter((j) => !j.isInvited).map((j) => j.id)),
+  );
   // Seeded from the server-persisted invite records (survives logout/reload)
   // rather than starting empty and relying purely on a live socket event.
   const [invitedJobIds, setInvitedJobIds] = useState<Set<string>>(
     () => new Set(initialJobs.filter((j) => j.isInvited).map((j) => j.id)),
   );
   const socketRef = useRef<import("socket.io-client").Socket | null>(null);
+  const jobsCount = useAvailableJobsCount();
+
+  // Keeps any "Available jobs" count displayed elsewhere on the page (a stat
+  // card, a header sentence) in sync with this feed's live list — those are
+  // otherwise server-rendered once and go stale as jobs arrive/get sent to.
+  useEffect(() => {
+    jobsCount?.setCount(jobs.length);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [jobs.length]);
 
   // Only clears the "new" highlight — "invited" is a persisted fact about
   // the request (see JobInvite in schema.prisma) and must stay shown until

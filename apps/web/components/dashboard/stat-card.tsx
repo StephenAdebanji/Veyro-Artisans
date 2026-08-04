@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { LucideIcon } from "lucide-react";
+import type { ReactNode } from "react";
 
 export function StatCard({
   icon: Icon,
@@ -8,7 +9,7 @@ export function StatCard({
   href,
 }: {
   icon: LucideIcon;
-  value: string | number;
+  value: string | number | ReactNode;
   label: string;
   href?: string;
 }) {

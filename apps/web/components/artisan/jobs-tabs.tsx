@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Inbox, ListChecks, X, XCircle, Zap } from "lucide-react";
 import { ArtisanJobFeed } from "@/components/dashboard/artisan-job-feed";
+import { AvailableJobsCountProvider, useAvailableJobsCount } from "@/components/dashboard/available-jobs-count-context";
 import { JobsTable, type JobsTableRow } from "@/components/dashboard/jobs-table";
 import { apiFetch } from "@/lib/api-client";
 import type { AvailableRequestSummary, DeclinedOfferNotice, SkillCategory } from "@veyro/contracts";
@@ -44,7 +45,15 @@ interface ArtisanJobsTabsProps {
   initialDeclinedNotices: DeclinedOfferNotice[];
 }
 
-export function ArtisanJobsTabs({
+export function ArtisanJobsTabs(props: ArtisanJobsTabsProps) {
+  return (
+    <AvailableJobsCountProvider initialCount={props.availableJobs.length}>
+      <ArtisanJobsTabsInner {...props} />
+    </AvailableJobsCountProvider>
+  );
+}
+
+function ArtisanJobsTabsInner({
   availableJobs,
   artisanId,
   category,
@@ -55,6 +64,7 @@ export function ArtisanJobsTabs({
   activeRows,
   initialDeclinedNotices,
 }: ArtisanJobsTabsProps) {
+  const jobsCount = useAvailableJobsCount();
   const [tab, setTab] = useState<Tab>("available");
   const [declinedNotices, setDeclinedNotices] = useState<DeclinedOfferNotice[]>([]);
   const dismissTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
@@ -122,7 +132,7 @@ export function ArtisanJobsTabs({
   }, [artisanId]);
 
   const tabs: { id: Tab; label: string; count: number; icon: typeof Inbox; accent: string }[] = [
-    { id: "available", label: "Available", count: availableJobs.length, icon: Inbox, accent: "emerald" },
+    { id: "available", label: "Available", count: jobsCount?.count ?? availableJobs.length, icon: Inbox, accent: "emerald" },
     { id: "pending", label: "My offers", count: pendingRows.length, icon: Zap, accent: "amber" },
     { id: "active", label: "In progress", count: activeRows.length, icon: ListChecks, accent: "blue" },
   ];
