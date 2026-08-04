@@ -152,6 +152,10 @@ export interface MatchingServicePort {
   /** Persists a homeowner's direct invite of one artisan (from the AI recommendation
    * panel) so it survives logout/reconnect — see JobInvite in schema.prisma. */
   createJobInvite(serviceRequestId: string, artisanId: string): Promise<void>;
+  /** Backs the "Invited ✓" state on the matching screen's AI panel — derived
+   * from JobInvite so it survives reload/logout rather than only living in
+   * client state. */
+  listInvitedArtisanIds(serviceRequestId: string): Promise<string[]>;
   /** Backs the artisan dashboard's "Jobs" table — merges this artisan's PENDING offers with their ACTIVE/COMPLETED jobs into one feed. */
   listJobsFeedForArtisan(artisanId: string): Promise<JobFeedItem[]>;
   /** Backs the artisan dashboard's "Active jobs" stat card. */

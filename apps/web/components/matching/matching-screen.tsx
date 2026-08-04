@@ -19,6 +19,10 @@ interface MatchingScreenProps {
   budgetMax: number | null;
   createdAt: string;
   initialOffers: OfferData[];
+  /** Artisans already invited on this request, persisted server-side — seeds
+   * the "Invited ✓" button state so it survives a reload/logout instead of
+   * resetting to "Invite to offer" every time this component remounts. */
+  initialInvitedArtisanIds: string[];
 }
 
 export function MatchingScreen({
@@ -30,6 +34,7 @@ export function MatchingScreen({
   budgetMax,
   createdAt,
   initialOffers,
+  initialInvitedArtisanIds,
 }: MatchingScreenProps) {
   const router = useRouter();
   const [offers, setOffers] = useState<OfferData[]>(initialOffers);
@@ -46,7 +51,9 @@ export function MatchingScreen({
   });
   const [aiCandidates, setAiCandidates] = useState<RankedArtisan[]>([]);
   const [aiLoading, setAiLoading] = useState(true);
-  const [invitedArtisanIds, setInvitedArtisanIds] = useState<Set<string>>(new Set());
+  const [invitedArtisanIds, setInvitedArtisanIds] = useState<Set<string>>(
+    () => new Set(initialInvitedArtisanIds),
+  );
   const [invitingArtisanId, setInvitingArtisanId] = useState<string | null>(null);
   const [inviteError, setInviteError] = useState<string | null>(null);
   const [cancelling, setCancelling] = useState(false);

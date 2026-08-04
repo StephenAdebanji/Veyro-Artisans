@@ -339,6 +339,10 @@ class MatchingService implements MatchingServicePort {
     await matchingRepository.createJobInvite(serviceRequestId, artisanId);
   }
 
+  async listInvitedArtisanIds(serviceRequestId: string): Promise<string[]> {
+    return matchingRepository.listInvitedArtisanIds(serviceRequestId);
+  }
+
   async listJobsFeedForArtisan(artisanId: string): Promise<JobFeedItem[]> {
     const [pendingMatches, jobs] = await Promise.all([
       matchingRepository.listPendingMatchesForArtisan(artisanId),

@@ -218,6 +218,17 @@ export const matchingRepository = {
     });
   },
 
+  /** Artisan ids the homeowner has already invited on this request — backs the
+   * "Invited ✓" state on the matching screen's AI panel so it survives a
+   * reload/logout instead of only living in client state. */
+  async listInvitedArtisanIds(serviceRequestId: string) {
+    const invites = await prisma.jobInvite.findMany({
+      where: { serviceRequestId },
+      select: { artisanId: true },
+    });
+    return invites.map((i) => i.artisanId);
+  },
+
   async listPendingMatchesForArtisan(artisanId: string) {
     return prisma.match.findMany({
       where: { artisanId, status: "PENDING", serviceRequest: { status: { not: "CANCELLED" } } },

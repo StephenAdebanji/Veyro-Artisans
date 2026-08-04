@@ -24,7 +24,10 @@ export default async function MatchingPage({
   if (!request || request.homeownerId !== homeowner.id) notFound();
 
   // Enrich existing offers with artisan display data for SSR.
-  const rawOffers = await matchingService.listOffers(serviceRequestId);
+  const [rawOffers, initialInvitedArtisanIds] = await Promise.all([
+    matchingService.listOffers(serviceRequestId),
+    matchingService.listInvitedArtisanIds(serviceRequestId),
+  ]);
   const initialOffers: OfferData[] = await Promise.all(
     rawOffers.map(async (offer) => {
       const artisan = (await userService.getArtisanProfile(offer.artisanId)) as Record<string, unknown> | null;
@@ -58,6 +61,7 @@ export default async function MatchingPage({
       budgetMax={request.budgetMax}
       createdAt={request.createdAt}
       initialOffers={initialOffers}
+      initialInvitedArtisanIds={initialInvitedArtisanIds}
     />
   );
 }
