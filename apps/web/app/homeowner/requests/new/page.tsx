@@ -1,9 +1,18 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { Suspense } from "react";
 import { NewRequestForm } from "@/components/dashboard/new-request-form";
+import { auth } from "@/platform/auth-session";
+import { userService } from "@/services/user/user.service";
 
-export default function NewServiceRequestPage() {
+export default async function NewServiceRequestPage() {
+  const session = await auth();
+  const userId = (session?.user as { id?: string } | undefined)?.id;
+  if (!userId) redirect("/sign-in");
+
+  const homeowner = await userService.getHomeownerProfileByUserId(userId);
+
   return (
     <main className="flex-1 px-6 py-10">
       <div className="mx-auto max-w-md">
@@ -20,7 +29,14 @@ export default function NewServiceRequestPage() {
         </p>
         <div className="mt-6">
           <Suspense>
-            <NewRequestForm />
+            <NewRequestForm
+              defaultAddress={{
+                address: homeowner?.address ?? null,
+                city: homeowner?.city ?? null,
+                state: homeowner?.state ?? null,
+                country: homeowner?.country ?? null,
+              }}
+            />
           </Suspense>
         </div>
       </div>

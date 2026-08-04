@@ -32,7 +32,7 @@ export default async function AdminHomeownerDetailPage({
   const homeowner = await userRepository.findHomeownerProfileFull(id);
   if (!homeowner) notFound();
 
-  const location = [homeowner.address, homeowner.city, homeowner.state].filter(Boolean).join(", ");
+  const location = [homeowner.address, homeowner.city, homeowner.state, homeowner.country].filter(Boolean).join(", ");
 
   return (
     <main className="mx-auto max-w-2xl flex-1 px-6 py-10">

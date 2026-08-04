@@ -129,10 +129,19 @@ export function HomeownerAccount({ email, fullName, profilePhotoUrl, initial }: 
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const isNigeria = country === "Nigeria";
+
   const lgaOptions = useMemo(
-    () => (state ? (NIGERIAN_LGAS[state] ?? []).map((l) => ({ value: l, label: l })) : []),
-    [state],
+    () => (state && isNigeria ? (NIGERIAN_LGAS[state] ?? []).map((l) => ({ value: l, label: l })) : []),
+    [state, isNigeria],
   );
+
+  function handleCountryChange(value: string) {
+    setCountry(value);
+    setState("");
+    setLga("");
+    setSaved(false);
+  }
 
   function handleStateChange(s: string) {
     setState(s);
@@ -242,34 +251,45 @@ export function HomeownerAccount({ email, fullName, profilePhotoUrl, initial }: 
                   <SearchableSelect
                     options={COUNTRY_OPTIONS}
                     value={country}
-                    onChange={(value) => { setCountry(value); setSaved(false); }}
+                    onChange={handleCountryChange}
                     placeholder="Select country"
                     searchPlaceholder="Search countries…"
                   />
                 </div>
                 <div className="mt-4 grid gap-4 sm:grid-cols-2">
                   <div className="flex flex-col gap-1.5">
-                    <Label>
+                    <Label htmlFor={isNigeria ? undefined : "state"}>
                       State of residence <span className="text-destructive">*</span>
                     </Label>
-                    <SearchableSelect
-                      options={NIGERIAN_STATE_OPTIONS}
-                      value={state}
-                      onChange={handleStateChange}
-                      placeholder="Select state"
-                      searchPlaceholder="Search states…"
-                    />
+                    {isNigeria ? (
+                      <SearchableSelect
+                        options={NIGERIAN_STATE_OPTIONS}
+                        value={state}
+                        onChange={handleStateChange}
+                        placeholder="Select state"
+                        searchPlaceholder="Search states…"
+                      />
+                    ) : (
+                      <Input
+                        id="state"
+                        placeholder="State / Province / Region"
+                        value={state}
+                        onChange={(e) => { setState(e.target.value); setLga(""); setSaved(false); }}
+                      />
+                    )}
                   </div>
-                  <div className="flex flex-col gap-1.5">
-                    <Label>Local Government Area</Label>
-                    <SearchableSelect
-                      options={lgaOptions}
-                      value={lga}
-                      onChange={(value) => { setLga(value); setSaved(false); }}
-                      placeholder="Select LGA"
-                      searchPlaceholder="Search LGAs…"
-                    />
-                  </div>
+                  {isNigeria && (
+                    <div className="flex flex-col gap-1.5">
+                      <Label>Local Government Area</Label>
+                      <SearchableSelect
+                        options={lgaOptions}
+                        value={lga}
+                        onChange={(value) => { setLga(value); setSaved(false); }}
+                        placeholder="Select LGA"
+                        searchPlaceholder="Search LGAs…"
+                      />
+                    </div>
+                  )}
                 </div>
                 <div className="mt-4 flex flex-col gap-1.5">
                   <Label htmlFor="address">
