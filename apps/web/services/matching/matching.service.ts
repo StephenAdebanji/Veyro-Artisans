@@ -5,6 +5,7 @@ import type {
   AvailableRequestSummary,
   CompletedJobSummary,
   CreateServiceRequestInput,
+  DeclinedOfferNotice,
   GeoPoint,
   JobFeedItem,
   JobHistoryItem,
@@ -368,6 +369,15 @@ class MatchingService implements MatchingServicePort {
     }));
 
     return [...pendingItems, ...jobItems];
+  }
+
+  async listRecentlyDeclinedForArtisan(artisanId: string): Promise<DeclinedOfferNotice[]> {
+    const rows = await matchingRepository.listRecentlyDeclinedMatchesForArtisan(artisanId);
+    return rows.map((match) => ({
+      matchId: match.id,
+      description: match.serviceRequest.description,
+      reason: match.declineReason ?? "No reason given.",
+    }));
   }
 
   async getJobFeedItem(

@@ -30,6 +30,12 @@ export interface MatchOfferSummary {
   status: MatchStatus;
 }
 
+export interface DeclinedOfferNotice {
+  matchId: string;
+  description: string;
+  reason: string;
+}
+
 export interface ServiceRequestSummary {
   id: string;
   homeownerId: string;
@@ -158,6 +164,10 @@ export interface MatchingServicePort {
   listInvitedArtisanIds(serviceRequestId: string): Promise<string[]>;
   /** Backs the artisan dashboard's "Jobs" table — merges this artisan's PENDING offers with their ACTIVE/COMPLETED jobs into one feed. */
   listJobsFeedForArtisan(artisanId: string): Promise<JobFeedItem[]>;
+  /** Offers declined within the last 48h — backs the dismissible "Offer
+   * declined" notice on the artisan's Jobs page so it still surfaces on
+   * their next visit even if they weren't connected when it happened. */
+  listRecentlyDeclinedForArtisan(artisanId: string): Promise<DeclinedOfferNotice[]>;
   /** Backs the artisan dashboard's "Active jobs" stat card. */
   countActiveJobsForArtisan(artisanId: string): Promise<number>;
   /** Backs the artisan dashboard's Reputation panel. */

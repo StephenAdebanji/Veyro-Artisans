@@ -79,4 +79,12 @@ export function registerMatchingGateway(io: Server, app: Application): void {
     namespace.to(`request:${req.params.serviceRequestId}`).emit("offer-responded", req.body);
     res.json({ ok: true });
   });
+
+  // Called by apps/web when a homeowner declines a specific artisan's offer —
+  // pushes a live notice (with the decline reason) to just that artisan.
+  app.post("/internal/matching/offer-declined", (req: Request, res: Response) => {
+    const { artisanUserId, ...payload } = req.body as { artisanUserId: string; [key: string]: unknown };
+    namespace.to(`user:${artisanUserId}`).emit("offer:declined", payload);
+    res.json({ ok: true });
+  });
 }

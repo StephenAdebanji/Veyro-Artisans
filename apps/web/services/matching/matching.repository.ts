@@ -245,6 +245,15 @@ export const matchingRepository = {
     });
   },
 
+  async listRecentlyDeclinedMatchesForArtisan(artisanId: string) {
+    const cutoff = new Date(Date.now() - 48 * 60 * 60 * 1000);
+    return prisma.match.findMany({
+      where: { artisanId, status: "DECLINED", respondedAt: { gte: cutoff } },
+      include: { serviceRequest: { select: { description: true } } },
+      orderBy: { respondedAt: "desc" },
+    });
+  },
+
   async findPendingMatchForArtisan(matchId: string, artisanId: string) {
     return prisma.match.findFirst({
       where: { id: matchId, artisanId, status: "PENDING" },

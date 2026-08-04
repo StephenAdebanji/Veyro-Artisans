@@ -40,7 +40,7 @@ export default async function ArtisanJobsPage() {
     );
   }
 
-  const [availableJobs, jobs] = await Promise.all([
+  const [availableJobs, jobs, declinedNotices] = await Promise.all([
     artisan.primarySkill
       ? matchingService.listAvailableRequests({
           artisanId: artisan.id,
@@ -52,6 +52,7 @@ export default async function ArtisanJobsPage() {
         })
       : Promise.resolve([]),
     matchingService.listJobsFeedForArtisan(artisan.id),
+    matchingService.listRecentlyDeclinedForArtisan(artisan.id),
   ]);
 
   const rows: JobsTableRow[] = await Promise.all(
@@ -98,6 +99,7 @@ export default async function ArtisanJobsPage() {
           serviceRadiusKm={artisan.serviceRadiusKm}
           pendingRows={pending}
           activeRows={active}
+          initialDeclinedNotices={declinedNotices}
         />
       </div>
     </main>
