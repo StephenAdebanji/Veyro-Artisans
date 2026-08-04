@@ -1,12 +1,11 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ArrowLeft, Briefcase, Clock, ListChecks, Zap } from "lucide-react";
+import { ArrowLeft, Clock, Hammer } from "lucide-react";
 import { auth } from "@/platform/auth-session";
 import { matchingService } from "@/services/matching/matching.service";
 import { userService } from "@/services/user/user.service";
-import { ArtisanJobFeed } from "@/components/dashboard/artisan-job-feed";
-import { JobsTable, type JobsTableRow } from "@/components/dashboard/jobs-table";
-import { StatCard } from "@/components/dashboard/stat-card";
+import { ArtisanJobsTabs } from "@/components/artisan/jobs-tabs";
+import { type JobsTableRow } from "@/components/dashboard/jobs-table";
 import { prisma } from "@/platform/prisma";
 import type { SkillCategory } from "@veyro/contracts";
 
@@ -81,77 +80,26 @@ export default async function ArtisanJobsPage() {
         Back to dashboard
       </Link>
 
-      <div className="flex items-center gap-3 rounded-2xl border bg-gradient-to-r from-primary/10 via-primary/5 to-transparent p-5">
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/15 text-primary">
-          <Briefcase className="h-5 w-5" />
-        </div>
-        <div>
-          <h1 className="text-2xl font-bold">Jobs</h1>
-          <p className="mt-0.5 text-sm text-muted-foreground">
-            Available requests nearby, your pending offers, and active work.
-          </p>
-        </div>
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary to-primary/70 px-6 py-8 text-primary-foreground">
+        <Hammer className="absolute -right-4 -top-4 h-32 w-32 rotate-12 text-white/10" />
+        <h1 className="text-2xl font-bold">Find your next job</h1>
+        <p className="mt-1 max-w-md text-sm text-primary-foreground/80">
+          Browse requests nearby, track the offers you&apos;ve sent, and follow the jobs currently in progress.
+        </p>
       </div>
 
-      <div className="mt-6 grid gap-4 sm:grid-cols-3">
-        <StatCard icon={ListChecks} value={availableJobs.length} label="Available jobs" />
-        <StatCard icon={Zap} value={pending.length} label="Pending offers" />
-        <StatCard icon={Clock} value={active.length} label="In progress" />
+      <div className="mt-6">
+        <ArtisanJobsTabs
+          availableJobs={availableJobs}
+          artisanId={artisan.id}
+          category={(artisan.primarySkill as SkillCategory) ?? null}
+          artisanLat={artisan.gpsLat ?? undefined}
+          artisanLng={artisan.gpsLng ?? undefined}
+          serviceRadiusKm={artisan.serviceRadiusKm}
+          pendingRows={pending}
+          activeRows={active}
+        />
       </div>
-
-      {/* Available homeowner posts — the primary section artisans come here for */}
-      <section className="mt-8">
-        <h2 className="mb-3 flex items-center gap-2 text-base font-semibold">
-          <ListChecks className="h-4 w-4 text-primary" />
-          Available jobs near you
-          {availableJobs.length > 0 && (
-            <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400">
-              {availableJobs.length} new
-            </span>
-          )}
-        </h2>
-        {artisan.primarySkill ? (
-          <ArtisanJobFeed
-            initialJobs={availableJobs}
-            artisanId={artisan.id}
-            category={artisan.primarySkill as SkillCategory}
-            artisanLat={artisan.gpsLat ?? undefined}
-            artisanLng={artisan.gpsLng ?? undefined}
-            serviceRadiusKm={artisan.serviceRadiusKm}
-          />
-        ) : (
-          <p className="text-sm text-muted-foreground">
-            Complete your profile (set your trade category) to see available jobs.
-          </p>
-        )}
-      </section>
-
-      {/* Pending offers the artisan has sent */}
-      {pending.length > 0 && (
-        <section className="mt-8">
-          <h2 className="mb-3 flex items-center gap-2 text-base font-semibold">
-            <Zap className="h-4 w-4 text-amber-500" />
-            My pending offers ({pending.length})
-          </h2>
-          <div className="rounded-xl border bg-card p-4">
-            <JobsTable rows={pending} />
-          </div>
-        </section>
-      )}
-
-      {/* Active / in-progress jobs */}
-      {active.length > 0 && (
-        <section className="mt-6">
-          <h2 className="mb-3 flex items-center gap-2 text-base font-semibold">
-            <Clock className="h-4 w-4 text-blue-500" />
-            In progress ({active.length})
-          </h2>
-          <div className="rounded-xl border bg-card p-4">
-            <JobsTable rows={active} />
-          </div>
-        </section>
-      )}
-
     </main>
   );
 }
