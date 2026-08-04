@@ -110,7 +110,8 @@ export function NewRequestForm({ defaultAddress }: { defaultAddress?: DefaultAdd
       setError("Maximum budget cannot be less than the minimum budget.");
       return;
     }
-    if (preferredDate && preferredDate < todayISO) {
+    if (!preferredDate) { setError("Choose a preferred date."); return; }
+    if (preferredDate < todayISO) {
       setError("Preferred date cannot be in the past.");
       return;
     }
@@ -158,7 +159,9 @@ export function NewRequestForm({ defaultAddress }: { defaultAddress?: DefaultAdd
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       {/* Service category */}
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="category">Service category</Label>
+        <Label htmlFor="category">
+          Service category <span className="text-destructive">*</span>
+        </Label>
         <Select value={category} onValueChange={(value) => setCategory(value as SkillCategory)}>
           <SelectTrigger id="category">
             <SelectValue placeholder="Select a category" />
@@ -175,7 +178,9 @@ export function NewRequestForm({ defaultAddress }: { defaultAddress?: DefaultAdd
 
       {/* Job description */}
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="description">Describe the job</Label>
+        <Label htmlFor="description">
+          Describe the job <span className="text-destructive">*</span>
+        </Label>
         <Textarea
           id="description"
           placeholder="e.g. Kitchen sockets aren't holding power"
@@ -240,7 +245,9 @@ export function NewRequestForm({ defaultAddress }: { defaultAddress?: DefaultAdd
 
           {/* State — Nigerian dropdown or free text for other countries */}
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="state">State</Label>
+            <Label htmlFor={isNigeria ? undefined : "state"}>
+              State <span className="text-destructive">*</span>
+            </Label>
             {isNigeria ? (
               <SearchableSelect
                 options={NIGERIAN_STATE_OPTIONS}
@@ -276,7 +283,9 @@ export function NewRequestForm({ defaultAddress }: { defaultAddress?: DefaultAdd
 
           {/* Street address */}
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="streetAddress">Address</Label>
+            <Label htmlFor="streetAddress">
+              Address <span className="text-destructive">*</span>
+            </Label>
             <Input
               id="streetAddress"
               placeholder="12 Admiralty Way, Lekki Phase 1"
@@ -302,13 +311,16 @@ export function NewRequestForm({ defaultAddress }: { defaultAddress?: DefaultAdd
 
       {/* Preferred date */}
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="preferredDate">Preferred date</Label>
+        <Label htmlFor="preferredDate">
+          Preferred date <span className="text-destructive">*</span>
+        </Label>
         <Input
           id="preferredDate"
           type="date"
           min={todayISO}
           value={preferredDate}
           onChange={(event) => setPreferredDate(event.target.value)}
+          required
         />
       </div>
 

@@ -21,7 +21,7 @@ const createRequestSchema = z
     countryCode: z.string().optional().default("NG"),
     budgetMin: z.number().optional(),
     budgetMax: z.number().optional(),
-    preferredDate: z.string().optional(),
+    preferredDate: z.string().min(1),
   })
   .refine(
     (data) => data.budgetMin === undefined || data.budgetMax === undefined || data.budgetMax >= data.budgetMin,
