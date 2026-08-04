@@ -1,11 +1,12 @@
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, MessageCircle, Phone, User } from "lucide-react";
+import { ArrowLeft, MessageCircle, Phone } from "lucide-react";
 import { auth } from "@/platform/auth-session";
 import { prisma } from "@/platform/prisma";
 import { matchingService } from "@/services/matching/matching.service";
 import { userService } from "@/services/user/user.service";
 import { Badge } from "@/components/ui/badge";
+import { Avatar } from "@/components/shared/avatar";
 import { SKILL_LABELS } from "@/components/shared/skill-labels";
 import type { SkillCategory } from "@veyro/contracts";
 import { CallButton } from "@/components/artisan/call-button";
@@ -111,9 +112,7 @@ export default async function JobDetailPage({
         </h2>
 
         <div className="flex items-center gap-4">
-          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-primary/10">
-            <User className="h-7 w-7 text-primary" />
-          </div>
+          <Avatar src={homeowner.profilePhotoUrl} name={homeowner.fullName} size={56} />
           <div>
             <p className="text-base font-semibold">{homeowner.fullName ?? "Homeowner"}</p>
             <p className="text-sm text-muted-foreground">Verified homeowner</p>

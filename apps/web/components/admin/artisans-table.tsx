@@ -10,6 +10,7 @@ import { SKILL_LABELS } from "@/components/shared/skill-labels";
 import { EditArtisanModal, type EditArtisanData } from "./edit-user-modal";
 import { ResetPasswordModal } from "./reset-password-modal";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
+import { Avatar } from "@/components/shared/avatar";
 import { apiFetch } from "@/lib/api-client";
 import type { SkillCategory } from "@veyro/contracts";
 
@@ -127,7 +128,12 @@ function ArtisanActionRow({
       />
       <tr className="border-b last:border-b-0 hover:bg-muted/30">
         <td className="py-3 pl-4 pr-4 text-sm text-muted-foreground">{index}</td>
-        <td className="py-3 pr-4 font-medium">{name}</td>
+        <td className="py-3 pr-4 font-medium">
+          <div className="flex items-center gap-2.5">
+            <Avatar src={data.profilePhotoUrl} name={name} size={28} />
+            {name}
+          </div>
+        </td>
         <td className="py-3 pr-4 text-sm text-muted-foreground">{data.user.email}</td>
         <td className="py-3 pr-4">
           <Badge className={ROLE_STYLE[data.user.role] ?? "bg-muted text-muted-foreground"}>

@@ -56,6 +56,7 @@ export interface FeaturedArtisan {
   artisanId: string;
   firstName: string | null;
   lastName: string | null;
+  profilePhotoUrl: string | null;
   primarySkill: SkillCategory;
   experienceLevel: ExperienceLevel;
   city: string | null;

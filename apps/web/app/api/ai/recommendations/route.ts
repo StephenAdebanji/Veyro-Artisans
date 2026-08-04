@@ -7,6 +7,17 @@ import { withApiErrorHandling } from "@/platform/api-handler";
 import { haversineKm } from "@/platform/geo";
 import type { RankedArtisan } from "@veyro/contracts";
 
+// Profile photos aren't part of the persisted RecommendationLog snapshot (and
+// could change since it was cached anyway) — always fetched fresh rather than
+// trusting whatever was true at scoring time.
+async function withProfilePhotos(ranked: RankedArtisan[]): Promise<RankedArtisan[]> {
+  const profiles = await Promise.all(ranked.map((r) => userService.getArtisanProfile(r.artisanId)));
+  return ranked.map((r, i) => ({
+    ...r,
+    artisanProfilePhotoUrl: (profiles[i] as { profilePhotoUrl?: string | null } | null)?.profilePhotoUrl ?? null,
+  }));
+}
+
 export const GET = withApiErrorHandling(async (request: Request) => {
   const url = new URL(request.url);
   const serviceRequestId = url.searchParams.get("serviceRequestId");
@@ -20,7 +31,8 @@ export const GET = withApiErrorHandling(async (request: Request) => {
     orderBy: { createdAt: "desc" },
   });
   if (cached) {
-    return NextResponse.json({ ranked: cached.output, cached: true });
+    const ranked = await withProfilePhotos(cached.output as unknown as RankedArtisan[]);
+    return NextResponse.json({ ranked, cached: true });
   }
 
   const serviceRequest = await matchingService.getServiceRequest(serviceRequestId);
@@ -63,5 +75,5 @@ export const GET = withApiErrorHandling(async (request: Request) => {
     artisanNames,
   });
 
-  return NextResponse.json({ ranked, cached: false });
+  return NextResponse.json({ ranked: await withProfilePhotos(ranked), cached: false });
 });

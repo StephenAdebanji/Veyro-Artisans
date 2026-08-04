@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Phone, ShieldCheck, Star } from "lucide-react";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { ReviewList, type ReviewItem } from "@/components/artisan/review-list";
 import { EXPERIENCE_LABELS, SKILL_LABELS } from "@/components/shared/skill-labels";
@@ -17,6 +17,7 @@ interface ArtisanProfileRecord {
   id: string;
   firstName: string | null;
   lastName: string | null;
+  profilePhotoUrl: string | null;
   bio: string | null;
   primarySkill: SkillCategory | null;
   experienceLevel: ExperienceLevel | null;
@@ -77,6 +78,7 @@ export default async function ArtisanProfilePage({ params }: { params: Promise<{
         <div className="flex flex-col gap-4 p-6 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex items-start gap-4">
             <Avatar className="size-16 -mt-12 border-4 border-background sm:-mt-14">
+              {profile.profilePhotoUrl && <AvatarImage src={profile.profilePhotoUrl} alt={name} />}
               <AvatarFallback className="text-lg">{initials}</AvatarFallback>
             </Avatar>
             <div>

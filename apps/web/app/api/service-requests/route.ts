@@ -71,6 +71,7 @@ export const POST = withApiErrorHandling(async (request: Request) => {
       description: parsed.data.description,
       address,
       homeownerName: homeowner.fullName,
+      homeownerProfilePhotoUrl: homeowner.profilePhotoUrl,
       budgetMin: parsed.data.budgetMin ?? null,
       budgetMax: parsed.data.budgetMax ?? null,
       lat: location.lat,

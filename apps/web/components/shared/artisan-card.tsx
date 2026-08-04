@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ShieldCheck, Star } from "lucide-react";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { EXPERIENCE_LABELS, SKILL_LABELS } from "@/components/shared/skill-labels";
 import type { FeaturedArtisan } from "@veyro/contracts";
@@ -20,6 +20,7 @@ export function ArtisanCard({ artisan }: { artisan: FeaturedArtisan }) {
     >
       <div className="flex items-center gap-3">
         <Avatar>
+          {artisan.profilePhotoUrl && <AvatarImage src={artisan.profilePhotoUrl} alt={name} />}
           <AvatarFallback>{initials(artisan.firstName, artisan.lastName)}</AvatarFallback>
         </Avatar>
         <div className="min-w-0">

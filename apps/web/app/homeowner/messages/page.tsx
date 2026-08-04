@@ -25,6 +25,7 @@ export default async function HomeownerMessagesPage() {
         id: c.id,
         counterpartId: c.artisanId,
         counterpartName,
+        counterpartPhotoUrl: (artisan?.profilePhotoUrl as string | null | undefined) ?? null,
         lastMessageAt: c.lastMessageAt,
         unreadCount: c.unreadCount,
         lastMessagePreview: c.lastMessagePreview ?? null,

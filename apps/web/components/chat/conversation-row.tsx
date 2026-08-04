@@ -1,8 +1,11 @@
 "use client";
 
+import { Avatar } from "@/components/shared/avatar";
+
 interface ConversationRowProps {
   id: string;
   counterpartName: string;
+  counterpartPhotoUrl?: string | null;
   lastMessageAt: string | null;
   lastMessagePreview?: string | null;
   unreadCount: number;
@@ -20,17 +23,9 @@ function relativeTime(iso: string): string {
   return `${Math.floor(h / 24)}d`;
 }
 
-function initials(name: string): string {
-  return name
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
-}
-
 export function ConversationRow({
   counterpartName,
+  counterpartPhotoUrl,
   lastMessageAt,
   lastMessagePreview,
   unreadCount,
@@ -44,8 +39,8 @@ export function ConversationRow({
         selected ? "bg-muted" : ""
       }`}
     >
-      <div className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
-        {initials(counterpartName) || "?"}
+      <div className="relative shrink-0">
+        <Avatar src={counterpartPhotoUrl} name={counterpartName} size={44} />
         {unreadCount > 0 && (
           <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[9px] font-bold text-primary-foreground">
             {unreadCount > 9 ? "9+" : unreadCount}

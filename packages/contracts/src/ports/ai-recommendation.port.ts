@@ -21,6 +21,7 @@ export interface RecommendationBreakdown {
 export interface RankedArtisan {
   artisanId: string;
   artisanName?: string;
+  artisanProfilePhotoUrl?: string | null;
   score: number;
   breakdown: RecommendationBreakdown;
   semanticScore?: number;

@@ -89,6 +89,7 @@ export interface AvailableRequestSummary {
   distanceKm: number;
   createdAt: string;
   homeownerName: string | null;
+  homeownerProfilePhotoUrl: string | null;
   /** True when the homeowner invited this artisan directly from the AI
    * recommendation panel — persisted, so it survives logout/reconnect and
    * only goes away when the request is cancelled or the offer window closes. */

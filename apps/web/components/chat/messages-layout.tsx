@@ -11,6 +11,7 @@ export interface EnrichedConversation {
   id: string;
   counterpartId: string;
   counterpartName: string;
+  counterpartPhotoUrl: string | null;
   lastMessageAt: string | null;
   unreadCount: number;
   lastMessagePreview?: string | null;
@@ -79,6 +80,7 @@ export function MessagesLayout({ conversations, currentProfileId, backHref }: Me
               key={convo.id}
               id={convo.id}
               counterpartName={convo.counterpartName}
+              counterpartPhotoUrl={convo.counterpartPhotoUrl}
               lastMessageAt={convo.lastMessageAt}
               lastMessagePreview={convo.lastMessagePreview}
               unreadCount={unreadMap[convo.id] ?? convo.unreadCount}

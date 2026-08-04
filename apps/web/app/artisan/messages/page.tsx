@@ -23,6 +23,7 @@ export default async function ArtisanMessagesPage() {
         id: c.id,
         counterpartId: c.homeownerId,
         counterpartName,
+        counterpartPhotoUrl: homeowner?.profilePhotoUrl ?? null,
         lastMessageAt: c.lastMessageAt,
         unreadCount: c.unreadCount,
         lastMessagePreview: c.lastMessagePreview ?? null,

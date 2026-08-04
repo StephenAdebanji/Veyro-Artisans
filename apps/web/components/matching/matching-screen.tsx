@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, CheckCircle2, Clock, Loader2, MapPin, MessageCircle, Phone, Sparkles, Wallet, XCircle } from "lucide-react";
 import { OfferCard, type OfferData } from "./offer-card";
 import type { RankedArtisan, SkillCategory } from "@veyro/contracts";
+import { Avatar } from "@/components/shared/avatar";
 import { SKILL_LABELS } from "@/components/shared/skill-labels";
 import { Button } from "@/components/ui/button";
 import { apiFetch } from "@/lib/api-client";
@@ -454,6 +455,7 @@ export function MatchingScreen({
                       return (
                         <div key={c.artisanId} className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
                           <span className="w-4 shrink-0 text-xs font-bold text-violet-500">#{idx + 1}</span>
+                          <Avatar src={c.artisanProfilePhotoUrl} name={c.artisanName} size={24} />
                           <span className="min-w-0 flex-1 truncate text-sm font-medium text-violet-900 dark:text-violet-200">
                             {c.artisanName ?? "Artisan"}
                           </span>

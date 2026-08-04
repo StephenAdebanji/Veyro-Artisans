@@ -235,6 +235,7 @@ class UserService implements UserServicePort {
         artisanId: row.id,
         firstName: row.firstName,
         lastName: row.lastName,
+        profilePhotoUrl: row.profilePhotoUrl,
         primarySkill: row.primarySkill as SkillCategory,
         experienceLevel: row.experienceLevel ? EXPERIENCE_FROM_DB[row.experienceLevel] : "0-2",
         city: row.city,

@@ -316,13 +316,13 @@ class MatchingService implements MatchingServicePort {
     // present from the generic query.
     const allRequests = [...requests, ...invitedRequests.filter((r) => !requests.some((req) => req.id === r.id))];
 
-    // Fetch homeowner names in one batch.
+    // Fetch homeowner display data in one batch.
     const homeownerIds = [...new Set(allRequests.map((r) => r.homeownerId))];
     const homeowners = await prisma.homeownerProfile.findMany({
       where: { id: { in: homeownerIds } },
-      select: { id: true, fullName: true },
+      select: { id: true, fullName: true, profilePhotoUrl: true },
     });
-    const nameById = new Map(homeowners.map((h) => [h.id, h.fullName]));
+    const homeownerById = new Map(homeowners.map((h) => [h.id, h]));
 
     const mapped = allRequests.map((request) => ({
       id: request.id,
@@ -335,7 +335,8 @@ class MatchingService implements MatchingServicePort {
         ? haversineKm(filter.near, { lat: request.lat, lng: request.lng })
         : 0,
       createdAt: request.createdAt.toISOString(),
-      homeownerName: nameById.get(request.homeownerId) ?? null,
+      homeownerName: homeownerById.get(request.homeownerId)?.fullName ?? null,
+      homeownerProfilePhotoUrl: homeownerById.get(request.homeownerId)?.profilePhotoUrl ?? null,
       isInvited: invitedIds.has(request.id),
     }));
 

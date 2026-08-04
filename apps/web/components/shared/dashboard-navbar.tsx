@@ -7,6 +7,7 @@ import { signOut } from "next-auth/react";
 import { Briefcase, History, LogOut, MessageSquare, UserCircle } from "lucide-react";
 import { apiFetch } from "@/lib/api-client";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
+import { Avatar } from "@/components/shared/avatar";
 
 interface DashboardNavbarProps {
   role: "artisan" | "homeowner";
@@ -29,7 +30,14 @@ function UnreadBadge({ count }: { count: number }) {
   );
 }
 
-export function DashboardNavbar({ role, userName: _userName, profilePhotoUrl: _profilePhotoUrl }: DashboardNavbarProps) {
+function AccountIcon({ profilePhotoUrl, userName }: { profilePhotoUrl?: string | null; userName?: string }) {
+  if (profilePhotoUrl) {
+    return <Avatar src={profilePhotoUrl} name={userName} size={20} />;
+  }
+  return <UserCircle className="h-4 w-4" />;
+}
+
+export function DashboardNavbar({ role, userName, profilePhotoUrl }: DashboardNavbarProps) {
   const pathname = usePathname();
   const [unreadCount, setUnreadCount] = useState(0);
   const [confirmLogout, setConfirmLogout] = useState(false);
@@ -114,7 +122,7 @@ export function DashboardNavbar({ role, userName: _userName, profilePhotoUrl: _p
               href={accountHref}
               className={linkClass(pathname === accountHref || pathname.startsWith(accountHref + "/"))}
             >
-              <UserCircle className="h-4 w-4" />
+              <AccountIcon profilePhotoUrl={profilePhotoUrl} userName={userName} />
               <span className="hidden md:inline">Account</span>
             </Link>
           </div>
@@ -180,7 +188,7 @@ export function DashboardNavbar({ role, userName: _userName, profilePhotoUrl: _p
               : "text-blue-100 hover:bg-white/10"
           }`}
         >
-          <UserCircle className="h-4 w-4" />
+          <AccountIcon profilePhotoUrl={profilePhotoUrl} userName={userName} />
           Account
         </Link>
       </div>

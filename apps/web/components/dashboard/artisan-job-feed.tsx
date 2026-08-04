@@ -19,6 +19,7 @@ type IncomingJob = {
   createdAt: string;
   category: SkillCategory;
   homeownerName?: string | null;
+  homeownerProfilePhotoUrl?: string | null;
 };
 
 interface ArtisanJobFeedProps {
@@ -137,6 +138,7 @@ export function ArtisanJobFeed({
             distanceKm,
             createdAt: job.createdAt,
             homeownerName: job.homeownerName ?? null,
+            homeownerProfilePhotoUrl: job.homeownerProfilePhotoUrl ?? null,
             isInvited: false,
           };
           return [newJob, ...prev];
@@ -167,6 +169,7 @@ export function ArtisanJobFeed({
             distanceKm,
             createdAt: job.createdAt,
             homeownerName: job.homeownerName ?? null,
+            homeownerProfilePhotoUrl: job.homeownerProfilePhotoUrl ?? null,
             isInvited: true,
           };
           return [newJob, ...prev];

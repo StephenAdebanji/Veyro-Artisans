@@ -22,10 +22,21 @@ function extractErrorMessage(body: unknown, fallback: string): string {
   if (body && typeof body === "object" && "error" in body) {
     const err = (body as { error: unknown }).error;
     if (typeof err === "string") return err;
-    // Zod's `.flatten()` shape: { formErrors: string[], fieldErrors: {...} }
-    if (err && typeof err === "object" && Array.isArray((err as { formErrors?: unknown[] }).formErrors)) {
-      const [first] = (err as { formErrors: string[] }).formErrors;
-      if (first) return first;
+    // Zod's `.flatten()` shape: { formErrors: string[], fieldErrors: {...} }.
+    // Most validation failures (e.g. a single-field `.max()`) land in
+    // fieldErrors, not formErrors (that's reserved for object-level
+    // `.refine()` checks) — checking formErrors alone silently swallowed the
+    // real message and fell through to the generic fallback.
+    if (err && typeof err === "object") {
+      const shaped = err as { formErrors?: unknown[]; fieldErrors?: Record<string, unknown[]> };
+      if (Array.isArray(shaped.formErrors) && typeof shaped.formErrors[0] === "string") {
+        return shaped.formErrors[0];
+      }
+      if (shaped.fieldErrors && typeof shaped.fieldErrors === "object") {
+        for (const messages of Object.values(shaped.fieldErrors)) {
+          if (Array.isArray(messages) && typeof messages[0] === "string") return messages[0];
+        }
+      }
     }
   }
   return fallback;

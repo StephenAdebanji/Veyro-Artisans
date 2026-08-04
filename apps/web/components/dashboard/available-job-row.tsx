@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { CurrencyInput } from "@/components/ui/currency-input";
 import { Input } from "@/components/ui/input";
 import { Sparkles, Star } from "lucide-react";
+import { Avatar } from "@/components/shared/avatar";
 import { SKILL_LABELS } from "@/components/shared/skill-labels";
 import { apiFetch, ApiRequestError } from "@/lib/api-client";
 import type { AvailableRequestSummary } from "@veyro/contracts";
@@ -80,33 +81,36 @@ export function AvailableJobRow({ job, isNew, isInvited, onSeen, onExpired }: Av
             : "bg-card"
       }`}
     >
-      <div className="flex items-center justify-between">
-        <div>
-          <div className="flex items-center gap-2">
-            {isInvited ? (
-              <span className="flex items-center gap-1 rounded-full bg-violet-600 px-2 py-0.5 text-[10px] font-bold text-white">
-                <Star className="h-2.5 w-2.5" /> Recommended for you
-              </span>
-            ) : (
-              isNew && (
-                <span className="flex items-center gap-1 rounded-full bg-emerald-600 px-2 py-0.5 text-[10px] font-bold text-white">
-                  <Sparkles className="h-2.5 w-2.5" /> New
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex min-w-0 items-start gap-3">
+          <Avatar src={job.homeownerProfilePhotoUrl} name={job.homeownerName} size={36} className="mt-0.5" />
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              {isInvited ? (
+                <span className="flex items-center gap-1 rounded-full bg-violet-600 px-2 py-0.5 text-[10px] font-bold text-white">
+                  <Star className="h-2.5 w-2.5" /> Recommended for you
                 </span>
-              )
+              ) : (
+                isNew && (
+                  <span className="flex items-center gap-1 rounded-full bg-emerald-600 px-2 py-0.5 text-[10px] font-bold text-white">
+                    <Sparkles className="h-2.5 w-2.5" /> New
+                  </span>
+                )
+              )}
+            </div>
+            <p className="font-semibold">
+              {job.homeownerName ?? "Someone"} is looking for a {SKILL_LABELS[job.category]}
+            </p>
+            {job.description && (
+              <p className="text-sm text-muted-foreground">{job.description}</p>
             )}
+            <p className="text-sm text-muted-foreground">
+              {job.address} · {job.distanceKm.toFixed(1)} km away
+              {job.budgetMin || job.budgetMax
+                ? ` · Budget ₦${job.budgetMin?.toLocaleString() ?? "?"}-₦${job.budgetMax?.toLocaleString() ?? "?"}`
+                : ""}
+            </p>
           </div>
-          <p className="font-semibold">
-            {job.homeownerName ?? "Someone"} is looking for a {SKILL_LABELS[job.category]}
-          </p>
-          {job.description && (
-            <p className="text-sm text-muted-foreground">{job.description}</p>
-          )}
-          <p className="text-sm text-muted-foreground">
-            {job.address} · {job.distanceKm.toFixed(1)} km away
-            {job.budgetMin || job.budgetMax
-              ? ` · Budget ₦${job.budgetMin?.toLocaleString() ?? "?"}-₦${job.budgetMax?.toLocaleString() ?? "?"}`
-              : ""}
-          </p>
         </div>
         {!sent && !unavailable && (
           <Button
