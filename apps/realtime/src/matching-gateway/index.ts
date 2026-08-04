@@ -23,6 +23,12 @@ export function registerMatchingGateway(io: Server, app: Application): void {
   });
 
   namespace.on("connection", (socket: Socket) => {
+    // Every connected user gets a personal room keyed by their own userId, so
+    // apps/web can push something to one specific person (e.g. an artisan
+    // directly invited to offer) without needing them to have joined anything
+    // request- or skill-specific first.
+    if (socket.data.userId) socket.join(`user:${socket.data.userId}`);
+
     // Homeowner watches a specific request for incoming offers.
     socket.on("join-request", ({ serviceRequestId }: { serviceRequestId: string }) => {
       socket.join(`request:${serviceRequestId}`);
@@ -47,6 +53,16 @@ export function registerMatchingGateway(io: Server, app: Application): void {
   app.post("/internal/matching/broadcast", (req: Request, res: Response) => {
     const { category, ...payload } = req.body as { category: string; [key: string]: unknown };
     namespace.to(`skill:${category}`).emit("job:new", { category, ...payload });
+    res.json({ ok: true });
+  });
+
+  // Called by apps/web when a homeowner directly invites one specific artisan
+  // (e.g. from the AI recommendation panel) to offer on their request — only
+  // that artisan's own socket sees it, distinct from the category-wide
+  // broadcast every eligible artisan already gets.
+  app.post("/internal/matching/invite", (req: Request, res: Response) => {
+    const { artisanUserId, ...payload } = req.body as { artisanUserId: string; [key: string]: unknown };
+    namespace.to(`user:${artisanUserId}`).emit("job:invited", payload);
     res.json({ ok: true });
   });
 

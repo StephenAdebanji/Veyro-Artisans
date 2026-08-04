@@ -3,8 +3,9 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { CurrencyInput } from "@/components/ui/currency-input";
 import { Input } from "@/components/ui/input";
-import { Sparkles } from "lucide-react";
+import { Sparkles, Star } from "lucide-react";
 import { SKILL_LABELS } from "@/components/shared/skill-labels";
 import { apiFetch, ApiRequestError } from "@/lib/api-client";
 import type { AvailableRequestSummary } from "@veyro/contracts";
@@ -14,11 +15,15 @@ interface AvailableJobRowProps {
   /** True while this job hasn't been acknowledged yet — arrived live via
    * socket since the feed mounted, rather than being part of the initial load. */
   isNew?: boolean;
-  /** Called once the artisan engages with the row, clearing the "new" highlight. */
+  /** True while this job was specifically pushed to this artisan by the
+   * homeowner picking them from the AI recommendation panel, rather than
+   * just being part of the generic category broadcast. */
+  isInvited?: boolean;
+  /** Called once the artisan engages with the row, clearing the highlight. */
   onSeen?: () => void;
 }
 
-export function AvailableJobRow({ job, isNew, onSeen }: AvailableJobRowProps) {
+export function AvailableJobRow({ job, isNew, isInvited, onSeen }: AvailableJobRowProps) {
   const router = useRouter();
   const [expanded, setExpanded] = useState(false);
   const [price, setPrice] = useState("");
@@ -59,18 +64,26 @@ export function AvailableJobRow({ job, isNew, onSeen }: AvailableJobRowProps) {
   return (
     <div
       className={`rounded-xl border p-4 transition-colors ${
-        isNew
-          ? "border-primary/50 bg-primary/5 ring-2 ring-primary/20 dark:bg-primary/10"
-          : "bg-card"
+        isInvited
+          ? "border-violet-400/60 bg-violet-50 ring-2 ring-violet-300/40 dark:bg-violet-950/30"
+          : isNew
+            ? "border-primary/50 bg-primary/5 ring-2 ring-primary/20 dark:bg-primary/10"
+            : "bg-card"
       }`}
     >
       <div className="flex items-center justify-between">
         <div>
           <div className="flex items-center gap-2">
-            {isNew && (
-              <span className="flex items-center gap-1 rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold text-primary-foreground">
-                <Sparkles className="h-2.5 w-2.5" /> New
+            {isInvited ? (
+              <span className="flex items-center gap-1 rounded-full bg-violet-600 px-2 py-0.5 text-[10px] font-bold text-white">
+                <Star className="h-2.5 w-2.5" /> Recommended for you
               </span>
+            ) : (
+              isNew && (
+                <span className="flex items-center gap-1 rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold text-primary-foreground">
+                  <Sparkles className="h-2.5 w-2.5" /> New
+                </span>
+              )
             )}
             {job.homeownerName && (
               <p className="text-xs font-medium text-muted-foreground">{job.homeownerName}</p>
@@ -103,12 +116,11 @@ export function AvailableJobRow({ job, isNew, onSeen }: AvailableJobRowProps) {
 
       {expanded && !sent && (
         <form onSubmit={handleSubmit} className="mt-3 flex flex-wrap items-end gap-2">
-          <Input
-            type="number"
+          <CurrencyInput
             placeholder="Price (₦)"
             className="w-32"
             value={price}
-            onChange={(event) => setPrice(event.target.value)}
+            onValueChange={setPrice}
             required
           />
           <Input

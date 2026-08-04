@@ -46,6 +46,9 @@ export function MatchingScreen({
   });
   const [aiCandidates, setAiCandidates] = useState<RankedArtisan[]>([]);
   const [aiLoading, setAiLoading] = useState(true);
+  const [invitedArtisanIds, setInvitedArtisanIds] = useState<Set<string>>(new Set());
+  const [invitingArtisanId, setInvitingArtisanId] = useState<string | null>(null);
+  const [inviteError, setInviteError] = useState<string | null>(null);
   const [cancelling, setCancelling] = useState(false);
   const [cancelled, setCancelled] = useState(false);
   const [cancelError, setCancelError] = useState<string | null>(null);
@@ -168,6 +171,23 @@ export function MatchingScreen({
     } catch (err) {
       setChatError(err instanceof Error ? err.message : "Could not start chat. Please try again.");
       setChatPending(false);
+    }
+  }
+
+  async function handleInviteArtisan(artisanId: string) {
+    setInviteError(null);
+    setInvitingArtisanId(artisanId);
+    try {
+      await apiFetch(`/api/service-requests/${serviceRequestId}/invite`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ artisanId }),
+      });
+      setInvitedArtisanIds((prev) => new Set(prev).add(artisanId));
+    } catch (err) {
+      setInviteError(err instanceof Error ? err.message : "Could not invite this artisan. Please try again.");
+    } finally {
+      setInvitingArtisanId(null);
     }
   }
 
@@ -364,25 +384,42 @@ export function MatchingScreen({
 
                 {!aiLoading && aiCandidates.length > 0 ? (
                   <div className="space-y-2.5">
-                    {aiCandidates.slice(0, 3).map((c, idx) => (
-                      <div key={c.artisanId} className="flex items-center gap-3">
-                        <span className="w-4 text-xs font-bold text-violet-500">#{idx + 1}</span>
-                        <span className="min-w-0 flex-1 truncate text-sm font-medium text-violet-900 dark:text-violet-200">
-                          {c.artisanName ?? "Artisan"}
-                        </span>
-                        <div className="flex items-center gap-2">
-                          <div className="h-1.5 w-20 overflow-hidden rounded-full bg-violet-200 dark:bg-violet-800">
-                            <div
-                              className="h-full rounded-full bg-violet-600 dark:bg-violet-400 transition-all duration-500"
-                              style={{ width: `${c.semanticScore ?? Math.round(c.score * 100)}%` }}
-                            />
-                          </div>
-                          <span className="w-8 text-right text-xs font-semibold text-violet-700 dark:text-violet-300">
-                            {c.semanticScore ?? Math.round(c.score * 100)}%
+                    {aiCandidates.slice(0, 3).map((c, idx) => {
+                      const isInvited = invitedArtisanIds.has(c.artisanId);
+                      const isInviting = invitingArtisanId === c.artisanId;
+                      return (
+                        <div key={c.artisanId} className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+                          <span className="w-4 shrink-0 text-xs font-bold text-violet-500">#{idx + 1}</span>
+                          <span className="min-w-0 flex-1 truncate text-sm font-medium text-violet-900 dark:text-violet-200">
+                            {c.artisanName ?? "Artisan"}
                           </span>
+                          <div className="flex shrink-0 items-center gap-2">
+                            <div className="h-1.5 w-16 overflow-hidden rounded-full bg-violet-200 dark:bg-violet-800">
+                              <div
+                                className="h-full rounded-full bg-violet-600 dark:bg-violet-400 transition-all duration-500"
+                                style={{ width: `${c.semanticScore ?? Math.round(c.score * 100)}%` }}
+                              />
+                            </div>
+                            <span className="w-8 text-right text-xs font-semibold text-violet-700 dark:text-violet-300">
+                              {c.semanticScore ?? Math.round(c.score * 100)}%
+                            </span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleInviteArtisan(c.artisanId)}
+                            disabled={isInvited || isInviting}
+                            className={`ml-auto shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold transition-colors sm:ml-0 ${
+                              isInvited
+                                ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400"
+                                : "bg-violet-600 text-white hover:bg-violet-700 disabled:opacity-60"
+                            }`}
+                          >
+                            {isInvited ? "Invited ✓" : isInviting ? "Inviting…" : "Invite to offer"}
+                          </button>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
+                    {inviteError && <p className="text-xs text-destructive">{inviteError}</p>}
                   </div>
                 ) : aiLoading ? (
                   <p className="text-xs text-violet-600 dark:text-violet-400">

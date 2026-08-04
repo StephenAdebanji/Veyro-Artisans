@@ -6,6 +6,20 @@ import { haversineKm } from "@/platform/geo";
 import { AvailableJobRow } from "./available-job-row";
 import { apiFetch } from "@/lib/api-client";
 
+type IncomingJob = {
+  id: string;
+  description: string;
+  address: string;
+  budgetMin: number | null;
+  budgetMax: number | null;
+  lat?: number;
+  lng?: number;
+  distanceKm?: number;
+  createdAt: string;
+  category: SkillCategory;
+  homeownerName?: string | null;
+};
+
 interface ArtisanJobFeedProps {
   initialJobs: AvailableRequestSummary[];
   artisanId: string;
@@ -25,10 +39,17 @@ export function ArtisanJobFeed({
 }: ArtisanJobFeedProps) {
   const [jobs, setJobs] = useState<AvailableRequestSummary[]>(initialJobs);
   const [newJobIds, setNewJobIds] = useState<Set<string>>(new Set());
+  const [invitedJobIds, setInvitedJobIds] = useState<Set<string>>(new Set());
   const socketRef = useRef<import("socket.io-client").Socket | null>(null);
 
   function markSeen(jobId: string) {
     setNewJobIds((prev) => {
+      if (!prev.has(jobId)) return prev;
+      const next = new Set(prev);
+      next.delete(jobId);
+      return next;
+    });
+    setInvitedJobIds((prev) => {
       if (!prev.has(jobId)) return prev;
       const next = new Set(prev);
       next.delete(jobId);
@@ -57,38 +78,64 @@ export function ArtisanJobFeed({
 
       socket.emit("join-skill", { category });
 
-      socket.on(
-        "job:new",
-        (job: { id: string; description: string; address: string; budgetMin: number | null; budgetMax: number | null; lat?: number; lng?: number; distanceKm?: number; createdAt: string; category: SkillCategory; homeownerName?: string | null }) => {
-          if (!mounted) return;
+      socket.on("job:new", (job: IncomingJob) => {
+        if (!mounted) return;
 
-          // Compute distance from artisan's GPS to the job location.
-          const distanceKm =
-            artisanLat !== undefined && artisanLng !== undefined && job.lat !== undefined && job.lng !== undefined
-              ? haversineKm({ lat: artisanLat, lng: artisanLng }, { lat: job.lat, lng: job.lng })
-              : (job.distanceKm ?? 0);
+        // Compute distance from artisan's GPS to the job location.
+        const distanceKm =
+          artisanLat !== undefined && artisanLng !== undefined && job.lat !== undefined && job.lng !== undefined
+            ? haversineKm({ lat: artisanLat, lng: artisanLng }, { lat: job.lat, lng: job.lng })
+            : (job.distanceKm ?? 0);
 
-          // Drop jobs outside the artisan's service radius.
-          if (serviceRadiusKm !== undefined && distanceKm > serviceRadiusKm) return;
+        // Drop jobs outside the artisan's service radius.
+        if (serviceRadiusKm !== undefined && distanceKm > serviceRadiusKm) return;
 
-          setJobs((prev) => {
-            if (prev.some((j) => j.id === job.id)) return prev;
-            const newJob: AvailableRequestSummary = {
-              id: job.id,
-              category: job.category,
-              description: job.description,
-              address: job.address,
-              budgetMin: job.budgetMin,
-              budgetMax: job.budgetMax,
-              distanceKm,
-              createdAt: job.createdAt,
-              homeownerName: job.homeownerName ?? null,
-            };
-            return [newJob, ...prev];
-          });
-          setNewJobIds((prev) => new Set(prev).add(job.id));
-        },
-      );
+        setJobs((prev) => {
+          if (prev.some((j) => j.id === job.id)) return prev;
+          const newJob: AvailableRequestSummary = {
+            id: job.id,
+            category: job.category,
+            description: job.description,
+            address: job.address,
+            budgetMin: job.budgetMin,
+            budgetMax: job.budgetMax,
+            distanceKm,
+            createdAt: job.createdAt,
+            homeownerName: job.homeownerName ?? null,
+          };
+          return [newJob, ...prev];
+        });
+        setNewJobIds((prev) => new Set(prev).add(job.id));
+      });
+
+      // A homeowner picked this artisan specifically from the AI panel — show
+      // it even if it's outside their usual radius, since they were chosen
+      // deliberately rather than matched by the generic broadcast.
+      socket.on("job:invited", (job: IncomingJob) => {
+        if (!mounted) return;
+
+        const distanceKm =
+          artisanLat !== undefined && artisanLng !== undefined && job.lat !== undefined && job.lng !== undefined
+            ? haversineKm({ lat: artisanLat, lng: artisanLng }, { lat: job.lat, lng: job.lng })
+            : (job.distanceKm ?? 0);
+
+        setJobs((prev) => {
+          if (prev.some((j) => j.id === job.id)) return prev;
+          const newJob: AvailableRequestSummary = {
+            id: job.id,
+            category: job.category,
+            description: job.description,
+            address: job.address,
+            budgetMin: job.budgetMin,
+            budgetMax: job.budgetMax,
+            distanceKm,
+            createdAt: job.createdAt,
+            homeownerName: job.homeownerName ?? null,
+          };
+          return [newJob, ...prev];
+        });
+        setInvitedJobIds((prev) => new Set(prev).add(job.id));
+      });
     }
 
     connect().catch(console.error);
@@ -110,6 +157,7 @@ export function ArtisanJobFeed({
           key={job.id}
           job={job}
           isNew={newJobIds.has(job.id)}
+          isInvited={invitedJobIds.has(job.id)}
           onSeen={() => markSeen(job.id)}
         />
       ))}
