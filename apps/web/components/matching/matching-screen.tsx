@@ -388,7 +388,7 @@ export function MatchingScreen({
               onClick={() => router.push("/homeowner/dashboard")}
               className="mt-1 text-sm font-medium text-emerald-700 underline underline-offset-2"
             >
-              Back to dashboard →
+              ← Back to dashboard
             </button>
           )}
         </div>
