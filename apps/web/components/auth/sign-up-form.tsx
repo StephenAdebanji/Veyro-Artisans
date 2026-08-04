@@ -154,7 +154,7 @@ export function SignUpForm() {
         {errors.phone && <p className="text-xs text-destructive">{errors.phone}</p>}
       </div>
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="state">State</Label>
+        <Label htmlFor="state">State of residence</Label>
         <SearchableSelect
           options={NIGERIAN_STATE_OPTIONS}
           value={state}

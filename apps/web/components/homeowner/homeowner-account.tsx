@@ -235,7 +235,7 @@ export function HomeownerAccount({ email, fullName, profilePhotoUrl, initial }: 
                 </div>
                 <div className="mt-4 grid gap-4 sm:grid-cols-2">
                   <div className="flex flex-col gap-1.5">
-                    <Label>State</Label>
+                    <Label>State of residence</Label>
                     <SearchableSelect
                       options={NIGERIAN_STATE_OPTIONS}
                       value={state}
