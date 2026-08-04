@@ -30,13 +30,16 @@ export function NewRequestForm() {
   const [category, setCategory] = useState<SkillCategory | "">(
     (searchParams.get("category") as SkillCategory) ?? "",
   );
-  const [description, setDescription] = useState("");
+  // Carried over when re-posting a request that got no offers (see the
+  // "Post again" button on the matching screen) — a blank "Post a new
+  // request" navigation simply won't have these params set.
+  const [description, setDescription] = useState(searchParams.get("description") ?? "");
   const [countryCode, setCountryCode] = useState("NG");
   const [state, setState] = useState("");
   const [lga, setLga] = useState("");
-  const [streetAddress, setStreetAddress] = useState("");
-  const [budgetMin, setBudgetMin] = useState("");
-  const [budgetMax, setBudgetMax] = useState("");
+  const [streetAddress, setStreetAddress] = useState(searchParams.get("streetAddress") ?? "");
+  const [budgetMin, setBudgetMin] = useState(searchParams.get("budgetMin") ?? "");
+  const [budgetMax, setBudgetMax] = useState(searchParams.get("budgetMax") ?? "");
   const [preferredDate, setPreferredDate] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);

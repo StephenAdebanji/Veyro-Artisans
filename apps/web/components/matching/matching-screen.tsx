@@ -354,7 +354,16 @@ export function MatchingScreen({
               </p>
             </div>
             <button
-              onClick={() => router.push("/homeowner/requests/new")}
+              onClick={() => {
+                // Re-posting after no one responded should carry the same
+                // details forward — only the dashboard's "Post a new request"
+                // is meant to start from a blank form.
+                const params = new URLSearchParams({ category, description });
+                if (budgetMin) params.set("budgetMin", String(budgetMin));
+                if (budgetMax) params.set("budgetMax", String(budgetMax));
+                if (address) params.set("streetAddress", address);
+                router.push(`/homeowner/requests/new?${params.toString()}`);
+              }}
               className="rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
             >
               Post again
