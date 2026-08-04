@@ -41,6 +41,7 @@ class UserService implements UserServicePort {
           address: profile.address ?? null,
           city: profile.city ?? null,
           state: profile.state ?? null,
+          country: profile.country ?? null,
         }
       : null;
   }
@@ -57,13 +58,14 @@ class UserService implements UserServicePort {
           address: profile.address ?? null,
           city: profile.city ?? null,
           state: profile.state ?? null,
+          country: profile.country ?? null,
         }
       : null;
   }
 
   async updateHomeownerProfile(
     userId: string,
-    data: { phone?: string; address?: string; city?: string; state?: string; profilePhotoUrl?: string },
+    data: { phone?: string; address?: string; city?: string; state?: string; country?: string; profilePhotoUrl?: string },
   ) {
     return userRepository.updateHomeownerProfile(userId, data);
   }

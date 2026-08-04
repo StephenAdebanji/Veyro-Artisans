@@ -27,6 +27,7 @@ export default async function HomeownerAccountPage() {
         address: profile?.address ?? "",
         city: profile?.city ?? "",
         state: profile?.state ?? "",
+        country: profile?.country ?? "Nigeria",
       }}
     />
   );

@@ -9,6 +9,7 @@ const updateSchema = z.object({
   address: z.string().optional(),
   city: z.string().optional(),
   state: z.string().optional(),
+  country: z.string().optional(),
   profilePhotoUrl: z.string().url().optional(),
 });
 
