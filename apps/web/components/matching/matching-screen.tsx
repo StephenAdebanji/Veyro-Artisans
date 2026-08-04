@@ -2,10 +2,11 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, CheckCircle2, Clock, Loader2, MapPin, Sparkles, Wallet, XCircle } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Clock, Loader2, MapPin, MessageCircle, Phone, Sparkles, Wallet, XCircle } from "lucide-react";
 import { OfferCard, type OfferData } from "./offer-card";
 import type { RankedArtisan, SkillCategory } from "@veyro/contracts";
 import { SKILL_LABELS } from "@/components/shared/skill-labels";
+import { Button } from "@/components/ui/button";
 import { apiFetch } from "@/lib/api-client";
 
 const MATCH_WINDOW_SECONDS = 10 * 60; // 10 minutes
@@ -23,6 +24,12 @@ interface MatchingScreenProps {
    * the "Invited ✓" button state so it survives a reload/logout instead of
    * resetting to "Invite to offer" every time this component remounts. */
   initialInvitedArtisanIds: string[];
+  /** Seeds jobId/artisanPhone below — without these, a request that was
+   * already accepted before this page loaded (e.g. a reload) would show the
+   * "Artisan confirmed!" card with no Call button and no "Back to dashboard"
+   * link, since those otherwise only ever get set by a live accept event. */
+  initialJobId: string | null;
+  initialArtisanPhone: string | null;
 }
 
 export function MatchingScreen({
@@ -35,14 +42,16 @@ export function MatchingScreen({
   createdAt,
   initialOffers,
   initialInvitedArtisanIds,
+  initialJobId,
+  initialArtisanPhone,
 }: MatchingScreenProps) {
   const router = useRouter();
   const [offers, setOffers] = useState<OfferData[]>(initialOffers);
   const [acceptedMatchId, setAcceptedMatchId] = useState<string | null>(
     initialOffers.find((o) => o.status === "ACCEPTED")?.matchId ?? null,
   );
-  const [jobId, setJobId] = useState<string | null>(null);
-  const [artisanPhone, setArtisanPhone] = useState<string | null>(null);
+  const [jobId, setJobId] = useState<string | null>(initialJobId);
+  const [artisanPhone, setArtisanPhone] = useState<string | null>(initialArtisanPhone);
   const [chatPending, setChatPending] = useState(false);
   const [chatError, setChatError] = useState<string | null>(null);
   const [secondsLeft, setSecondsLeft] = useState(() => {
@@ -343,7 +352,9 @@ export function MatchingScreen({
       </div>
 
       {/* Accepted state */}
-      {acceptedMatchId && (
+      {acceptedMatchId && (() => {
+        const acceptedArtisanId = offers.find((o) => o.matchId === acceptedMatchId)?.artisanId;
+        return (
         <div className="mb-6 flex flex-col items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-6 text-center">
           <CheckCircle2 className="h-10 w-10 text-emerald-500" />
           <div>
@@ -352,6 +363,26 @@ export function MatchingScreen({
               Your artisan is on the way. You can chat or call them below.
             </p>
           </div>
+          <div className="flex items-center gap-2">
+            {acceptedArtisanId && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => handleStartChat(acceptedArtisanId)}
+                disabled={chatPending}
+              >
+                <MessageCircle className="h-3.5 w-3.5" /> {chatPending ? "Opening…" : "Chat"}
+              </Button>
+            )}
+            {artisanPhone && (
+              <a href={`tel:${artisanPhone}`}>
+                <Button size="sm" variant="outline">
+                  <Phone className="h-3.5 w-3.5" /> Call
+                </Button>
+              </a>
+            )}
+          </div>
+          {chatError && <p className="text-xs text-destructive">{chatError}</p>}
           {jobId && (
             <button
               onClick={() => router.push("/homeowner/dashboard")}
@@ -361,7 +392,8 @@ export function MatchingScreen({
             </button>
           )}
         </div>
-      )}
+        );
+      })()}
 
       {/* Offers */}
       <div>

@@ -19,8 +19,11 @@ const createRequestSchema = z
     state: z.string().min(1),
     country: z.string().min(1).default("Nigeria"),
     countryCode: z.string().optional().default("NG"),
-    budgetMin: z.number(),
-    budgetMax: z.number(),
+    // ServiceRequest.budgetMin/Max are Postgres INT4 columns (max
+    // 2,147,483,647) — capped well under that so an overflow becomes a
+    // clean validation error instead of an unhandled Prisma DB crash.
+    budgetMin: z.number().max(999_999_999, "Budget is too large."),
+    budgetMax: z.number().max(999_999_999, "Budget is too large."),
     preferredDate: z.string().min(1),
   })
   .refine((data) => data.budgetMax >= data.budgetMin, {

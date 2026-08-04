@@ -7,6 +7,8 @@ const GENERIC_MESSAGE = "Something went wrong. Please try again.";
 function isPrismaError(err: unknown): boolean {
   return (
     err instanceof Prisma.PrismaClientKnownRequestError ||
+    err instanceof Prisma.PrismaClientUnknownRequestError ||
+    err instanceof Prisma.PrismaClientRustPanicError ||
     err instanceof Prisma.PrismaClientValidationError ||
     err instanceof Prisma.PrismaClientInitializationError
   );

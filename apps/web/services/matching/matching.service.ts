@@ -21,7 +21,7 @@ import type {
 import { eventBus } from "@/platform/event-bus";
 import { haversineKm } from "@/platform/geo";
 import { prisma } from "@/platform/prisma";
-import { matchingRepository } from "./matching.repository";
+import { matchingRepository, MATCH_WINDOW_MS } from "./matching.repository";
 
 /** Owns: ServiceRequest, Match, Job, Review, Dispute — the job lifecycle end to
  * end. Never reads User/Trust schemas directly; the API gateway route is
@@ -78,6 +78,11 @@ class MatchingService implements MatchingServicePort {
     };
   }
 
+  async getJobIdForServiceRequest(serviceRequestId: string): Promise<string | null> {
+    const job = await matchingRepository.findJobByServiceRequestId(serviceRequestId);
+    return job?.id ?? null;
+  }
+
   async offerMatch(input: MatchOfferInput): Promise<string> {
     const request = await matchingRepository.findServiceRequest(input.serviceRequestId);
     if (!request) throw new Error("Service request not found.");
@@ -86,6 +91,13 @@ class MatchingService implements MatchingServicePort {
     }
     if (!["SEARCHING", "MATCHED"].includes(request.status)) {
       throw new Error("This request is no longer accepting offers.");
+    }
+    // The cron sweep that flips stale SEARCHING requests to CANCELLED runs
+    // periodically, not the instant the window closes — this catches an
+    // artisan submitting in that gap (e.g. had the row open before it timed
+    // out) instead of letting a dead-on-arrival offer silently succeed.
+    if (Date.now() - request.createdAt.getTime() > MATCH_WINDOW_MS) {
+      throw new Error("OFFER_WINDOW_EXPIRED");
     }
 
     const match = await matchingRepository.createMatch(input);

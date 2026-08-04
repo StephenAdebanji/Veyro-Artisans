@@ -1,7 +1,7 @@
 import type { SkillCategory } from "@prisma/client";
 import { prisma } from "@/platform/prisma";
 
-const MATCH_WINDOW_MS = 10 * 60 * 1000; // must match matching-screen.tsx
+export const MATCH_WINDOW_MS = 10 * 60 * 1000; // must match matching-screen.tsx
 
 export const matchingRepository = {
   async createServiceRequest(data: {
@@ -73,6 +73,10 @@ export const matchingRepository = {
 
   async findJob(id: string) {
     return prisma.job.findUnique({ where: { id } });
+  },
+
+  async findJobByServiceRequestId(serviceRequestId: string) {
+    return prisma.job.findUnique({ where: { serviceRequestId } });
   },
 
   async updateJobStatus(id: string, status: "IN_PROGRESS" | "COMPLETED") {

@@ -24,13 +24,17 @@ export default async function MatchingPage({
   if (!request || request.homeownerId !== homeowner.id) notFound();
 
   // Enrich existing offers with artisan display data for SSR.
-  const [rawOffers, initialInvitedArtisanIds] = await Promise.all([
+  const [rawOffers, initialInvitedArtisanIds, initialJobId] = await Promise.all([
     matchingService.listOffers(serviceRequestId),
     matchingService.listInvitedArtisanIds(serviceRequestId),
+    matchingService.getJobIdForServiceRequest(serviceRequestId),
   ]);
+  type ArtisanRecord = Record<string, unknown> & { user?: { phone?: string | null } };
+  const artisanById = new Map<string, ArtisanRecord | null>();
   const initialOffers: OfferData[] = await Promise.all(
     rawOffers.map(async (offer) => {
-      const artisan = (await userService.getArtisanProfile(offer.artisanId)) as Record<string, unknown> | null;
+      const artisan = (await userService.getArtisanProfile(offer.artisanId)) as ArtisanRecord | null;
+      artisanById.set(offer.artisanId, artisan);
       return {
         matchId: offer.id,
         artisanId: offer.artisanId,
@@ -50,6 +54,10 @@ export default async function MatchingPage({
       };
     }),
   );
+  const acceptedOffer = rawOffers.find((o) => o.status === "ACCEPTED");
+  const initialArtisanPhone = acceptedOffer
+    ? (artisanById.get(acceptedOffer.artisanId)?.user?.phone ?? null)
+    : null;
 
   return (
     <MatchingScreen
@@ -62,6 +70,8 @@ export default async function MatchingPage({
       createdAt={request.createdAt}
       initialOffers={initialOffers}
       initialInvitedArtisanIds={initialInvitedArtisanIds}
+      initialJobId={initialJobId}
+      initialArtisanPhone={initialArtisanPhone}
     />
   );
 }

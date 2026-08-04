@@ -5,9 +5,12 @@ import { matchingService } from "@/services/matching/matching.service";
 import { userService } from "@/services/user/user.service";
 import { withApiErrorHandling } from "@/platform/api-handler";
 
+// Match.proposedPrice is a Postgres INT4 column (max 2,147,483,647) — capping
+// well under that turns an overflow into a clean validation error instead of
+// an unhandled Prisma "Unable to fit integer value into an INT4" crash.
 const offerSchema = z.object({
-  proposedPrice: z.number().positive(),
-  etaMinutes: z.number().positive(),
+  proposedPrice: z.number().positive().max(999_999_999, "Price is too large."),
+  etaMinutes: z.number().positive().max(10_000, "ETA is too large."),
   distanceKm: z.number().nonnegative(),
 });
 
@@ -96,6 +99,12 @@ export const POST = withApiErrorHandling(async (request: Request, { params }: { 
           error:
             "Oops! It looks like the customer has already cancelled this request. Hang tight — new jobs come in regularly, and the next one could be yours!",
         },
+        { status: 409 },
+      );
+    }
+    if (err instanceof Error && err.message === "OFFER_WINDOW_EXPIRED") {
+      return NextResponse.json(
+        { error: "The offer window for this job has closed. Check back for newer requests nearby." },
         { status: 409 },
       );
     }

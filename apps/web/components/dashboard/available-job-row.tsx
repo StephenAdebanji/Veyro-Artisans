@@ -21,9 +21,13 @@ interface AvailableJobRowProps {
   isInvited?: boolean;
   /** Called once the artisan engages with the row, clearing the highlight. */
   onSeen?: () => void;
+  /** Called when the offer window closed out from under this row (submitted
+   * after the 10-minute window elapsed) — removes it from the feed entirely
+   * rather than leaving a stale card, so newer jobs stay front and center. */
+  onExpired?: () => void;
 }
 
-export function AvailableJobRow({ job, isNew, isInvited, onSeen }: AvailableJobRowProps) {
+export function AvailableJobRow({ job, isNew, isInvited, onSeen, onExpired }: AvailableJobRowProps) {
   const router = useRouter();
   const [expanded, setExpanded] = useState(false);
   const [price, setPrice] = useState("");
@@ -51,7 +55,12 @@ export function AvailableJobRow({ job, isNew, isInvited, onSeen }: AvailableJobR
       setSent(true);
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not send your offer.");
+      const message = err instanceof Error ? err.message : "Could not send your offer.";
+      if (err instanceof ApiRequestError && err.status === 409 && message.toLowerCase().includes("offer window")) {
+        onExpired?.();
+        return;
+      }
+      setError(message);
       if (err instanceof ApiRequestError && err.status === 409) {
         setUnavailable(true);
         setExpanded(false);

@@ -52,6 +52,24 @@ export function ArtisanJobFeed({
   );
   const socketRef = useRef<import("socket.io-client").Socket | null>(null);
   const jobsCount = useAvailableJobsCount();
+  const [expiredNotice, setExpiredNotice] = useState<string | null>(null);
+  const expiredNoticeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // The offer window closed out from under this row before the artisan
+  // finished submitting — drop it and surface why, rather than leaving a
+  // dead card or silently vanishing it with no explanation.
+  function removeExpiredJob(jobId: string) {
+    setJobs((prev) => prev.filter((j) => j.id !== jobId));
+    setExpiredNotice("That offer window closed. Keep an eye out — newer jobs show up here live.");
+    if (expiredNoticeTimer.current) clearTimeout(expiredNoticeTimer.current);
+    expiredNoticeTimer.current = setTimeout(() => setExpiredNotice(null), 6000);
+  }
+
+  useEffect(() => {
+    return () => {
+      if (expiredNoticeTimer.current) clearTimeout(expiredNoticeTimer.current);
+    };
+  }, []);
 
   // Keeps any "Available jobs" count displayed elsewhere on the page (a stat
   // card, a header sentence) in sync with this feed's live list — those are
@@ -165,21 +183,27 @@ export function ArtisanJobFeed({
     };
   }, [artisanId, category, artisanLat, artisanLng, serviceRadiusKm]);
 
-  if (jobs.length === 0) {
-    return <p className="text-sm text-muted-foreground">No new requests nearby right now.</p>;
-  }
-
   return (
     <div className="space-y-3">
-      {jobs.map((job) => (
-        <AvailableJobRow
-          key={job.id}
-          job={job}
-          isNew={newJobIds.has(job.id)}
-          isInvited={invitedJobIds.has(job.id)}
-          onSeen={() => markSeen(job.id)}
-        />
-      ))}
+      {expiredNotice && (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-300">
+          {expiredNotice}
+        </div>
+      )}
+      {jobs.length === 0 ? (
+        <p className="text-sm text-muted-foreground">No new requests nearby right now.</p>
+      ) : (
+        jobs.map((job) => (
+          <AvailableJobRow
+            key={job.id}
+            job={job}
+            isNew={newJobIds.has(job.id)}
+            isInvited={invitedJobIds.has(job.id)}
+            onSeen={() => markSeen(job.id)}
+            onExpired={() => removeExpiredJob(job.id)}
+          />
+        ))
+      )}
     </div>
   );
 }

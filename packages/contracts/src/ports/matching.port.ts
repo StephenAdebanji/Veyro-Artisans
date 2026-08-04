@@ -127,6 +127,10 @@ export interface MatchingServicePort {
   getServiceRequestStatus(serviceRequestId: string): Promise<ServiceRequestStatus>;
   /** Used by the API gateway (e.g. the AI recommendations route) instead of reaching into Matching's Prisma models directly. */
   getServiceRequest(serviceRequestId: string): Promise<ServiceRequestSummary | null>;
+  /** Backs the matching screen's initial load when it re-renders an already-
+   * accepted request — needed to seed the "Back to dashboard" state without
+   * requiring a live accept event to have fired during this page visit. */
+  getJobIdForServiceRequest(serviceRequestId: string): Promise<string | null>;
   /** An artisan responds to a broadcasted request with a price/ETA offer — this is what renders as a response card on the homeowner's matching screen. */
   offerMatch(input: MatchOfferInput): Promise<string>;
   /** Poll fallback for the matching screen if the Socket.io push is missed. */
