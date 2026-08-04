@@ -7,6 +7,8 @@ import { userService } from "@/services/user/user.service";
 import { Badge } from "@/components/ui/badge";
 import { SKILL_LABELS } from "@/components/shared/skill-labels";
 import { ReviewForm } from "@/components/homeowner/review-form";
+import { StartChatButton } from "@/components/homeowner/start-chat-button";
+import { CallButton } from "@/components/homeowner/call-button";
 import type { SkillCategory } from "@veyro/contracts";
 
 const STATUS_STYLE: Record<string, string> = {
@@ -61,7 +63,9 @@ export default async function HomeownerJobDetailPage({
     primarySkill?: string | null;
     ratingAvg?: number;
     ratingCount?: number;
+    user?: { phone?: string | null };
   } | null;
+  const artisanPhone = artisan?.user?.phone ?? null;
   const artisanName = artisan
     ? [artisan.firstName, artisan.lastName].filter(Boolean).join(" ") || "Artisan"
     : "Artisan";
@@ -124,6 +128,10 @@ export default async function HomeownerJobDetailPage({
               </div>
             ) : null}
           </div>
+        </div>
+        <div className="mt-4 grid grid-cols-2 gap-3">
+          <StartChatButton artisanId={job.artisanId} jobId={jobId} />
+          <CallButton phone={artisanPhone} />
         </div>
       </div>
 
