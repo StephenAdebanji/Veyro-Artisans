@@ -231,6 +231,13 @@ export function MatchingScreen({
   // window elapses, rather than leaving a "Declined" card cluttering the list.
   const visibleOffers = offers.filter((o) => o.status !== "DECLINED");
 
+  // Once an artisan has responded (any status, including declined), they
+  // shouldn't linger in the "VEYRO AI is finding your best match" panel —
+  // otherwise rejecting the only offer just re-shows the same name with an
+  // "Invite to offer" button, and the screen looks stuck on the same card.
+  const respondedArtisanIds = new Set(offers.map((o) => o.artisanId));
+  const freshAiCandidates = aiCandidates.filter((c) => !respondedArtisanIds.has(c.artisanId));
+
   if (cancelled) {
     return (
       <div className="mx-auto max-w-2xl px-6 py-10">
@@ -407,9 +414,9 @@ export function MatchingScreen({
                   {aiLoading && <Loader2 className="h-3.5 w-3.5 animate-spin text-violet-500" />}
                 </div>
 
-                {!aiLoading && aiCandidates.length > 0 ? (
+                {!aiLoading && freshAiCandidates.length > 0 ? (
                   <div className="space-y-2.5">
-                    {aiCandidates.slice(0, 3).map((c, idx) => {
+                    {freshAiCandidates.slice(0, 3).map((c, idx) => {
                       const isInvited = invitedArtisanIds.has(c.artisanId);
                       const isInviting = invitingArtisanId === c.artisanId;
                       return (
