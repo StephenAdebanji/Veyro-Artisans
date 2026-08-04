@@ -6,6 +6,7 @@ import { StatCard } from "@/components/dashboard/stat-card";
 import { ArtisanJobFeed } from "@/components/dashboard/artisan-job-feed";
 import { JobsTable, type JobsTableRow } from "@/components/dashboard/jobs-table";
 import { auth } from "@/platform/auth-session";
+import { getTimeOfDayGreeting } from "@/lib/greeting";
 import { isAvailableNow } from "@/services/user/availability";
 import { matchingService } from "@/services/matching/matching.service";
 import { trustService } from "@/services/trust/trust.service";
@@ -148,7 +149,7 @@ export default async function ArtisanDashboardPage() {
 
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold">{(() => { const h = new Date().getHours(); return h < 12 ? "Good morning" : h < 17 ? "Good afternoon" : "Good evening"; })()}, {profile.firstName ?? "there"}</h1>
+          <h1 className="text-2xl font-bold">{getTimeOfDayGreeting()}, {profile.firstName ?? "there"}</h1>
           <p className="text-muted-foreground">
             You have {availableJobs.length} new request{availableJobs.length === 1 ? "" : "s"} within{" "}
             {profile.serviceRadiusKm} km.

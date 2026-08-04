@@ -40,6 +40,14 @@ export const POST = withApiErrorHandling(async (_request: Request, { params }: {
     );
   }
 
+  const availability = (profile as { availability?: { workingDays?: string[] } | null }).availability;
+  if (!availability?.workingDays || availability.workingDays.length === 0) {
+    return NextResponse.json(
+      { error: "Select at least one working day before submitting your application." },
+      { status: 400 },
+    );
+  }
+
   await userService.submitArtisanOnboarding(artisanId);
   return NextResponse.json({ ok: true });
 });

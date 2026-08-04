@@ -49,6 +49,10 @@ export function Step8Availability() {
       setError("Your session expired — please start again from step 1.");
       return;
     }
+    if (workingDays.length === 0) {
+      setError("Select at least one working day.");
+      return;
+    }
 
     setError(null);
     setLoading(true);
