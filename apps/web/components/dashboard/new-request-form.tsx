@@ -102,11 +102,13 @@ export function NewRequestForm({ defaultAddress }: { defaultAddress?: DefaultAdd
       if (!streetAddress.trim()) { setError("Enter a street address."); return; }
     }
 
-    if (budgetMin && Number(budgetMin) < 500) {
+    if (!budgetMin) { setError("Enter a minimum budget."); return; }
+    if (!budgetMax) { setError("Enter a maximum budget."); return; }
+    if (Number(budgetMin) < 500) {
       setError("Minimum budget cannot be less than ₦500.");
       return;
     }
-    if (budgetMin && budgetMax && Number(budgetMax) < Number(budgetMin)) {
+    if (Number(budgetMax) < Number(budgetMin)) {
       setError("Maximum budget cannot be less than the minimum budget.");
       return;
     }
@@ -143,8 +145,8 @@ export function NewRequestForm({ defaultAddress }: { defaultAddress?: DefaultAdd
           category,
           description,
           ...addressPayload,
-          budgetMin: budgetMin ? Number(budgetMin) : undefined,
-          budgetMax: budgetMax ? Number(budgetMax) : undefined,
+          budgetMin: Number(budgetMin),
+          budgetMax: Number(budgetMax),
           preferredDate: preferredDate || undefined,
         }),
       });
@@ -300,12 +302,16 @@ export function NewRequestForm({ defaultAddress }: { defaultAddress?: DefaultAdd
       {/* Budget */}
       <div className="grid grid-cols-2 gap-4">
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="budgetMin">Budget min (₦)</Label>
-          <CurrencyInput id="budgetMin" value={budgetMin} onValueChange={setBudgetMin} />
+          <Label htmlFor="budgetMin">
+            Budget min (₦) <span className="text-destructive">*</span>
+          </Label>
+          <CurrencyInput id="budgetMin" value={budgetMin} onValueChange={setBudgetMin} required />
         </div>
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="budgetMax">Budget max (₦)</Label>
-          <CurrencyInput id="budgetMax" value={budgetMax} onValueChange={setBudgetMax} />
+          <Label htmlFor="budgetMax">
+            Budget max (₦) <span className="text-destructive">*</span>
+          </Label>
+          <CurrencyInput id="budgetMax" value={budgetMax} onValueChange={setBudgetMax} required />
         </div>
       </div>
 

@@ -19,14 +19,13 @@ const createRequestSchema = z
     state: z.string().min(1),
     country: z.string().min(1).default("Nigeria"),
     countryCode: z.string().optional().default("NG"),
-    budgetMin: z.number().optional(),
-    budgetMax: z.number().optional(),
+    budgetMin: z.number(),
+    budgetMax: z.number(),
     preferredDate: z.string().min(1),
   })
-  .refine(
-    (data) => data.budgetMin === undefined || data.budgetMax === undefined || data.budgetMax >= data.budgetMin,
-    { message: "Maximum budget cannot be less than the minimum budget." },
-  );
+  .refine((data) => data.budgetMax >= data.budgetMin, {
+    message: "Maximum budget cannot be less than the minimum budget.",
+  });
 
 const REALTIME_URL = process.env.REALTIME_INTERNAL_URL ?? "http://localhost:4001";
 
