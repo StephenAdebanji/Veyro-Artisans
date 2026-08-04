@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { signOut } from "next-auth/react";
 import { Briefcase, History, LogOut, MessageSquare, UserCircle } from "lucide-react";
 import { apiFetch } from "@/lib/api-client";
+import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 
 interface DashboardNavbarProps {
   role: "artisan" | "homeowner";
@@ -31,6 +32,8 @@ function UnreadBadge({ count }: { count: number }) {
 export function DashboardNavbar({ role, userName: _userName, profilePhotoUrl: _profilePhotoUrl }: DashboardNavbarProps) {
   const pathname = usePathname();
   const [unreadCount, setUnreadCount] = useState(0);
+  const [confirmLogout, setConfirmLogout] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
 
   useEffect(() => {
     async function fetchCount() {
@@ -117,7 +120,7 @@ export function DashboardNavbar({ role, userName: _userName, profilePhotoUrl: _p
           </div>
 
           <button
-            onClick={() => signOut({ callbackUrl: "/sign-in" })}
+            onClick={() => setConfirmLogout(true)}
             className="flex items-center gap-1.5 rounded-md px-2 py-1.5 text-sm text-blue-100 hover:bg-white/10 hover:text-white"
           >
             <LogOut className="h-4 w-4" />
@@ -181,6 +184,19 @@ export function DashboardNavbar({ role, userName: _userName, profilePhotoUrl: _p
           Account
         </Link>
       </div>
+
+      <ConfirmDialog
+        open={confirmLogout}
+        title="Log out?"
+        description="You'll need to sign in again to access your account."
+        confirmLabel="Log out"
+        loading={loggingOut}
+        onConfirm={() => {
+          setLoggingOut(true);
+          signOut({ callbackUrl: "/sign-in" });
+        }}
+        onCancel={() => setConfirmLogout(false)}
+      />
     </nav>
   );
 }

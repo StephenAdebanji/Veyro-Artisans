@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, CheckCircle2, Loader2, Sparkles, XCircle } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Clock, Loader2, MapPin, Sparkles, Wallet, XCircle } from "lucide-react";
 import { OfferCard, type OfferData } from "./offer-card";
 import type { RankedArtisan, SkillCategory } from "@veyro/contracts";
 import { SKILL_LABELS } from "@/components/shared/skill-labels";
@@ -244,53 +244,59 @@ export function MatchingScreen({
 
       {/* Header */}
       <div className="mb-6 rounded-xl border bg-card p-5">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <span className="inline-block rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
-              {SKILL_LABELS[category] ?? category}
+        <span className="inline-block rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
+          {SKILL_LABELS[category] ?? category}
+        </span>
+        <p className="mt-3 text-lg font-semibold leading-snug">{description}</p>
+        <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-muted-foreground">
+          <span className="flex items-center gap-1.5">
+            <MapPin className="h-3.5 w-3.5 shrink-0" />
+            {address}
+          </span>
+          {(budgetMin || budgetMax) && (
+            <span className="flex items-center gap-1.5">
+              <Wallet className="h-3.5 w-3.5 shrink-0" />
+              {budgetMin && budgetMax
+                ? `₦${budgetMin.toLocaleString()} – ₦${budgetMax.toLocaleString()}`
+                : budgetMax
+                ? `Up to ₦${budgetMax.toLocaleString()}`
+                : `From ₦${budgetMin!.toLocaleString()}`}
             </span>
-            <p className="mt-2 text-sm text-muted-foreground">{address}</p>
-            <p className="mt-1 font-medium">{description}</p>
-            {(budgetMin || budgetMax) && (
-              <p className="mt-1 text-sm text-muted-foreground">
-                Budget:{" "}
-                {budgetMin && budgetMax
-                  ? `₦${budgetMin.toLocaleString()} – ₦${budgetMax.toLocaleString()}`
-                  : budgetMax
-                  ? `up to ₦${budgetMax.toLocaleString()}`
-                  : `from ₦${budgetMin!.toLocaleString()}`}
-              </p>
-            )}
-          </div>
-
-          {!acceptedMatchId && (
-            <div className="flex flex-col items-end gap-2">
-              {secondsLeft > 0 && (
-                <div className="text-right">
-                  <p className="text-xs text-muted-foreground">Offer window closes in</p>
-                  <p
-                    className={`text-2xl font-bold tabular-nums ${secondsLeft < 60 ? "text-destructive" : "text-primary"}`}
-                  >
-                    {mm}:{ss}
-                  </p>
-                </div>
-              )}
-              <button
-                onClick={handleCancel}
-                disabled={cancelling}
-                className="flex items-center gap-1.5 rounded-lg border border-destructive/40 px-3 py-1.5 text-xs font-medium text-destructive transition-colors hover:bg-destructive/5 disabled:opacity-50"
-              >
-                {cancelling ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                ) : (
-                  <XCircle className="h-3.5 w-3.5" />
-                )}
-                Cancel request
-              </button>
-              {cancelError && <p className="max-w-40 text-right text-xs text-destructive">{cancelError}</p>}
-            </div>
           )}
         </div>
+
+        {!acceptedMatchId && (
+          <div className="mt-5 flex flex-col items-stretch gap-3 border-t pt-4 sm:flex-row sm:items-center sm:justify-between">
+            {secondsLeft > 0 && (
+              <div
+                className={`flex items-center justify-center gap-2 rounded-full border px-4 py-2 ${
+                  secondsLeft < 60
+                    ? "border-destructive/30 bg-destructive/5 text-destructive"
+                    : "border-primary/20 bg-primary/5 text-primary"
+                }`}
+              >
+                <Clock className={`h-4 w-4 shrink-0 ${secondsLeft < 60 ? "animate-pulse" : ""}`} />
+                <span className="text-xs font-medium">Offer window closes in</span>
+                <span className="text-lg font-bold tabular-nums">
+                  {mm}:{ss}
+                </span>
+              </div>
+            )}
+            <button
+              onClick={handleCancel}
+              disabled={cancelling}
+              className="flex items-center justify-center gap-1.5 rounded-lg border border-destructive/40 px-3 py-2 text-xs font-medium text-destructive transition-colors hover:bg-destructive/5 disabled:opacity-50"
+            >
+              {cancelling ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <XCircle className="h-3.5 w-3.5" />
+              )}
+              Cancel request
+            </button>
+          </div>
+        )}
+        {cancelError && <p className="mt-2 text-center text-xs text-destructive sm:text-right">{cancelError}</p>}
       </div>
 
       {/* Accepted state */}

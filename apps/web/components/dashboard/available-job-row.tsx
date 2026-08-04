@@ -79,7 +79,9 @@ export function AvailableJobRow({ job, isNew, onSeen }: AvailableJobRowProps) {
           <p className="font-semibold">{job.description || SKILL_LABELS[job.category]}</p>
           <p className="text-sm text-muted-foreground">
             {job.address} · {job.distanceKm.toFixed(1)} km away
-            {job.budgetMin || job.budgetMax ? ` · Budget ₦${job.budgetMin ?? "?"}-₦${job.budgetMax ?? "?"}` : ""}
+            {job.budgetMin || job.budgetMax
+              ? ` · Budget ₦${job.budgetMin?.toLocaleString() ?? "?"}-₦${job.budgetMax?.toLocaleString() ?? "?"}`
+              : ""}
           </p>
         </div>
         {!sent && !unavailable && (
