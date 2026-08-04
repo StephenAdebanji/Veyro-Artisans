@@ -64,6 +64,15 @@ export const POST = withApiErrorHandling(async (request: Request, { params }: { 
     return NextResponse.json({ error: "No artisan profile for this account" }, { status: 403 });
   }
 
+  // Only artisans admin has verified can respond to jobs — this cannot be a
+  // client-side-only check, since the client is never a trust boundary.
+  if (artisan.verificationStatus !== "VERIFIED") {
+    return NextResponse.json(
+      { error: "Your account must be verified by our trust team before you can send offers." },
+      { status: 403 },
+    );
+  }
+
   const body = await request.json();
   const parsed = offerSchema.safeParse(body);
   if (!parsed.success) {

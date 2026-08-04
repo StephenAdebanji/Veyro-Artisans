@@ -55,9 +55,13 @@ export default async function ArtisanDashboardPage() {
   const isPendingReview =
     profile.onboardingStatus !== "ACTIVE" && profile.verificationStatus === "UNVERIFIED";
   const isRejected = profile.verificationStatus === "REJECTED";
+  const isVerified = profile.verificationStatus === "VERIFIED";
 
   const [availableJobs, activeJobsCount, jobsFeed, disputesCount, reviews] = await Promise.all([
-    profile.primarySkill
+    // Unverified/rejected artisans must not see or be able to bid on jobs —
+    // enforced here (not fetched at all) and again server-side on the offers
+    // endpoint, since hiding it from the UI alone isn't a real boundary.
+    profile.primarySkill && isVerified
       ? matchingService.listAvailableRequests({
           artisanId: profile.id,
           category: profile.primarySkill,
@@ -167,7 +171,7 @@ export default async function ArtisanDashboardPage() {
           <section>
             <h2 className="text-lg font-semibold">Available jobs near you</h2>
             <div className="mt-3">
-              {profile.primarySkill && (
+              {profile.primarySkill && isVerified && (
                 <ArtisanJobFeed
                   initialJobs={availableJobs}
                   artisanId={profile.id}
@@ -177,7 +181,12 @@ export default async function ArtisanDashboardPage() {
                   serviceRadiusKm={profile.serviceRadiusKm}
                 />
               )}
-              {!profile.primarySkill && (
+              {!isVerified && (
+                <p className="text-sm text-muted-foreground">
+                  Available jobs will appear here once your account is verified.
+                </p>
+              )}
+              {isVerified && !profile.primarySkill && (
                 <p className="text-sm text-muted-foreground">No new requests nearby right now.</p>
               )}
             </div>
