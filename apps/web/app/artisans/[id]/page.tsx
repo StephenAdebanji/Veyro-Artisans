@@ -4,7 +4,9 @@ import { Phone, ShieldCheck, Star } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { ReviewList, type ReviewItem } from "@/components/artisan/review-list";
+import { ArtisanProfileActions } from "@/components/artisan/profile-actions";
 import { EXPERIENCE_LABELS, SKILL_LABELS } from "@/components/shared/skill-labels";
+import { auth } from "@/platform/auth-session";
 import { matchingService } from "@/services/matching/matching.service";
 import { userService } from "@/services/user/user.service";
 import { blockchainService } from "@/services/blockchain/blockchain.service";
@@ -30,6 +32,7 @@ interface ArtisanProfileRecord {
   ratingCount: number;
   completedJobs: number;
   portfolio: Array<{ id: string; beforeUrl: string | null; afterUrl: string | null; caption: string | null }>;
+  user?: { phone?: string | null };
 }
 
 const EXPERIENCE_FROM_DB: Record<ExperienceLevel, string> = {
@@ -42,10 +45,14 @@ const EXPERIENCE_FROM_DB: Record<ExperienceLevel, string> = {
 export default async function ArtisanProfilePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 
-  const profile = (await userService.getArtisanProfile(id)) as ArtisanProfileRecord | null;
+  const [profile, session] = await Promise.all([
+    userService.getArtisanProfile(id) as Promise<ArtisanProfileRecord | null>,
+    auth(),
+  ]);
   if (!profile || profile.onboardingStatus !== "ACTIVE") {
     notFound();
   }
+  const isAuthenticatedHomeowner = (session?.user as { role?: string } | undefined)?.role === "HOMEOWNER";
 
   const [rawReviews, chainRecords] = await Promise.all([
     matchingService.listReviewsForArtisan(id),
@@ -102,18 +109,24 @@ export default async function ArtisanProfilePage({ params }: { params: Promise<{
             </div>
           </div>
           <div className="flex gap-2">
-            <Link
-              href="/sign-in"
-              className="inline-flex items-center gap-1.5 rounded-md border px-3 py-2 text-sm font-medium"
-            >
-              Chat
-            </Link>
-            <Link
-              href="/sign-in"
-              className="inline-flex items-center gap-1.5 rounded-md border px-3 py-2 text-sm font-medium"
-            >
-              <Phone className="size-3.5" /> Call
-            </Link>
+            {isAuthenticatedHomeowner ? (
+              <ArtisanProfileActions artisanId={profile.id} phone={profile.user?.phone ?? null} />
+            ) : (
+              <>
+                <Link
+                  href="/sign-in"
+                  className="inline-flex items-center gap-1.5 rounded-md border px-3 py-2 text-sm font-medium"
+                >
+                  Chat
+                </Link>
+                <Link
+                  href="/sign-in"
+                  className="inline-flex items-center gap-1.5 rounded-md border px-3 py-2 text-sm font-medium"
+                >
+                  <Phone className="size-3.5" /> Call
+                </Link>
+              </>
+            )}
             <Link
               href={`/homeowner/requests/new?artisanId=${profile.id}&category=${profile.primarySkill ?? ""}`}
               className="inline-flex items-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
