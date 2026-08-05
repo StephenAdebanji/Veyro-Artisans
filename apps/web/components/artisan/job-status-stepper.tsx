@@ -21,7 +21,15 @@ const NEXT: Record<JobStatus, "IN_PROGRESS" | "COMPLETED" | null> = {
   COMPLETED: null,
 };
 
-export function JobStatusStepper({ jobId, currentStatus }: { jobId: string; currentStatus: string }) {
+export function JobStatusStepper({
+  jobId,
+  currentStatus,
+  hasReview,
+}: {
+  jobId: string;
+  currentStatus: string;
+  hasReview?: boolean;
+}) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -119,7 +127,7 @@ export function JobStatusStepper({ jobId, currentStatus }: { jobId: string; curr
 
       {isCompleted && (
         <p className="mt-4 text-center text-sm font-medium text-emerald-600">
-          Job completed — awaiting homeowner review.
+          {hasReview ? "Job completed — homeowner left a review." : "Job completed — awaiting homeowner review."}
         </p>
       )}
     </div>

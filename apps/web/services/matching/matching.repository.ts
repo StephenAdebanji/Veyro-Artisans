@@ -286,14 +286,14 @@ export const matchingRepository = {
   async findJobForArtisan(jobId: string, artisanId: string) {
     return prisma.job.findFirst({
       where: { id: jobId, artisanId },
-      include: { serviceRequest: true },
+      include: { serviceRequest: true, review: true },
     });
   },
 
   async findJobByMatchId(matchId: string, artisanId: string) {
     return prisma.job.findFirst({
       where: { matchId, artisanId },
-      include: { serviceRequest: true },
+      include: { serviceRequest: true, review: true },
     });
   },
 

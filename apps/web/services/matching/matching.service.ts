@@ -396,7 +396,7 @@ class MatchingService implements MatchingServicePort {
   async getJobFeedItem(
     jobId: string,
     artisanId: string,
-  ): Promise<(JobFeedItem & { conversationId: string | null; expired?: boolean }) | null> {
+  ): Promise<(JobFeedItem & { conversationId: string | null; expired?: boolean; hasReview?: boolean }) | null> {
     // Check pending matches first (PENDING state)
     const match = await matchingRepository.findPendingMatchForArtisan(jobId, artisanId);
     if (match) {
@@ -422,6 +422,7 @@ class MatchingService implements MatchingServicePort {
         status: job.status,
         price: job.agreedPrice,
         conversationId: conv?.id ?? null,
+        hasReview: job.review !== null,
       };
     }
     // The supplied ID may be a match ID where the match was accepted or expired.
@@ -437,6 +438,7 @@ class MatchingService implements MatchingServicePort {
         status: jobFromMatch.status,
         price: jobFromMatch.agreedPrice,
         conversationId: conv?.id ?? null,
+        hasReview: jobFromMatch.review !== null,
       };
     }
     // Match exists but was declined/expired — return a sentinel so the UI can show

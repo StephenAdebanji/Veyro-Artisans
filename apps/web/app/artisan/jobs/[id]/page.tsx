@@ -146,7 +146,7 @@ export default async function JobDetailPage({
 
       {/* Status stepper — only for real jobs (not PENDING offers) */}
       {job.status !== "PENDING" && (
-        <JobStatusStepper jobId={job.id} currentStatus={job.status} />
+        <JobStatusStepper jobId={job.id} currentStatus={job.status} hasReview={job.hasReview} />
       )}
     </main>
   );
