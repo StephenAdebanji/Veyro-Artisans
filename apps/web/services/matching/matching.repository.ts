@@ -128,8 +128,19 @@ export const matchingRepository = {
   },
 
   async listActiveRequestsForHomeowner(homeownerId: string) {
+    // A SEARCHING request past the offer window is functionally expired even
+    // if its DB status hasn't been swept to CANCELLED yet (the cron sweep
+    // runs on its own cadence) — checked here too so the dashboard never
+    // shows a dead "Awaiting matches" card waiting on that sweep.
+    const windowStart = new Date(Date.now() - MATCH_WINDOW_MS);
     return prisma.serviceRequest.findMany({
-      where: { homeownerId, status: { in: ["SEARCHING", "MATCHED", "IN_PROGRESS"] } },
+      where: {
+        homeownerId,
+        OR: [
+          { status: "SEARCHING", createdAt: { gte: windowStart } },
+          { status: { in: ["MATCHED", "IN_PROGRESS"] } },
+        ],
+      },
       include: {
         matches: { where: { status: "ACCEPTED" }, take: 1 },
         job: { select: { id: true } },
