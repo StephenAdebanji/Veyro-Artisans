@@ -20,7 +20,9 @@ interface AvailableJobRowProps {
    * homeowner picking them from the AI recommendation panel, rather than
    * just being part of the generic category broadcast. */
   isInvited?: boolean;
-  /** Called once the artisan engages with the row, clearing the highlight. */
+  /** Called once the artisan actually submits an offer, clearing the
+   * highlight — not on merely opening/cancelling the form, which shouldn't
+   * cost the row its "new"/"recommended" attention-grabbing styling. */
   onSeen?: () => void;
   /** Called when the offer window closed out from under this row (submitted
    * after the 10-minute window elapsed) — removes it from the feed entirely
@@ -54,6 +56,7 @@ export function AvailableJobRow({ job, isNew, isInvited, onSeen, onExpired }: Av
         }),
       });
       setSent(true);
+      onSeen?.();
       router.refresh();
     } catch (err) {
       const message = err instanceof Error ? err.message : "Could not send your offer.";
@@ -117,10 +120,7 @@ export function AvailableJobRow({ job, isNew, isInvited, onSeen, onExpired }: Av
             type="button"
             size="sm"
             variant={expanded ? "outline" : "default"}
-            onClick={() => {
-              setExpanded((v) => !v);
-              onSeen?.();
-            }}
+            onClick={() => setExpanded((v) => !v)}
           >
             {expanded ? "Cancel" : "Send offer"}
           </Button>
