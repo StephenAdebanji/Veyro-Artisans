@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { BarChart2, ShieldCheck, AlertTriangle, Settings, Hammer, Home, LogOut, History, Users } from "lucide-react";
+import { BarChart2, ShieldCheck, AlertTriangle, Settings, Hammer, Home, LogOut, History, Users, ScrollText } from "lucide-react";
 import { auth, signOut } from "@/platform/auth-session";
 
 const NAV = [
@@ -11,6 +11,7 @@ const NAV = [
   { href: "/admin/verifications", label: "Verifications", icon: ShieldCheck },
   { href: "/admin/reports", label: "Disputes", icon: AlertTriangle },
   { href: "/admin/history", label: "History", icon: History },
+  { href: "/admin/access-log", label: "Access Log", icon: ScrollText },
   { href: "/admin/account", label: "Account", icon: Settings },
 ];
 

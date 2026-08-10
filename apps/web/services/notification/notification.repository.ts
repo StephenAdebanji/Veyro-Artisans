@@ -18,4 +18,8 @@ export const notificationRepository = {
   async markRead(id: string) {
     return prisma.notification.update({ where: { id }, data: { readAt: new Date() } });
   },
+
+  async deleteForUser(userId: string) {
+    await prisma.notification.deleteMany({ where: { userId } });
+  },
 };

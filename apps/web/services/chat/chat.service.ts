@@ -101,6 +101,10 @@ class ChatService implements ChatServicePort {
   async countUnreadForUser(userId: string): Promise<number> {
     return chatRepository.countUnread(userId);
   }
+
+  async deleteDataForParticipant(profileId: string): Promise<void> {
+    await chatRepository.deleteForParticipant(profileId);
+  }
 }
 
 export const chatService = new ChatService();

@@ -6,6 +6,7 @@ import {
   UserCircle,
   Settings2,
   AlertOctagon,
+  ShieldAlert,
   Sun,
   Moon,
   Monitor,
@@ -13,6 +14,7 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { ProfilePhotoUpload } from "@/components/shared/profile-photo-upload";
+import { AccountDangerZone } from "@/components/shared/account-danger-zone";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,7 +25,7 @@ import { apiFetch } from "@/lib/api-client";
 const COUNTRY_OPTIONS = COUNTRIES.map((c) => ({ value: c.name, label: c.name }));
 const NIGERIAN_STATE_OPTIONS = NIGERIAN_STATES.map((s) => ({ value: s, label: s }));
 
-type Tab = "profile" | "disputes" | "settings";
+type Tab = "profile" | "disputes" | "settings" | "danger";
 
 interface HomeownerAccountProps {
   email: string;
@@ -181,6 +183,7 @@ export function HomeownerAccount({ email, fullName, profilePhotoUrl, initial }: 
           { id: "profile" as Tab, icon: UserCircle, label: "Profile" },
           { id: "disputes" as Tab, icon: AlertOctagon, label: "Disputes" },
           { id: "settings" as Tab, icon: Settings2, label: "Settings" },
+          { id: "danger" as Tab, icon: ShieldAlert, label: "Privacy" },
         ]).map(({ id, icon: Icon, label }) => (
           <button
             key={id}
@@ -321,6 +324,8 @@ export function HomeownerAccount({ email, fullName, profilePhotoUrl, initial }: 
         {tab === "disputes" && <LogDisputeSection />}
 
         {tab === "settings" && <AppearanceSection />}
+
+        {tab === "danger" && <AccountDangerZone email={email} />}
       </div>
     </div>
   );

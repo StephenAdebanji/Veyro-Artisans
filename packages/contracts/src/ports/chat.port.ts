@@ -41,4 +41,7 @@ export interface ChatServicePort {
   listMessages(conversationId: string): Promise<MessageRecord[]>;
   /** Backs the homeowner/artisan dashboards' "unread messages" stat. */
   countUnreadForUser(userId: string): Promise<number>;
+  /** Self-service deletion (DELETE /api/me) — hard-deletes every conversation
+   * (and its messages) this homeowner/artisan profile id participates in. */
+  deleteDataForParticipant(profileId: string): Promise<void>;
 }

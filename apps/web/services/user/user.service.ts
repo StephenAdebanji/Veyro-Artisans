@@ -254,6 +254,14 @@ class UserService implements UserServicePort {
       emergencyAvailable: availability.emergencyAvailable as boolean | undefined,
     });
   }
+
+  async deleteHomeownerAccount(userId: string): Promise<void> {
+    await userRepository.deleteHomeownerProfileByUserId(userId);
+  }
+
+  async deleteArtisanAccount(userId: string): Promise<string | null> {
+    return userRepository.deleteArtisanProfileByUserId(userId);
+  }
 }
 
 function asString(value: unknown): string | undefined {

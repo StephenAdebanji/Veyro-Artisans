@@ -129,4 +129,12 @@ export const trustRepository = {
     });
     return profile?.history ?? [];
   },
+
+  async listCredentialsForArtisan(artisanId: string) {
+    return prisma.credential.findMany({ where: { artisanId }, orderBy: { createdAt: "desc" } });
+  },
+
+  async deleteCredentialsForArtisan(artisanId: string) {
+    await prisma.credential.deleteMany({ where: { artisanId } });
+  },
 };

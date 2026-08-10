@@ -6,6 +6,7 @@ import { useTheme } from "next-themes";
 import {
   UserCircle,
   ShieldCheck,
+  ShieldAlert,
   AlertOctagon,
   Settings2,
   Sun,
@@ -24,6 +25,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import { KycSection, type StagedItem, type CredentialRecord, type VerificationStatus } from "./kyc-section";
 import { ProfilePhotoUpload } from "@/components/shared/profile-photo-upload";
+import { AccountDangerZone } from "@/components/shared/account-danger-zone";
 import { COUNTRIES, NIGERIAN_STATES, NIGERIAN_LGAS } from "@/lib/location-data";
 import { SKILL_LABELS } from "@/components/shared/skill-labels";
 import { apiFetch } from "@/lib/api-client";
@@ -32,7 +34,7 @@ import type { SkillCategory } from "@veyro/contracts";
 const COUNTRY_OPTIONS = COUNTRIES.map((c) => ({ value: c.code, label: c.name }));
 const NIGERIAN_STATE_OPTIONS = NIGERIAN_STATES.map((s) => ({ value: s, label: s }));
 
-type Tab = "profile" | "kyc" | "disputes" | "settings";
+type Tab = "profile" | "kyc" | "disputes" | "settings" | "danger";
 
 interface ArtisanAccountProps {
   artisanId: string;
@@ -324,6 +326,7 @@ export function ArtisanAccount({
             { id: "kyc" as Tab, icon: ShieldCheck, label: "KYC" },
             { id: "disputes" as Tab, icon: AlertOctagon, label: "Disputes" },
             { id: "settings" as Tab, icon: Settings2, label: "Settings" },
+            { id: "danger" as Tab, icon: ShieldAlert, label: "Privacy" },
           ] as const
         ).map(({ id, icon: Icon, label }) => (
           <button
@@ -482,6 +485,8 @@ export function ArtisanAccount({
         {tab === "disputes" && <LogDisputeSection />}
 
         {tab === "settings" && <AppearanceSection />}
+
+        {tab === "danger" && <AccountDangerZone email={email} />}
       </div>
 
       {/* Save / Cancel — only on Profile and KYC tabs */}

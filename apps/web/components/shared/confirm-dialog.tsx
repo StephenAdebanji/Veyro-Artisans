@@ -18,6 +18,8 @@ interface ConfirmDialogProps {
   cancelLabel?: string;
   destructive?: boolean;
   loading?: boolean;
+  confirmDisabled?: boolean;
+  children?: React.ReactNode;
   onConfirm: () => void;
   onCancel: () => void;
 }
@@ -30,6 +32,8 @@ export function ConfirmDialog({
   cancelLabel = "Cancel",
   destructive = false,
   loading = false,
+  confirmDisabled = false,
+  children,
   onConfirm,
   onCancel,
 }: ConfirmDialogProps) {
@@ -40,6 +44,7 @@ export function ConfirmDialog({
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
+        {children && <div className="flex flex-col gap-3">{children}</div>}
         <DialogFooter className="gap-2">
           <Button variant="outline" onClick={onCancel} disabled={loading}>
             {cancelLabel}
@@ -47,7 +52,7 @@ export function ConfirmDialog({
           <Button
             variant={destructive ? "destructive" : "default"}
             onClick={onConfirm}
-            disabled={loading}
+            disabled={loading || confirmDisabled}
           >
             {confirmLabel}
           </Button>

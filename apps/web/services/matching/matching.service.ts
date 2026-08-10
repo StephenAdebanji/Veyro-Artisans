@@ -288,6 +288,21 @@ class MatchingService implements MatchingServicePort {
       id: review.id,
       homeownerId: review.homeownerId,
       homeownerName: nameById.get(review.homeownerId) ?? null,
+      artisanId: review.artisanId,
+      jobDescription: review.job?.serviceRequest?.description ?? null,
+      rating: review.rating,
+      comment: review.comment,
+      createdAt: review.createdAt.toISOString(),
+    }));
+  }
+
+  async listReviewsByHomeowner(homeownerId: string): Promise<ReviewSummary[]> {
+    const reviews = await matchingRepository.listReviewsByHomeowner(homeownerId);
+    return reviews.map((review) => ({
+      id: review.id,
+      homeownerId: review.homeownerId,
+      homeownerName: null,
+      artisanId: review.artisanId,
       jobDescription: review.job?.serviceRequest?.description ?? null,
       rating: review.rating,
       comment: review.comment,

@@ -157,6 +157,14 @@ export const matchingRepository = {
     });
   },
 
+  async listReviewsByHomeowner(homeownerId: string) {
+    return prisma.review.findMany({
+      where: { homeownerId },
+      orderBy: { createdAt: "desc" },
+      include: { job: { include: { serviceRequest: { select: { description: true } } } } },
+    });
+  },
+
   async countCompletedRequestsForHomeowner(homeownerId: string) {
     return prisma.serviceRequest.count({ where: { homeownerId, status: "COMPLETED" } });
   },

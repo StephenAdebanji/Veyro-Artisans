@@ -73,6 +73,7 @@ export interface ReviewSummary {
   id: string;
   homeownerId: string;
   homeownerName: string | null;
+  artisanId: string;
   jobDescription: string | null;
   rating: number;
   comment: string | null;
@@ -151,6 +152,8 @@ export interface MatchingServicePort {
   listActiveRequestsForHomeowner(homeownerId: string): Promise<ActiveRequestSummary[]>;
   /** Backs the artisan public profile's "Reviews" section. */
   listReviewsForArtisan(artisanId: string): Promise<ReviewSummary[]>;
+  /** Self-service data export (GET /api/me/export) — reviews this homeowner wrote. */
+  listReviewsByHomeowner(homeownerId: string): Promise<ReviewSummary[]>;
   /** Backs the homeowner dashboard's "Completed" stat card. */
   countCompletedRequestsForHomeowner(homeownerId: string): Promise<number>;
   /** Backs the artisan dashboard's "Available jobs" — SEARCHING requests matching category, within radius of `near`, excluding requests this artisan already offered on. Distance is computed here (haversine) rather than by the caller. */

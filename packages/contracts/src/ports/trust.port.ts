@@ -1,4 +1,12 @@
-import type { CredentialType, VerificationStatus } from "../common";
+import type { CredentialStatus, CredentialType, VerificationStatus } from "../common";
+
+export interface CredentialExport {
+  id: string;
+  type: CredentialType;
+  fileUrl: string;
+  status: CredentialStatus;
+  createdAt: string;
+}
 
 export interface SubmitCredentialInput {
   artisanId: string;
@@ -66,4 +74,8 @@ export interface TrustServicePort {
   getScoreHistory(artisanId: string): Promise<Array<{ score: number; createdAt: string }>>;
   /** Backs the admin verification queue (docs/API.md). */
   listPendingCredentials(): Promise<PendingCredentialSummary[]>;
+  /** Self-service data export (GET /api/me/export). */
+  listCredentialsForArtisan(artisanId: string): Promise<CredentialExport[]>;
+  /** Self-service deletion (DELETE /api/me) — hard-deletes the artisan's KYC documents. */
+  deleteCredentialsForArtisan(artisanId: string): Promise<void>;
 }

@@ -35,6 +35,10 @@ class NotificationService implements NotificationServicePort {
   async markRead(notificationId: string): Promise<void> {
     await notificationRepository.markRead(notificationId);
   }
+
+  async deleteForUser(userId: string): Promise<void> {
+    await notificationRepository.deleteForUser(userId);
+  }
 }
 
 export const notificationService = new NotificationService();

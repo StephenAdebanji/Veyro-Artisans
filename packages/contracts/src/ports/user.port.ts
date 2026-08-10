@@ -93,4 +93,8 @@ export interface UserServicePort {
   /** Verified, active artisans ranked by trust score — backs the landing page's "Trusted artisans" section. */
   listFeaturedArtisans(limit: number): Promise<FeaturedArtisan[]>;
   updateAvailability(artisanId: string, availability: Record<string, unknown>): Promise<void>;
+  /** Self-service deletion (DELETE /api/me) — deletes the HomeownerProfile row for this user, if any. */
+  deleteHomeownerAccount(userId: string): Promise<void>;
+  /** Self-service deletion (DELETE /api/me) — deletes PortfolioItem + ArtisanAvailability + ArtisanProfile for this user, if any. Returns the deleted artisanId so the caller can clean up Trust/Chat data, or null if the user had no artisan profile. */
+  deleteArtisanAccount(userId: string): Promise<string | null>;
 }

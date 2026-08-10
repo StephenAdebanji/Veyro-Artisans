@@ -67,4 +67,15 @@ export const chatRepository = {
       },
     });
   },
+
+  async deleteForParticipant(profileId: string) {
+    const conversations = await prisma.conversation.findMany({
+      where: { OR: [{ homeownerId: profileId }, { artisanId: profileId }] },
+      select: { id: true },
+    });
+    const conversationIds = conversations.map((c) => c.id);
+    if (conversationIds.length === 0) return;
+    await prisma.message.deleteMany({ where: { conversationId: { in: conversationIds } } });
+    await prisma.conversation.deleteMany({ where: { id: { in: conversationIds } } });
+  },
 };

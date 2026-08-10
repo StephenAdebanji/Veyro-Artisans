@@ -1,5 +1,6 @@
 import {
   findMissingCompulsoryCredentials,
+  type CredentialExport,
   type PendingCredentialSummary,
   type SubmitCredentialInput,
   type TrustProfileSnapshot,
@@ -201,6 +202,21 @@ class TrustService implements TrustServicePort {
       status: credential.status,
       createdAt: credential.createdAt.toISOString(),
     }));
+  }
+
+  async listCredentialsForArtisan(artisanId: string): Promise<CredentialExport[]> {
+    const rows = await trustRepository.listCredentialsForArtisan(artisanId);
+    return rows.map((row) => ({
+      id: row.id,
+      type: row.type,
+      fileUrl: row.fileUrl,
+      status: row.status,
+      createdAt: row.createdAt.toISOString(),
+    }));
+  }
+
+  async deleteCredentialsForArtisan(artisanId: string): Promise<void> {
+    await trustRepository.deleteCredentialsForArtisan(artisanId);
   }
 }
 

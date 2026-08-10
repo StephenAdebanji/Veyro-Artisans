@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { auth } from "@/platform/auth-session";
 import { trustService } from "@/services/trust/trust.service";
+import { authService } from "@/services/auth/auth.service";
 import { prisma } from "@/platform/prisma";
 import { withApiErrorHandling } from "@/platform/api-handler";
 
@@ -23,6 +24,16 @@ export const PATCH = withApiErrorHandling(async (req: Request, { params }: { par
   }
 
   await trustService.reviewCredential(id, body.decision, admin.id ?? "admin");
+
+  if (admin.id) {
+    await authService.logAdminAction({
+      adminId: admin.id,
+      action: body.decision === "APPROVED" ? "APPROVED_CREDENTIAL" : "REJECTED_CREDENTIAL",
+      targetType: "Credential",
+      targetId: id,
+    });
+  }
+
   revalidatePath("/admin", "layout");
   return NextResponse.json({ ok: true });
 });

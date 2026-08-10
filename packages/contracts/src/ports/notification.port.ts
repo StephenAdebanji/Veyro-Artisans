@@ -14,4 +14,6 @@ export interface NotificationServicePort {
   notify(userId: string, type: NotificationType, payload: object): Promise<string>;
   listForUser(userId: string, opts?: { unreadOnly?: boolean }): Promise<NotificationRecord[]>;
   markRead(notificationId: string): Promise<void>;
+  /** Self-service deletion (DELETE /api/me). */
+  deleteForUser(userId: string): Promise<void>;
 }

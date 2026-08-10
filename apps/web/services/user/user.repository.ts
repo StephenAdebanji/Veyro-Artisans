@@ -185,4 +185,19 @@ export const userRepository = {
     if (!profile) return;
     return prisma.user.update({ where: { id: profile.userId }, data: { phone } });
   },
+
+  async deleteHomeownerProfileByUserId(userId: string) {
+    const profile = await prisma.homeownerProfile.findUnique({ where: { userId }, select: { id: true } });
+    if (!profile) return;
+    await prisma.homeownerProfile.delete({ where: { userId } });
+  },
+
+  async deleteArtisanProfileByUserId(userId: string): Promise<string | null> {
+    const profile = await prisma.artisanProfile.findUnique({ where: { userId }, select: { id: true } });
+    if (!profile) return null;
+    await prisma.portfolioItem.deleteMany({ where: { artisanId: profile.id } });
+    await prisma.artisanAvailability.deleteMany({ where: { artisanId: profile.id } });
+    await prisma.artisanProfile.delete({ where: { id: profile.id } });
+    return profile.id;
+  },
 };
