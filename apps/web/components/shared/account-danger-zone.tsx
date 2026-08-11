@@ -2,11 +2,12 @@
 
 import { useState } from "react";
 import { signOut } from "next-auth/react";
-import { Download, Trash2 } from "lucide-react";
+import { CheckCircle2, Download, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { apiFetch, ApiRequestError } from "@/lib/api-client";
 
 export function AccountDangerZone({ email }: { email: string }) {
@@ -17,6 +18,7 @@ export function AccountDangerZone({ email }: { email: string }) {
   const [emailInput, setEmailInput] = useState("");
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [deletedOpen, setDeletedOpen] = useState(false);
 
   async function handleExport() {
     setExporting(true);
@@ -46,11 +48,26 @@ export function AccountDangerZone({ email }: { email: string }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: emailInput.trim() }),
       });
-      await signOut({ callbackUrl: "/sign-in" });
+      // Kill the session cookie now, but don't let next-auth navigate —
+      // we show our own "account deleted" dialog first, and the eventual
+      // navigation needs to *replace* history (see handleReturnHome) so the
+      // back button can never land on this now-deleted account page again.
+      await signOut({ redirect: false });
+      setConfirmOpen(false);
+      setDeleting(false);
+      setDeletedOpen(true);
     } catch (err) {
       setDeleteError(err instanceof ApiRequestError ? err.message : "Failed to delete your account. Please try again.");
       setDeleting(false);
     }
+  }
+
+  function handleReturnHome() {
+    // A hard navigation that replaces the current history entry (rather than
+    // a Next.js router.push, which would leave this deleted-account page as
+    // a "back" target) so pressing the browser back button afterward skips
+    // straight past it.
+    window.location.replace("/");
   }
 
   return (
@@ -115,6 +132,26 @@ export function AccountDangerZone({ email }: { email: string }) {
         </div>
         {deleteError && <p className="text-sm text-destructive">{deleteError}</p>}
       </ConfirmDialog>
+
+      <Dialog open={deletedOpen}>
+        <DialogContent
+          className="max-w-sm"
+          showCloseButton={false}
+          onEscapeKeyDown={(e) => e.preventDefault()}
+          onPointerDownOutside={(e) => e.preventDefault()}
+        >
+          <DialogHeader className="items-center text-center">
+            <CheckCircle2 className="h-10 w-10 text-emerald-600" />
+            <DialogTitle>Account deleted</DialogTitle>
+            <DialogDescription>
+              Your VEYRO account and personal data have been permanently deleted.
+            </DialogDescription>
+          </DialogHeader>
+          <Button onClick={handleReturnHome} className="w-full">
+            Return to homepage
+          </Button>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
