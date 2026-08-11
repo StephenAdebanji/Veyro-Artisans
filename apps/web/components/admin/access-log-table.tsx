@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { Eye } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Eye, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
@@ -41,6 +43,23 @@ function DetailRow({ label, value }: { label: string; value: string }) {
 
 export function AccessLogTable({ entries }: { entries: AccessLogRow[] }) {
   const [selected, setSelected] = useState<AccessLogRow | null>(null);
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
+
+  const rows = useMemo(() => {
+    if (!fromDate && !toDate) return entries;
+    // Date inputs are local-time "YYYY-MM-DD" with no time component — treat
+    // `from` as the start of that day and `to` as the end of that day so the
+    // range is inclusive on both ends.
+    const from = fromDate ? new Date(`${fromDate}T00:00:00`) : null;
+    const to = toDate ? new Date(`${toDate}T23:59:59.999`) : null;
+    return entries.filter((entry) => {
+      const createdAt = new Date(entry.createdAt);
+      if (from && createdAt < from) return false;
+      if (to && createdAt > to) return false;
+      return true;
+    });
+  }, [entries, fromDate, toDate]);
 
   if (entries.length === 0) {
     return <p className="p-6 text-sm text-muted-foreground">No admin actions logged yet.</p>;
@@ -48,6 +67,45 @@ export function AccessLogTable({ entries }: { entries: AccessLogRow[] }) {
 
   return (
     <>
+      <div className="flex flex-wrap items-end gap-3 border-b p-4">
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="access-log-from" className="text-xs text-muted-foreground">From</Label>
+          <Input
+            id="access-log-from"
+            type="date"
+            value={fromDate}
+            max={toDate || undefined}
+            onChange={(e) => setFromDate(e.target.value)}
+            className="w-auto"
+          />
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="access-log-to" className="text-xs text-muted-foreground">To</Label>
+          <Input
+            id="access-log-to"
+            type="date"
+            value={toDate}
+            min={fromDate || undefined}
+            onChange={(e) => setToDate(e.target.value)}
+            className="w-auto"
+          />
+        </div>
+        {(fromDate || toDate) && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="h-8 gap-1 text-xs text-muted-foreground"
+            onClick={() => { setFromDate(""); setToDate(""); }}
+          >
+            <X className="h-3.5 w-3.5" /> Clear
+          </Button>
+        )}
+        <p className="ml-auto text-xs text-muted-foreground">
+          {rows.length} of {entries.length} {entries.length === 1 ? "entry" : "entries"}
+        </p>
+      </div>
+
       <table className="w-full text-left text-sm">
         <thead className="border-b bg-muted/40 text-xs uppercase tracking-wide text-muted-foreground">
           <tr>
@@ -59,31 +117,39 @@ export function AccessLogTable({ entries }: { entries: AccessLogRow[] }) {
           </tr>
         </thead>
         <tbody className="divide-y">
-          {entries.map((entry) => (
-            <tr key={entry.id}>
-              <td className="px-4 py-3">{entry.adminEmail ?? entry.adminId}</td>
-              <td className="px-4 py-3">
-                <Badge className={ACTION_STYLE[entry.action] ?? ""}>{entry.action}</Badge>
-              </td>
-              <td className="px-4 py-3 text-muted-foreground">
-                {entry.targetLabel ?? `${entry.targetType} · ${entry.targetId}`}
-              </td>
-              <td className="px-4 py-3 text-muted-foreground">
-                {new Date(entry.createdAt).toLocaleString()}
-              </td>
-              <td className="px-4 py-3 text-right">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="h-7 gap-1 text-xs"
-                  onClick={() => setSelected(entry)}
-                >
-                  <Eye className="h-3.5 w-3.5" /> View
-                </Button>
+          {rows.length === 0 ? (
+            <tr>
+              <td colSpan={5} className="px-4 py-6 text-center text-sm text-muted-foreground">
+                No admin actions in this date range.
               </td>
             </tr>
-          ))}
+          ) : (
+            rows.map((entry) => (
+              <tr key={entry.id}>
+                <td className="px-4 py-3">{entry.adminEmail ?? entry.adminId}</td>
+                <td className="px-4 py-3">
+                  <Badge className={ACTION_STYLE[entry.action] ?? ""}>{entry.action}</Badge>
+                </td>
+                <td className="px-4 py-3 text-muted-foreground">
+                  {entry.targetLabel ?? `${entry.targetType} · ${entry.targetId}`}
+                </td>
+                <td className="px-4 py-3 text-muted-foreground">
+                  {new Date(entry.createdAt).toLocaleString()}
+                </td>
+                <td className="px-4 py-3 text-right">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 gap-1 text-xs"
+                    onClick={() => setSelected(entry)}
+                  >
+                    <Eye className="h-3.5 w-3.5" /> View
+                  </Button>
+                </td>
+              </tr>
+            ))
+          )}
         </tbody>
       </table>
 
