@@ -4,6 +4,7 @@ import { auth } from "@/platform/auth-session";
 import { trustService } from "@/services/trust/trust.service";
 import { trustRepository } from "@/services/trust/trust.repository";
 import { userRepository } from "@/services/user/user.repository";
+import { authService } from "@/services/auth/auth.service";
 import { withApiErrorHandling } from "@/platform/api-handler";
 
 async function requireAdmin() {
@@ -33,6 +34,12 @@ export const PATCH = withApiErrorHandling(async (req: Request, { params }: { par
       onboardingStatus: "ACTIVE",
       rejectionReason: null,
     });
+    await authService.logAdminAction({
+      adminId,
+      action: "VERIFIED_IDENTITY",
+      targetType: "Artisan",
+      targetId: artisanId,
+    });
 
   } else if (body.decision === "REJECTED") {
     if (!body.reason?.trim()) {
@@ -49,6 +56,13 @@ export const PATCH = withApiErrorHandling(async (req: Request, { params }: { par
       verificationStatus: "REJECTED",
       rejectionReason: body.reason.trim(),
     });
+    await authService.logAdminAction({
+      adminId,
+      action: "REJECTED_IDENTITY",
+      targetType: "Artisan",
+      targetId: artisanId,
+      notes: body.reason.trim(),
+    });
 
   } else if (body.decision === "REVOKED") {
     await trustService.revokeDecision(artisanId);
@@ -56,6 +70,12 @@ export const PATCH = withApiErrorHandling(async (req: Request, { params }: { par
       verificationStatus: "UNVERIFIED",
       onboardingStatus: "PENDING_REVIEW",
       rejectionReason: null,
+    });
+    await authService.logAdminAction({
+      adminId,
+      action: "REVOKED_VERIFICATION",
+      targetType: "Artisan",
+      targetId: artisanId,
     });
 
   } else {

@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { EditArtisanModal, EditHomeownerModal, type EditArtisanData, type EditHomeownerData } from "./edit-user-modal";
 import { ResetPasswordModal } from "./reset-password-modal";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
+import { Avatar } from "@/components/shared/avatar";
 import { apiFetch } from "@/lib/api-client";
 
 type ArtisanCombinedRow = {
@@ -21,6 +22,7 @@ type ArtisanCombinedRow = {
   status: string;
   primarySkill: string | null;
   location: string;
+  profilePhotoUrl: string | null;
 };
 
 type HomeownerCombinedRow = {
@@ -31,6 +33,7 @@ type HomeownerCombinedRow = {
   role: string;
   status: string;
   location: string;
+  profilePhotoUrl: string | null;
 };
 
 type AdminCombinedRow = {
@@ -60,6 +63,10 @@ function displayName(row: CombinedUserRow): string {
   if (row.kind === "artisan") return [row.firstName, row.lastName].filter(Boolean).join(" ") || "—";
   if (row.kind === "homeowner") return row.fullName || "—";
   return row.name || "—";
+}
+
+function photoUrl(row: CombinedUserRow): string | null {
+  return row.kind === "admin" ? null : row.profilePhotoUrl;
 }
 
 function UserActionRow({
@@ -137,7 +144,12 @@ function UserActionRow({
 
       <tr className="border-b last:border-b-0 hover:bg-muted/30">
         <td className="py-3 pl-4 pr-4 text-sm text-muted-foreground">{index}</td>
-        <td className="py-3 pr-4 font-medium">{name}</td>
+        <td className="py-3 pr-4 font-medium">
+          <div className="flex items-center gap-2.5">
+            <Avatar src={photoUrl(data)} name={name} size={28} />
+            {name}
+          </div>
+        </td>
         <td className="py-3 pr-4 text-sm text-muted-foreground">{data.email}</td>
         <td className="py-3 pr-4">
           <Badge className={ROLE_STYLE[data.role] ?? "bg-muted text-muted-foreground"}>
