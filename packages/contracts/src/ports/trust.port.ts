@@ -78,4 +78,7 @@ export interface TrustServicePort {
   listCredentialsForArtisan(artisanId: string): Promise<CredentialExport[]>;
   /** Self-service deletion (DELETE /api/me) — hard-deletes the artisan's KYC documents. */
   deleteCredentialsForArtisan(artisanId: string): Promise<void>;
+  /** Backs the admin access log's "Target" column — resolves Credential-type
+   * log entries back to the artisan they belong to. */
+  getArtisanIdsForCredentials(credentialIds: string[]): Promise<Record<string, string>>;
 }

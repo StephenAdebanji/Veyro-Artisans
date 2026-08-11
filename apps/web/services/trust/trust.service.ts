@@ -218,6 +218,12 @@ class TrustService implements TrustServicePort {
   async deleteCredentialsForArtisan(artisanId: string): Promise<void> {
     await trustRepository.deleteCredentialsForArtisan(artisanId);
   }
+
+  async getArtisanIdsForCredentials(credentialIds: string[]): Promise<Record<string, string>> {
+    const uniqueIds = [...new Set(credentialIds)];
+    const rows = await trustRepository.findCredentialsByIds(uniqueIds);
+    return Object.fromEntries(rows.map((row) => [row.id, row.artisanId]));
+  }
 }
 
 export const trustService = new TrustService();

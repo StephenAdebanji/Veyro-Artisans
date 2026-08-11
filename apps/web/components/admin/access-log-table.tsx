@@ -13,6 +13,14 @@ import {
 } from "@/components/ui/dialog";
 import type { AdminActionLogEntry } from "@veyro/contracts";
 
+export type AccessLogRow = AdminActionLogEntry & {
+  /** The artisan's "Name — Category" when the target resolves to one, e.g. a
+   * Credential is resolved back to the artisan it belongs to. Null falls
+   * back to the raw target type/id (target no longer exists, or isn't
+   * artisan-related). */
+  targetLabel: string | null;
+};
+
 const ACTION_STYLE: Record<string, string> = {
   VIEWED_CREDENTIAL: "bg-muted text-muted-foreground",
   APPROVED_CREDENTIAL: "bg-emerald-100 text-emerald-700",
@@ -31,8 +39,8 @@ function DetailRow({ label, value }: { label: string; value: string }) {
   );
 }
 
-export function AccessLogTable({ entries }: { entries: AdminActionLogEntry[] }) {
-  const [selected, setSelected] = useState<AdminActionLogEntry | null>(null);
+export function AccessLogTable({ entries }: { entries: AccessLogRow[] }) {
+  const [selected, setSelected] = useState<AccessLogRow | null>(null);
 
   if (entries.length === 0) {
     return <p className="p-6 text-sm text-muted-foreground">No admin actions logged yet.</p>;
@@ -58,7 +66,7 @@ export function AccessLogTable({ entries }: { entries: AdminActionLogEntry[] }) 
                 <Badge className={ACTION_STYLE[entry.action] ?? ""}>{entry.action}</Badge>
               </td>
               <td className="px-4 py-3 text-muted-foreground">
-                {entry.targetType} · {entry.targetId}
+                {entry.targetLabel ?? `${entry.targetType} · ${entry.targetId}`}
               </td>
               <td className="px-4 py-3 text-muted-foreground">
                 {new Date(entry.createdAt).toLocaleString()}
@@ -88,7 +96,7 @@ export function AccessLogTable({ entries }: { entries: AdminActionLogEntry[] }) 
             <div className="flex flex-col">
               <DetailRow label="Admin" value={selected.adminEmail ?? selected.adminId} />
               <DetailRow label="Action" value={selected.action} />
-              <DetailRow label="Target type" value={selected.targetType} />
+              <DetailRow label="Target" value={selected.targetLabel ?? selected.targetType} />
               <DetailRow label="Target ID" value={selected.targetId} />
               {selected.notes && <DetailRow label="Notes" value={selected.notes} />}
               <DetailRow label="When" value={new Date(selected.createdAt).toLocaleString()} />

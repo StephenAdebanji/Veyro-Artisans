@@ -11,6 +11,14 @@ export const trustRepository = {
     return prisma.credential.findUnique({ where: { id: credentialId } });
   },
 
+  async findCredentialsByIds(credentialIds: string[]) {
+    if (credentialIds.length === 0) return [];
+    return prisma.credential.findMany({
+      where: { id: { in: credentialIds } },
+      select: { id: true, artisanId: true },
+    });
+  },
+
   async updateCredentialStatus(credentialId: string, status: CredentialStatus, reviewedBy: string) {
     return prisma.credential.update({
       where: { id: credentialId },
