@@ -65,6 +65,7 @@ export const PATCH = withApiErrorHandling(async (req: Request, { params }: { par
     });
 
   } else if (body.decision === "REVOKED") {
+    const previousStatus = artisan.verificationStatus;
     await trustService.revokeDecision(artisanId);
     await userRepository.updateArtisanProfile(artisanId, {
       verificationStatus: "UNVERIFIED",
@@ -76,6 +77,7 @@ export const PATCH = withApiErrorHandling(async (req: Request, { params }: { par
       action: "REVOKED_VERIFICATION",
       targetType: "Artisan",
       targetId: artisanId,
+      notes: `${previousStatus} → UNVERIFIED`,
     });
 
   } else {
