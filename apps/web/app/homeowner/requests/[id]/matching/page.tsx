@@ -2,6 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import { auth } from "@/platform/auth-session";
 import { matchingService } from "@/services/matching/matching.service";
 import { userService } from "@/services/user/user.service";
+import { blockchainService } from "@/services/blockchain/blockchain.service";
 import { MatchingScreen } from "@/components/matching/matching-screen";
 import type { OfferData } from "@/components/matching/offer-card";
 import type { SkillCategory } from "@veyro/contracts";
@@ -33,7 +34,10 @@ export default async function MatchingPage({
   const artisanById = new Map<string, ArtisanRecord | null>();
   const initialOffers: OfferData[] = await Promise.all(
     rawOffers.map(async (offer) => {
-      const artisan = (await userService.getArtisanProfile(offer.artisanId)) as ArtisanRecord | null;
+      const [artisan, chainRecords] = await Promise.all([
+        userService.getArtisanProfile(offer.artisanId) as Promise<ArtisanRecord | null>,
+        blockchainService.getRecordsForRef(offer.artisanId),
+      ]);
       artisanById.set(offer.artisanId, artisan);
       return {
         matchId: offer.id,
@@ -51,6 +55,7 @@ export default async function MatchingPage({
         etaMinutes: offer.etaMinutes,
         distanceKm: offer.distanceKm,
         status: String(offer.status),
+        blockchainVerified: chainRecords.some((r) => r.status === "CONFIRMED"),
       };
     }),
   );

@@ -3,6 +3,7 @@ import { z } from "zod";
 import { auth } from "@/platform/auth-session";
 import { matchingService } from "@/services/matching/matching.service";
 import { userService } from "@/services/user/user.service";
+import { blockchainService } from "@/services/blockchain/blockchain.service";
 import { withApiErrorHandling } from "@/platform/api-handler";
 
 // Match.proposedPrice is a Postgres INT4 column (max 2,147,483,647) — capping
@@ -31,7 +32,10 @@ export const GET = withApiErrorHandling(async (_req: Request, { params }: { para
   // Enrich each offer with artisan display data.
   const enriched = await Promise.all(
     offers.map(async (offer) => {
-      const artisan = await userService.getArtisanProfile(offer.artisanId) as Record<string, unknown> | null;
+      const [artisan, chainRecords] = await Promise.all([
+        userService.getArtisanProfile(offer.artisanId) as Promise<Record<string, unknown> | null>,
+        blockchainService.getRecordsForRef(offer.artisanId),
+      ]);
       return {
         matchId: offer.id,
         artisanId: offer.artisanId,
@@ -46,6 +50,7 @@ export const GET = withApiErrorHandling(async (_req: Request, { params }: { para
         etaMinutes: offer.etaMinutes,
         distanceKm: offer.distanceKm,
         status: offer.status,
+        blockchainVerified: chainRecords.some((r) => r.status === "CONFIRMED"),
       };
     }),
   );
@@ -112,7 +117,10 @@ export const POST = withApiErrorHandling(async (request: Request, { params }: { 
   }
 
   // Fetch the full profile for display stats (summary type has no rating/trust).
-  const fullProfile = await userService.getArtisanProfile(artisan.id) as Record<string, unknown> | null;
+  const [fullProfile, chainRecords] = await Promise.all([
+    userService.getArtisanProfile(artisan.id) as Promise<Record<string, unknown> | null>,
+    blockchainService.getRecordsForRef(artisan.id),
+  ]);
 
   // Push enriched offer card to the homeowner's matching screen live.
   fetch(`${REALTIME_URL}/internal/matching/${serviceRequestId}/offer`, {
@@ -132,6 +140,7 @@ export const POST = withApiErrorHandling(async (request: Request, { params }: { 
       etaMinutes: parsed.data.etaMinutes,
       distanceKm: parsed.data.distanceKm,
       status: "PENDING",
+      blockchainVerified: chainRecords.some((r) => r.status === "CONFIRMED"),
     }),
   }).catch(() => {});
 

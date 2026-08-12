@@ -29,4 +29,19 @@ class EventBus {
   }
 }
 
-export const eventBus = new EventBus();
+// Next.js dev mode (Turbopack) can compile the instrumentation/boot path and
+// the request-handling path as separate module graphs, each re-evaluating
+// this file and producing its own EventBus instance — so handlers registered
+// at boot (via instrumentation.ts) would subscribe to a different emitter
+// than the one services actually publish to at request time, and every
+// event silently goes nowhere (no error; EventEmitter just has 0 listeners).
+// Same class of bug platform/prisma.ts already guards against — same fix:
+// stash the singleton on globalThis so every module graph resolves to the
+// same instance within this one Node.js process.
+const globalForEventBus = globalThis as unknown as { __veyroEventBus?: EventBus };
+
+export const eventBus = globalForEventBus.__veyroEventBus ?? new EventBus();
+
+if (process.env.NODE_ENV !== "production") {
+  globalForEventBus.__veyroEventBus = eventBus;
+}

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { Star, Clock, MapPin, Sparkles, MessageCircle, Phone } from "lucide-react";
+import { Star, Clock, MapPin, Sparkles, MessageCircle, Phone, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import type { SkillCategory } from "@veyro/contracts";
@@ -23,6 +23,11 @@ export interface OfferData {
   state?: string | null;
   aiScore?: number;
   aiReason?: string;
+  /** True when this artisan's identity verification has a CONFIRMED
+   * BlockchainRecord — i.e. the trust score behind the badge below isn't
+   * just a self-reported number, it's backed by a tamper-evident on-chain
+   * record. See BlockchainRecordType.IDENTITY_VERIFIED. */
+  blockchainVerified?: boolean;
 }
 
 // Best-effort visual fallback when an artisan hasn't uploaded a profile
@@ -158,6 +163,12 @@ export function OfferCard({
             <Badge variant="secondary" className="text-xs">
               {Math.round(offer.trustScore)}/100 Trust
             </Badge>
+            {offer.blockchainVerified && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-medium text-emerald-700 ring-1 ring-emerald-200 dark:bg-emerald-950 dark:text-emerald-400 dark:ring-emerald-900">
+                <ShieldCheck className="h-2.5 w-2.5" />
+                Verified on-chain
+              </span>
+            )}
             {offer.aiScore !== undefined && (
               <span className="inline-flex items-center gap-1 rounded-full bg-violet-100 px-2.5 py-0.5 text-xs font-semibold text-violet-700 dark:bg-violet-950 dark:text-violet-300">
                 <Sparkles className="h-3 w-3" />
