@@ -3,6 +3,18 @@ import { eventBus } from "@/platform/event-bus";
 import { blockchainRepository } from "./blockchain.repository";
 import { writeTrustRecord } from "./chain-adapter";
 
+// All chain writes share one wallet, and chain-adapter.ts asks the RPC
+// provider for that wallet's "next" nonce independently on every call
+// (getSigner() constructs a fresh ethers.Wallet each time, with no local
+// nonce tracking). Firing writes concurrently — e.g. verifyIdentity()
+// publishes IdentityVerified, then TrustScoreUpdated moments later, each
+// enqueuing its own write — let two "next nonce" lookups race and resolve
+// to the same value, so the second submission was rejected by the network
+// with NONCE_EXPIRED ("nonce too low"). Chaining every write through this
+// one promise ensures only one is ever in flight, so each subsequent
+// lookup sees the previous submission already accounted for.
+let chainQueue: Promise<unknown> = Promise.resolve();
+
 /**
  * In-process stand-in for a real queue consumer (an SQS/RabbitMQ-backed worker
  * process once Blockchain Service is physically extracted — it's first in the
@@ -16,7 +28,7 @@ export function processRecordAsync(
   refId: string,
   payload: object,
 ): void {
-  setImmediate(async () => {
+  chainQueue = chainQueue.catch(() => {}).then(async () => {
     try {
       const result = await writeTrustRecord(type, refId, payload);
       await blockchainRepository.markConfirmed(
