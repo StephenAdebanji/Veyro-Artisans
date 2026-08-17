@@ -56,15 +56,15 @@ export function IdleSessionGuard() {
   const forceSignOut = useCallback(() => {
     if (signingOutRef.current) return;
     signingOutRef.current = true;
+    // Close the warning dialog immediately so it doesn't stay frozen on "1s"
+    // while signOut() is resolving.
+    setSecondsLeft(null);
     try {
       localStorage.setItem(SIGNOUT_STORAGE_KEY, String(now()));
     } catch {
       // Ignore — other tabs just won't hear about it, this tab still signs out.
     }
     void signOut({ redirect: false }).finally(() => {
-      // Hard navigation + history replace, same reasoning as the account-
-      // deletion flow: guarantees the browser back button can't land on a
-      // page rendered under the now-dead session.
       window.location.replace("/sign-in?reason=idle");
     });
   }, []);
