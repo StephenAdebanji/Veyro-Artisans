@@ -1,5 +1,6 @@
 import { AuthLayout } from "@/components/auth/auth-layout";
 import { SignInForm } from "@/components/auth/sign-in-form";
+import { IdleReasonBanner } from "@/components/auth/idle-reason-banner";
 
 export default async function SignInPage({
   searchParams,
@@ -20,11 +21,7 @@ export default async function SignInPage({
           Password reset email sent — check your inbox.
         </div>
       )}
-      {params.reason === "idle" && (
-        <div className="mb-4 rounded-md border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-          You were signed out after 30 minutes of inactivity — please sign in again.
-        </div>
-      )}
+      <IdleReasonBanner reason={params.reason} />
       <SignInForm />
     </AuthLayout>
   );
