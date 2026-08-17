@@ -8,6 +8,9 @@
     "node": ">=20"
   },
   "packageManager": "pnpm@9.15.9",
+  "pnpm": {
+    "neverBuiltDependencies": ["playwright", "@playwright/test"]
+  },
   "scripts": {
     "dev:web": "pnpm --filter web dev",
     "dev:realtime": "pnpm --filter realtime dev",
