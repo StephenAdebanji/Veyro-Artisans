@@ -4,7 +4,7 @@ import { SignInForm } from "@/components/auth/sign-in-form";
 export default async function SignInPage({
   searchParams,
 }: {
-  searchParams: Promise<{ registered?: string; reset?: string }>;
+  searchParams: Promise<{ registered?: string; reset?: string; reason?: string }>;
 }) {
   const params = await searchParams;
 
@@ -18,6 +18,11 @@ export default async function SignInPage({
       {params.reset === "1" && (
         <div className="mb-4 rounded-md border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
           Password reset email sent — check your inbox.
+        </div>
+      )}
+      {params.reason === "idle" && (
+        <div className="mb-4 rounded-md border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          You were signed out after 30 minutes of inactivity — please sign in again.
         </div>
       )}
       <SignInForm />

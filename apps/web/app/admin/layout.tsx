@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { BarChart2, ShieldCheck, AlertTriangle, Settings, Hammer, Home, LogOut, History, Users, ScrollText } from "lucide-react";
 import { auth, signOut } from "@/platform/auth-session";
 import { BfcacheGuard } from "@/components/shared/bfcache-guard";
+import { IdleSessionGuard } from "@/components/shared/idle-session-guard";
 
 const NAV = [
   { href: "/admin/console", label: "Console", icon: BarChart2 },
@@ -25,6 +26,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   return (
     <div className="flex min-h-screen">
       <BfcacheGuard />
+      <IdleSessionGuard />
       <aside className="fixed left-0 top-0 flex h-screen w-56 flex-col border-r bg-muted/30 px-3 py-6">
         <p className="mb-4 px-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
           Admin

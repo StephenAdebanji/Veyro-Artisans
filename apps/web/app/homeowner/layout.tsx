@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { DashboardNavbar } from "@/components/shared/dashboard-navbar";
 import { BfcacheGuard } from "@/components/shared/bfcache-guard";
+import { IdleSessionGuard } from "@/components/shared/idle-session-guard";
 import { auth } from "@/platform/auth-session";
 import { userService } from "@/services/user/user.service";
 
@@ -15,6 +16,7 @@ export default async function HomeownerLayout({ children }: { children: React.Re
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <BfcacheGuard />
+      <IdleSessionGuard />
       <DashboardNavbar role="homeowner" userName={firstName} profilePhotoUrl={profile?.profilePhotoUrl} />
       <div className="flex min-h-0 flex-1 flex-col">{children}</div>
     </div>

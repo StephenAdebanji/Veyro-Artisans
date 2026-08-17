@@ -1,13 +1,24 @@
 import NextAuth, { CredentialsSignin } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { authService } from "@/services/auth/auth.service";
+import { IDLE_TIMEOUT_MINUTES } from "@/lib/session";
 
 class SuspendedError extends CredentialsSignin {
   code = "SUSPENDED";
 }
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  session: { strategy: "jwt" },
+  // No middleware in this app, so a plain page/route `auth()` call can only
+  // ever read the JWT — Next.js forbids Server Components from writing
+  // cookies, so it can't silently extend the expiry just because a page
+  // rendered. The JWT strategy re-signs with a fresh expiry on every real
+  // /api/auth/session round-trip (see @auth/core's session action), so the
+  // 30-minute idle timeout is enforced here as a hard cap, and only actually
+  // stays alive because components/shared/idle-session-guard.tsx calls
+  // session.update() — deliberately, only when there's been genuine recent
+  // activity — to keep sliding it forward. Without that guard, every session
+  // would hard-expire exactly maxAge after sign-in regardless of activity.
+  session: { strategy: "jwt", maxAge: IDLE_TIMEOUT_MINUTES * 60 },
   pages: { signIn: "/sign-in" },
   providers: [
     Credentials({
