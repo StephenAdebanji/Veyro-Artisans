@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { getSession, signIn } from "next-auth/react";
@@ -22,15 +22,21 @@ export function SignInForm({ reason }: { reason?: string }) {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const emailRef = useRef<HTMLInputElement>(null);
+  const passwordRef = useRef<HTMLInputElement>(null);
 
-  // Chrome autofills inputs after React's render, so setting state to "" has
-  // no effect (no re-render when the value hasn't changed). The fix: start
-  // inputs as readOnly — Chrome skips autofill on readOnly — then flip them
-  // editable after a tick. inputsReady tracks when that flip happens.
-  const [inputsReady, setInputsReady] = useState(!idleSignOut);
+  // Chrome autofills after React renders, and setting state to "" causes no
+  // re-render (value unchanged), so the browser-injected DOM value persists.
+  // Direct DOM mutation via ref clears the visible field regardless, and runs
+  // twice (immediately + 300 ms) to catch browsers that autofill late.
   useEffect(() => {
     if (!idleSignOut) return;
-    const t = setTimeout(() => setInputsReady(true), 150);
+    const clear = () => {
+      if (emailRef.current) emailRef.current.value = "";
+      if (passwordRef.current) passwordRef.current.value = "";
+    };
+    clear();
+    const t = setTimeout(clear, 300);
     return () => clearTimeout(t);
   }, [idleSignOut]);
 
@@ -67,9 +73,9 @@ export function SignInForm({ reason }: { reason?: string }) {
           // "username" (the WHATWG-recommended token for a login identifier)
           // is what tells the browser this is the field to anchor its saved-
           // credentials dropdown to — pairs with "current-password" below.
+          ref={emailRef}
           autoComplete="username"
           placeholder="you@home.com"
-          readOnly={!inputsReady}
           value={email}
           onChange={(event) => setEmail(event.target.value)}
           required
@@ -84,8 +90,8 @@ export function SignInForm({ reason }: { reason?: string }) {
           // told the browser not to treat this as a fillable login field, so
           // it fell back to showing its account-picker on the password field
           // instead of the email field where it belongs.
+          ref={passwordRef}
           autoComplete="current-password"
-          readOnly={!inputsReady}
           value={password}
           onChange={(event) => setPassword(event.target.value)}
           required
