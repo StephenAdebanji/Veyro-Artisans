@@ -20,16 +20,19 @@ export function SignInForm({ reason }: { reason?: string }) {
   const idleSignOut = reason === "idle";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
-  // Browser autofill fires after React's initial render — useEffect clears
-  // whatever the browser injected when arriving from an idle sign-out.
-  useEffect(() => {
-    if (!idleSignOut) return;
-    setEmail("");
-    setPassword("");
-  }, [idleSignOut]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  // Chrome autofills inputs after React's render, so setting state to "" has
+  // no effect (no re-render when the value hasn't changed). The fix: start
+  // inputs as readOnly — Chrome skips autofill on readOnly — then flip them
+  // editable after a tick. inputsReady tracks when that flip happens.
+  const [inputsReady, setInputsReady] = useState(!idleSignOut);
+  useEffect(() => {
+    if (!idleSignOut) return;
+    const t = setTimeout(() => setInputsReady(true), 150);
+    return () => clearTimeout(t);
+  }, [idleSignOut]);
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -64,8 +67,9 @@ export function SignInForm({ reason }: { reason?: string }) {
           // "username" (the WHATWG-recommended token for a login identifier)
           // is what tells the browser this is the field to anchor its saved-
           // credentials dropdown to — pairs with "current-password" below.
-          autoComplete={idleSignOut ? "off" : "username"}
+          autoComplete="username"
           placeholder="you@home.com"
+          readOnly={!inputsReady}
           value={email}
           onChange={(event) => setEmail(event.target.value)}
           required
@@ -80,7 +84,8 @@ export function SignInForm({ reason }: { reason?: string }) {
           // told the browser not to treat this as a fillable login field, so
           // it fell back to showing its account-picker on the password field
           // instead of the email field where it belongs.
-          autoComplete={idleSignOut ? "off" : "current-password"}
+          autoComplete="current-password"
+          readOnly={!inputsReady}
           value={password}
           onChange={(event) => setPassword(event.target.value)}
           required
