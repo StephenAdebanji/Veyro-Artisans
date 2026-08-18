@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { getSession, signIn } from "next-auth/react";
@@ -15,10 +15,19 @@ const ROLE_REDIRECT: Record<string, string> = {
   ADMIN: "/admin/console",
 };
 
-export function SignInForm() {
+export function SignInForm({ reason }: { reason?: string }) {
   const router = useRouter();
+  const idleSignOut = reason === "idle";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+
+  // Browser autofill fires after React's initial render — useEffect clears
+  // whatever the browser injected when arriving from an idle sign-out.
+  useEffect(() => {
+    if (!idleSignOut) return;
+    setEmail("");
+    setPassword("");
+  }, [idleSignOut]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -55,7 +64,7 @@ export function SignInForm() {
           // "username" (the WHATWG-recommended token for a login identifier)
           // is what tells the browser this is the field to anchor its saved-
           // credentials dropdown to — pairs with "current-password" below.
-          autoComplete="username"
+          autoComplete={idleSignOut ? "off" : "username"}
           placeholder="you@home.com"
           value={email}
           onChange={(event) => setEmail(event.target.value)}
@@ -71,7 +80,7 @@ export function SignInForm() {
           // told the browser not to treat this as a fillable login field, so
           // it fell back to showing its account-picker on the password field
           // instead of the email field where it belongs.
-          autoComplete="current-password"
+          autoComplete={idleSignOut ? "off" : "current-password"}
           value={password}
           onChange={(event) => setPassword(event.target.value)}
           required

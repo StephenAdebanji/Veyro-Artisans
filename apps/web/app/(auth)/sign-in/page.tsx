@@ -22,7 +22,7 @@ export default async function SignInPage({
         </div>
       )}
       <IdleReasonBanner reason={params.reason} />
-      <SignInForm />
+      <SignInForm reason={params.reason} />
     </AuthLayout>
   );
 }
