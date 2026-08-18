@@ -8,9 +8,9 @@ export function IdleReasonBanner({ reason }: { reason?: string }) {
   const router = useRouter();
 
   useEffect(() => {
-    if (reason === "idle") {
-      router.replace("/sign-in");
-    }
+    if (reason !== "idle") return;
+    const t = setTimeout(() => router.replace("/sign-in"), 40_000);
+    return () => clearTimeout(t);
   }, [reason, router]);
 
   if (reason !== "idle") return null;
