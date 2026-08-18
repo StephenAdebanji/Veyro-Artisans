@@ -25,10 +25,8 @@ export function SignInForm({ reason }: { reason?: string }) {
   const emailRef = useRef<HTMLInputElement>(null);
   const passwordRef = useRef<HTMLInputElement>(null);
 
-  // Chrome autofills after React renders, and setting state to "" causes no
-  // re-render (value unchanged), so the browser-injected DOM value persists.
-  // Direct DOM mutation via ref clears the visible field regardless, and runs
-  // twice (immediately + 300 ms) to catch browsers that autofill late.
+  // Chrome runs multiple autofill passes — a single clear isn't enough.
+  // Poll every 500 ms for 5 s to override any late re-injection.
   useEffect(() => {
     if (!idleSignOut) return;
     const clear = () => {
@@ -36,8 +34,9 @@ export function SignInForm({ reason }: { reason?: string }) {
       if (passwordRef.current) passwordRef.current.value = "";
     };
     clear();
-    const t = setTimeout(clear, 300);
-    return () => clearTimeout(t);
+    const interval = setInterval(clear, 500);
+    const stop = setTimeout(() => clearInterval(interval), 5000);
+    return () => { clearInterval(interval); clearTimeout(stop); };
   }, [idleSignOut]);
 
   async function handleSubmit(event: React.FormEvent) {
@@ -74,7 +73,7 @@ export function SignInForm({ reason }: { reason?: string }) {
           // is what tells the browser this is the field to anchor its saved-
           // credentials dropdown to — pairs with "current-password" below.
           ref={emailRef}
-          autoComplete="username"
+          autoComplete={idleSignOut ? "off" : "username"}
           placeholder="you@home.com"
           value={email}
           onChange={(event) => setEmail(event.target.value)}
@@ -91,7 +90,7 @@ export function SignInForm({ reason }: { reason?: string }) {
           // it fell back to showing its account-picker on the password field
           // instead of the email field where it belongs.
           ref={passwordRef}
-          autoComplete="current-password"
+          autoComplete={idleSignOut ? "new-password" : "current-password"}
           value={password}
           onChange={(event) => setPassword(event.target.value)}
           required
