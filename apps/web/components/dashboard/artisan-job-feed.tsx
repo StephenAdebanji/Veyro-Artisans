@@ -56,11 +56,15 @@ export function ArtisanJobFeed({
   const [expiredNotice, setExpiredNotice] = useState<string | null>(null);
   const expiredNoticeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  function removeJob(jobId: string) {
+    setJobs((prev) => prev.filter((j) => j.id !== jobId));
+  }
+
   // The offer window closed out from under this row before the artisan
   // finished submitting — drop it and surface why, rather than leaving a
   // dead card or silently vanishing it with no explanation.
   function removeExpiredJob(jobId: string) {
-    setJobs((prev) => prev.filter((j) => j.id !== jobId));
+    removeJob(jobId);
     setExpiredNotice("That offer window closed. Keep an eye out — newer jobs show up here live.");
     if (expiredNoticeTimer.current) clearTimeout(expiredNoticeTimer.current);
     expiredNoticeTimer.current = setTimeout(() => setExpiredNotice(null), 6000);
@@ -204,6 +208,7 @@ export function ArtisanJobFeed({
             isInvited={invitedJobIds.has(job.id)}
             onSeen={() => markSeen(job.id)}
             onExpired={() => removeExpiredJob(job.id)}
+            onRemove={() => removeJob(job.id)}
           />
         ))
       )}

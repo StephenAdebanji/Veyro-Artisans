@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { CurrencyInput } from "@/components/ui/currency-input";
@@ -28,9 +28,12 @@ interface AvailableJobRowProps {
    * after the 10-minute window elapsed) — removes it from the feed entirely
    * rather than leaving a stale card, so newer jobs stay front and center. */
   onExpired?: () => void;
+  /** Called to remove this card from the feed — on successful offer submission,
+   * or after the 10-second error grace period for a cancelled request. */
+  onRemove?: () => void;
 }
 
-export function AvailableJobRow({ job, isNew, isInvited, onSeen, onExpired }: AvailableJobRowProps) {
+export function AvailableJobRow({ job, isNew, isInvited, onSeen, onExpired, onRemove }: AvailableJobRowProps) {
   const router = useRouter();
   const [expanded, setExpanded] = useState(false);
   const [price, setPrice] = useState("");
@@ -39,6 +42,9 @@ export function AvailableJobRow({ job, isNew, isInvited, onSeen, onExpired }: Av
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
   const [unavailable, setUnavailable] = useState(false);
+  const removeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => () => { if (removeTimer.current) clearTimeout(removeTimer.current); }, []);
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -58,6 +64,8 @@ export function AvailableJobRow({ job, isNew, isInvited, onSeen, onExpired }: Av
       setSent(true);
       onSeen?.();
       router.refresh();
+      // Remove the card immediately — the artisan already acted on it.
+      onRemove?.();
     } catch (err) {
       const message = err instanceof Error ? err.message : "Could not send your offer.";
       if (err instanceof ApiRequestError && err.status === 409 && message.toLowerCase().includes("offer window")) {
@@ -68,6 +76,8 @@ export function AvailableJobRow({ job, isNew, isInvited, onSeen, onExpired }: Av
       if (err instanceof ApiRequestError && err.status === 409) {
         setUnavailable(true);
         setExpanded(false);
+        // Auto-remove after 10 s so the stale card doesn't linger.
+        removeTimer.current = setTimeout(() => onRemove?.(), 10_000);
       }
     } finally {
       setLoading(false);
