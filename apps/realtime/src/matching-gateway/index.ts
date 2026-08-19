@@ -87,4 +87,13 @@ export function registerMatchingGateway(io: Server, app: Application): void {
     namespace.to(`user:${artisanUserId}`).emit("offer:declined", payload);
     res.json({ ok: true });
   });
+
+  // Called by apps/web when a homeowner cancels their service request —
+  // broadcasts to all artisans in the skill room so any open job cards for
+  // this request disappear immediately without a page refresh.
+  app.post("/internal/matching/broadcast-cancel", (req: Request, res: Response) => {
+    const { serviceRequestId, category } = req.body as { serviceRequestId: string; category: string };
+    namespace.to(`skill:${category}`).emit("job:cancelled", { serviceRequestId });
+    res.json({ ok: true });
+  });
 }

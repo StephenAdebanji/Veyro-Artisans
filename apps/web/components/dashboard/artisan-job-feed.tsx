@@ -153,6 +153,11 @@ export function ArtisanJobFeed({
       // A homeowner picked this artisan specifically from the AI panel — show
       // it even if it's outside their usual radius, since they were chosen
       // deliberately rather than matched by the generic broadcast.
+      socket.on("job:cancelled", ({ serviceRequestId }: { serviceRequestId: string }) => {
+        if (!mounted) return;
+        removeJob(serviceRequestId);
+      });
+
       socket.on("job:invited", (job: IncomingJob) => {
         if (!mounted) return;
 
