@@ -204,7 +204,9 @@ export const matchingRepository = {
     return prisma.serviceRequest.findMany({
       where: {
         category,
-        status: "SEARCHING",
+        // MATCHED means at least one offer arrived — still open for more bids
+        // until the homeowner explicitly accepts one.
+        status: { in: ["SEARCHING", "MATCHED"] },
         createdAt: { gte: windowStart },
         // Exclude only if artisan has an active (non-declined) match — DECLINED means they can re-offer.
         matches: { none: { artisanId: excludeArtisanId, status: { in: ["PENDING", "ACCEPTED", "EXPIRED"] } } },

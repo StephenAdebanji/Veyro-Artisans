@@ -43,5 +43,12 @@ export const POST = withApiErrorHandling(async (_req: Request, { params }: { par
     body: JSON.stringify({ matchId, decision: "ACCEPT", jobId, artisanId: match.artisanId, artisanPhone }),
   }).catch(() => {});
 
+  // Remove the card from every other artisan's live feed — the job is taken.
+  fetch(`${REALTIME_URL}/internal/matching/broadcast-cancel`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ serviceRequestId: serviceRequest.id, category: serviceRequest.category }),
+  }).catch(() => {});
+
   return NextResponse.json({ jobId, artisanId: match.artisanId, artisanPhone });
 });
