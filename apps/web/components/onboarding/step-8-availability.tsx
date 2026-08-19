@@ -37,9 +37,13 @@ export function Step8Availability() {
   }, [workingDays, startTime, endTime, emergencyAvailable]);
 
   function toggleDay(day: string) {
-    setWorkingDays((current) =>
-      current.includes(day) ? current.filter((value) => value !== day) : [...current, day],
-    );
+    setWorkingDays((current) => {
+      if (current.includes(day)) {
+        if (current.length === 1) return current; // keep at least one
+        return current.filter((value) => value !== day);
+      }
+      return [...current, day];
+    });
   }
 
   async function handleSubmit(event: React.FormEvent) {
@@ -80,6 +84,9 @@ export function Step8Availability() {
             </label>
           ))}
         </div>
+        {workingDays.length === 0 && (
+          <p className="text-sm text-destructive">Select at least one working day.</p>
+        )}
       </div>
 
       <div className="mt-4 grid grid-cols-2 gap-4">
