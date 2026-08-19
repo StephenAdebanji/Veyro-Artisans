@@ -180,7 +180,7 @@ export interface MatchingServicePort {
   countActiveJobsForArtisan(artisanId: string): Promise<number>;
   /** Backs the artisan dashboard's Reputation panel. */
   countDisputesForArtisan(artisanId: string): Promise<number>;
-  cancelServiceRequest(serviceRequestId: string, homeownerId: string): Promise<void>;
+  cancelServiceRequest(serviceRequestId: string, homeownerId: string): Promise<{ category: string }>;
   listJobsHistoryForArtisan(artisanId: string): Promise<JobHistoryItem[]>;
   listJobsHistoryForHomeowner(homeownerId: string): Promise<JobHistoryItem[]>;
   listAllJobsHistory(): Promise<JobHistoryItem[]>;
