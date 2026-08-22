@@ -14,7 +14,7 @@ export default async function AdminUsersPage() {
     userRepository.listAllHomeowners(),
   ]);
 
-  const withDates: { row: CombinedUserRow; createdAt: Date }[] = [
+  const withDates = [
     ...admins.map((a) => ({
       row: {
         kind: "admin" as const,
