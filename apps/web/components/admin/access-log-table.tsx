@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { TablePagination, PAGE_SIZE } from "@/components/shared/table-pagination";
 import { Eye, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -45,8 +46,13 @@ export function AccessLogTable({ entries }: { entries: AccessLogRow[] }) {
   const [selected, setSelected] = useState<AccessLogRow | null>(null);
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
+  const [page, setPage] = useState(1);
 
-  const rows = useMemo(() => {
+  function setFrom(v: string) { setFromDate(v); setPage(1); }
+  function setTo(v: string) { setToDate(v); setPage(1); }
+  function clearDates() { setFromDate(""); setToDate(""); setPage(1); }
+
+  const filtered = useMemo(() => {
     if (!fromDate && !toDate) return entries;
     // Date inputs are local-time "YYYY-MM-DD" with no time component — treat
     // `from` as the start of that day and `to` as the end of that day so the
@@ -60,6 +66,11 @@ export function AccessLogTable({ entries }: { entries: AccessLogRow[] }) {
       return true;
     });
   }, [entries, fromDate, toDate]);
+
+  const rows = useMemo(
+    () => filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
+    [filtered, page],
+  );
 
   if (entries.length === 0) {
     return <p className="p-6 text-sm text-muted-foreground">No admin actions logged yet.</p>;
@@ -75,7 +86,7 @@ export function AccessLogTable({ entries }: { entries: AccessLogRow[] }) {
             type="date"
             value={fromDate}
             max={toDate || undefined}
-            onChange={(e) => setFromDate(e.target.value)}
+            onChange={(e) => setFrom(e.target.value)}
             className="w-auto"
           />
         </div>
@@ -86,7 +97,7 @@ export function AccessLogTable({ entries }: { entries: AccessLogRow[] }) {
             type="date"
             value={toDate}
             min={fromDate || undefined}
-            onChange={(e) => setToDate(e.target.value)}
+            onChange={(e) => setTo(e.target.value)}
             className="w-auto"
           />
         </div>
@@ -96,13 +107,13 @@ export function AccessLogTable({ entries }: { entries: AccessLogRow[] }) {
             variant="ghost"
             size="sm"
             className="h-8 gap-1 text-xs text-muted-foreground"
-            onClick={() => { setFromDate(""); setToDate(""); }}
+            onClick={clearDates}
           >
             <X className="h-3.5 w-3.5" /> Clear
           </Button>
         )}
         <p className="ml-auto text-xs text-muted-foreground">
-          {rows.length} of {entries.length} {entries.length === 1 ? "entry" : "entries"}
+          {filtered.length} of {entries.length} {entries.length === 1 ? "entry" : "entries"}
         </p>
       </div>
 
@@ -152,6 +163,8 @@ export function AccessLogTable({ entries }: { entries: AccessLogRow[] }) {
           )}
         </tbody>
       </table>
+
+      <TablePagination total={filtered.length} page={page} onPage={setPage} />
 
       <Dialog open={selected !== null} onOpenChange={(open) => { if (!open) setSelected(null); }}>
         <DialogContent className="max-w-md">

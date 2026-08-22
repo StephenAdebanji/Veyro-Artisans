@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
+import { TablePagination, PAGE_SIZE } from "@/components/shared/table-pagination";
 import Link from "next/link";
 import { Eye, Pencil, Trash2, ShieldOff, ShieldCheck, KeyRound, Search } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -211,12 +212,18 @@ function HomeownerActionRow({
 export function HomeownersTable({ initialRows }: { initialRows: HomeownerRow[] }) {
   const [allRows, setAllRows] = useState(initialRows);
   const [query, setQuery] = useState("");
+  const [page, setPage] = useState(1);
 
   function handleDeleted(id: string) {
     setAllRows((prev) => prev.filter((r) => r.id !== id));
   }
 
-  const rows = useMemo(() => {
+  function handleSearch(q: string) {
+    setQuery(q);
+    setPage(1);
+  }
+
+  const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return allRows;
     return allRows.filter((row) => {
@@ -224,6 +231,11 @@ export function HomeownersTable({ initialRows }: { initialRows: HomeownerRow[] }
       return name.includes(q) || row.user.email.toLowerCase().includes(q);
     });
   }, [allRows, query]);
+
+  const rows = useMemo(
+    () => filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
+    [filtered, page],
+  );
 
   if (allRows.length === 0) {
     return <p className="p-6 text-sm text-muted-foreground">No homeowners registered yet.</p>;
@@ -239,7 +251,7 @@ export function HomeownersTable({ initialRows }: { initialRows: HomeownerRow[] }
           <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) => handleSearch(e.target.value)}
             placeholder="Search by name or email…"
             className="pl-8"
           />
@@ -267,12 +279,18 @@ export function HomeownersTable({ initialRows }: { initialRows: HomeownerRow[] }
               </tr>
             ) : (
               rows.map((row, i) => (
-                <HomeownerActionRow key={row.id} row={row} index={i + 1} onDeleted={handleDeleted} />
+                <HomeownerActionRow
+                  key={row.id}
+                  row={row}
+                  index={(page - 1) * PAGE_SIZE + i + 1}
+                  onDeleted={handleDeleted}
+                />
               ))
             )}
           </tbody>
         </table>
       </div>
+      <TablePagination total={filtered.length} page={page} onPage={setPage} />
     </div>
   );
 }

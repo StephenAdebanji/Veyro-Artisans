@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { TablePagination, PAGE_SIZE } from "@/components/shared/table-pagination";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Eye } from "lucide-react";
@@ -51,12 +52,20 @@ export function HistoryClient({
 }) {
   const [tab, setTab] = useState<Tab>(defaultTab);
   const [selected, setSelected] = useState<HistoryRow | null>(null);
+  const [page, setPage] = useState(1);
 
-  const filtered = jobs.filter((j) => {
+  function handleTab(t: Tab) { setTab(t); setPage(1); }
+
+  const filtered = useMemo(() => jobs.filter((j) => {
     if (tab === "active") return j.status === "ACTIVE" || j.status === "IN_PROGRESS";
     if (tab === "completed") return j.status === "COMPLETED";
     return true;
-  });
+  }), [jobs, tab]);
+
+  const pageRows = useMemo(
+    () => filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
+    [filtered, page],
+  );
 
   const tabs: { key: Tab; label: string }[] = [
     { key: "all", label: "All" },
@@ -78,7 +87,7 @@ export function HistoryClient({
           return (
             <button
               key={key}
-              onClick={() => setTab(key)}
+              onClick={() => handleTab(key)}
               className={`-mb-px border-b-2 px-4 py-2 text-sm font-medium transition-colors ${
                 tab === key
                   ? "border-primary text-primary"
@@ -111,7 +120,7 @@ export function HistoryClient({
               </tr>
             </thead>
             <tbody>
-              {filtered.map((job) => (
+              {pageRows.map((job) => (
                 <tr
                   key={job.jobId}
                   className="border-b last:border-b-0 transition-colors hover:bg-muted/40"
@@ -151,6 +160,7 @@ export function HistoryClient({
               ))}
             </tbody>
           </table>
+          <TablePagination total={filtered.length} page={page} onPage={setPage} />
         </div>
       )}
 
