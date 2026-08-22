@@ -12,7 +12,7 @@ export interface AuthenticatedUser {
   email: string;
   name?: string | null;
   role: Role;
-  status: "ACTIVE" | "SUSPENDED";
+  status: "ACTIVE" | "SUSPENDED" | "DELETED";
 }
 
 export interface AdminActionLogEntry {
@@ -32,7 +32,7 @@ export interface UserExport {
   name: string | null;
   phone: string | null;
   role: Role;
-  status: "ACTIVE" | "SUSPENDED";
+  status: "ACTIVE" | "SUSPENDED" | "DELETED";
   createdAt: string;
   updatedAt: string;
 }
