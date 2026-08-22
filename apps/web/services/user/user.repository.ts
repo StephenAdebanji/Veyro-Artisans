@@ -134,14 +134,14 @@ export const userRepository = {
 
   async listAllArtisans() {
     return prisma.artisanProfile.findMany({
-      include: { availability: true, portfolio: true, user: { select: { email: true, status: true, role: true, createdAt: true } } },
+      include: { availability: true, portfolio: true, user: { select: { email: true, status: true, role: true, createdAt: true, deleteReason: true } } },
       orderBy: { createdAt: "desc" },
     });
   },
 
   async listAllHomeowners() {
     return prisma.homeownerProfile.findMany({
-      include: { user: { select: { email: true, status: true, role: true, createdAt: true } } },
+      include: { user: { select: { email: true, status: true, role: true, createdAt: true, deleteReason: true } } },
       orderBy: { createdAt: "desc" },
     });
   },
@@ -149,14 +149,14 @@ export const userRepository = {
   async findArtisanProfileFull(artisanId: string) {
     return prisma.artisanProfile.findUnique({
       where: { id: artisanId },
-      include: { availability: true, portfolio: true, user: { select: { email: true, status: true, role: true, createdAt: true } } },
+      include: { availability: true, portfolio: true, user: { select: { email: true, status: true, role: true, createdAt: true, deleteReason: true } } },
     });
   },
 
   async findHomeownerProfileFull(homeownerId: string) {
     return prisma.homeownerProfile.findUnique({
       where: { id: homeownerId },
-      include: { user: { select: { email: true, status: true, role: true, createdAt: true } } },
+      include: { user: { select: { email: true, status: true, role: true, createdAt: true, deleteReason: true } } },
     });
   },
 
@@ -168,16 +168,24 @@ export const userRepository = {
     return prisma.user.update({ where: { id: userId }, data: { status: "ACTIVE" } });
   },
 
-  async deleteArtisan(artisanId: string) {
+  async deleteArtisan(artisanId: string, reason: string) {
     const profile = await prisma.artisanProfile.findUnique({ where: { id: artisanId }, select: { userId: true } });
-    if (profile) await prisma.user.update({ where: { id: profile.userId }, data: { status: "SUSPENDED" } });
-    await prisma.artisanProfile.delete({ where: { id: artisanId } });
+    if (profile) {
+      await prisma.user.update({
+        where: { id: profile.userId },
+        data: { status: "DELETED", deleteReason: reason },
+      });
+    }
   },
 
-  async deleteHomeowner(homeownerId: string) {
+  async deleteHomeowner(homeownerId: string, reason: string) {
     const profile = await prisma.homeownerProfile.findUnique({ where: { id: homeownerId }, select: { userId: true } });
-    if (profile) await prisma.user.update({ where: { id: profile.userId }, data: { status: "SUSPENDED" } });
-    await prisma.homeownerProfile.delete({ where: { id: homeownerId } });
+    if (profile) {
+      await prisma.user.update({
+        where: { id: profile.userId },
+        data: { status: "DELETED", deleteReason: reason },
+      });
+    }
   },
 
   async updateUserPhoneByArtisanId(artisanId: string, phone: string) {

@@ -9,7 +9,8 @@ import { ResetPasswordTrigger } from "@/components/admin/reset-password-trigger"
 
 const STATUS_STYLE: Record<string, string> = {
   ACTIVE: "bg-emerald-100 text-emerald-700",
-  SUSPENDED: "bg-red-100 text-red-700",
+  SUSPENDED: "bg-amber-100 text-amber-700",
+  DELETED: "bg-red-100 text-red-700",
 };
 
 const ROLE_STYLE: Record<string, string> = {
@@ -31,11 +32,18 @@ export default async function AdminHomeownerDetailPage({
   const [{ id }, { from }] = await Promise.all([params, searchParams]);
   const homeowner = await userRepository.findHomeownerProfileFull(id);
   if (!homeowner) notFound();
+  const deleteReason = homeowner.user.deleteReason ?? null;
 
   const location = [homeowner.address, homeowner.city, homeowner.state, homeowner.country].filter(Boolean).join(", ");
 
   return (
     <main className="mx-auto max-w-2xl flex-1 px-6 py-10">
+      {homeowner.user.status === "DELETED" && (
+        <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-800">
+          <p className="font-semibold">This account has been deleted.</p>
+          {deleteReason && <p className="mt-1 text-red-700">Reason: {deleteReason}</p>}
+        </div>
+      )}
       <div className="mb-6 flex items-center justify-between">
         <Link
           href={from === "users" ? "/admin/users" : "/admin/homeowners"}

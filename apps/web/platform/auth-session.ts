@@ -54,7 +54,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       // Returning null from the jwt callback invalidates the JWT in NextAuth v5.
       if (!user && token.sub) {
         const dbUser = await authService.getUserById(token.sub);
-        if (!dbUser || (dbUser as { status?: string }).status === "SUSPENDED") {
+        const s = (dbUser as { status?: string } | undefined)?.status;
+        if (!dbUser || s === "SUSPENDED" || s === "DELETED") {
           return null;
         }
       }

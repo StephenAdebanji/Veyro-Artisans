@@ -17,6 +17,7 @@ export default async function AdminArtisansPage() {
           ...a,
           profilePhotoUrl: a.profilePhotoUrl ?? null,
           createdAt: a.user.createdAt.toISOString(),
+          user: { ...a.user, deleteReason: a.user.deleteReason ?? null },
         }))} />
       </div>
     </main>

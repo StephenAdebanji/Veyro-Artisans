@@ -83,10 +83,12 @@ export const PUT = withApiErrorHandling(async (req: Request, { params }: { param
   return NextResponse.json({ ok: true });
 });
 
-export const DELETE = withApiErrorHandling(async (_req: Request, { params }: { params: Promise<{ id: string }> }) => {
+export const DELETE = withApiErrorHandling(async (req: Request, { params }: { params: Promise<{ id: string }> }) => {
   if (!(await requireAdmin())) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { id } = await params;
-  await userRepository.deleteArtisan(id);
+  const body = await req.json().catch(() => ({})) as { reason?: string };
+  const reason = typeof body.reason === "string" && body.reason.trim() ? body.reason.trim() : "No reason provided";
+  await userRepository.deleteArtisan(id, reason);
   revalidatePath("/admin", "layout");
   return NextResponse.json({ ok: true });
 });

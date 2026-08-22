@@ -13,7 +13,12 @@ export default async function AdminHomeownersPage() {
     <main className="flex-1 px-6 py-10">
       <h1 className="text-2xl font-bold">Homeowners</h1>
       <div className="mt-6 rounded-xl border bg-card">
-        <HomeownersTable initialRows={homeowners.map((h) => ({ ...h, profilePhotoUrl: h.profilePhotoUrl ?? null, createdAt: h.user.createdAt.toISOString() }))} />
+        <HomeownersTable initialRows={homeowners.map((h) => ({
+          ...h,
+          profilePhotoUrl: h.profilePhotoUrl ?? null,
+          createdAt: h.user.createdAt.toISOString(),
+          user: { ...h.user, deleteReason: h.user.deleteReason ?? null },
+        }))} />
       </div>
     </main>
   );

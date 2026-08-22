@@ -21,7 +21,8 @@ const VERIFICATION_STYLE: Record<string, string> = {
 
 const STATUS_STYLE: Record<string, string> = {
   ACTIVE: "bg-emerald-100 text-emerald-700",
-  SUSPENDED: "bg-red-100 text-red-700",
+  SUSPENDED: "bg-amber-100 text-amber-700",
+  DELETED: "bg-red-100 text-red-700",
 };
 
 const EXPERIENCE_LABELS: Record<string, string> = {
@@ -44,6 +45,7 @@ export default async function AdminArtisanDetailPage({
   const [{ id }, { from }] = await Promise.all([params, searchParams]);
   const artisan = await userRepository.findArtisanProfileFull(id);
   if (!artisan) notFound();
+  const deleteReason = artisan.user.deleteReason ?? null;
 
   // Fetch credentials from trust schema.
   const credentials = await prisma.credential.findMany({
@@ -64,6 +66,12 @@ export default async function AdminArtisanDetailPage({
 
   return (
     <main className="mx-auto max-w-3xl flex-1 px-6 py-10">
+      {artisan.user.status === "DELETED" && (
+        <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-800">
+          <p className="font-semibold">This account has been deleted.</p>
+          {deleteReason && <p className="mt-1 text-red-700">Reason: {deleteReason}</p>}
+        </div>
+      )}
       <div className="mb-6 flex items-center justify-between">
         <Link
           href={from === "verifications" ? "/admin/verifications" : from === "users" ? "/admin/users" : "/admin/artisans"}

@@ -45,20 +45,22 @@ enum Role {
 enum UserStatus {
   ACTIVE
   SUSPENDED
+  DELETED
 
   @@schema("auth")
 }
 
 model User {
-  id           String     @id @default(uuid())
-  email        String     @unique
-  name         String?
-  phone        String?    @unique
-  passwordHash String
-  role         Role
-  status       UserStatus @default(ACTIVE)
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
+  id            String     @id @default(uuid())
+  email         String     @unique
+  name          String?
+  phone         String?    @unique
+  passwordHash  String
+  role          Role
+  status        UserStatus @default(ACTIVE)
+  deleteReason  String?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
 
   adminActions        AdminActionLog[]     @relation("AdminActor")
   homeownerProfile    HomeownerProfile?

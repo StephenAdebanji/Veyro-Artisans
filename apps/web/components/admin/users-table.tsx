@@ -22,6 +22,7 @@ type ArtisanCombinedRow = {
   email: string;
   role: string;
   status: string;
+  deleteReason: string | null;
   primarySkill: string | null;
   location: string;
   profilePhotoUrl: string | null;
@@ -35,6 +36,7 @@ type HomeownerCombinedRow = {
   email: string;
   role: string;
   status: string;
+  deleteReason: string | null;
   location: string;
   profilePhotoUrl: string | null;
   createdAt: string;
@@ -47,6 +49,7 @@ type AdminCombinedRow = {
   email: string;
   role: string;
   status: string;
+  deleteReason: string | null;
   location: string;
   createdAt: string;
 };
@@ -61,7 +64,8 @@ const ROLE_STYLE: Record<string, string> = {
 
 const STATUS_STYLE: Record<string, string> = {
   ACTIVE: "bg-emerald-100 text-emerald-700",
-  SUSPENDED: "bg-red-100 text-red-700",
+  SUSPENDED: "bg-amber-100 text-amber-700",
+  DELETED: "bg-red-100 text-red-700",
 };
 
 function displayName(row: CombinedUserRow): string {
@@ -87,8 +91,10 @@ function UserActionRow({
   const [editOpen, setEditOpen] = useState(false);
   const [resetOpen, setResetOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleteReason, setDeleteReason] = useState("");
   const [actionError, setActionError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  const isDeleted = data.status === "DELETED";
 
   const apiBase = data.kind === "artisan" ? "artisans" : data.kind === "homeowner" ? "homeowners" : null;
   const name = displayName(data);
@@ -121,12 +127,14 @@ function UserActionRow({
     if (!apiBase) return;
     startTransition(async () => {
       try {
-        await apiFetch(`/api/admin/${apiBase}/${data.id}`, { method: "DELETE" });
+        await apiFetch(`/api/admin/${apiBase}/${data.id}`, {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ reason: deleteReason }),
+        });
         setConfirmDelete(false);
-        // Let the dialog's exit animation finish before the row (and dialog) unmount,
-        // otherwise the fixed full-screen overlay can be orphaned mid-fade and swallow
-        // the next click on the page.
-        setTimeout(() => onDeleted(data.kind, data.id), 200);
+        setDeleteReason("");
+        setData((prev) => ({ ...prev, status: "DELETED", deleteReason: deleteReason.trim() }));
       } catch (err) {
         setConfirmDelete(false);
         setActionError(err instanceof Error ? err.message : "Could not delete user.");
@@ -139,13 +147,22 @@ function UserActionRow({
       <ConfirmDialog
         open={confirmDelete}
         title={`Delete ${data.kind === "artisan" ? "artisan" : "homeowner"}`}
-        description={`Delete ${name}? Their account will be suspended and this cannot be undone.`}
+        description={`This will permanently deactivate ${name}'s account. Please provide a reason.`}
         confirmLabel="Delete"
         destructive
         loading={pending}
+        confirmDisabled={!deleteReason.trim()}
         onConfirm={handleDelete}
-        onCancel={() => setConfirmDelete(false)}
-      />
+        onCancel={() => { setConfirmDelete(false); setDeleteReason(""); }}
+      >
+        <textarea
+          className="w-full rounded-md border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+          rows={3}
+          placeholder="Reason for deletion…"
+          value={deleteReason}
+          onChange={(e) => setDeleteReason(e.target.value)}
+        />
+      </ConfirmDialog>
 
       <tr className="border-b last:border-b-0 hover:bg-muted/30">
         <td className="py-3 pl-4 pr-4 text-sm text-muted-foreground">{index}</td>
@@ -180,45 +197,49 @@ function UserActionRow({
                     </Button>
                   </Link>
                 )}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-7 gap-1 text-xs text-primary"
-                  onClick={() => setEditOpen(true)}
-                >
-                  <Pencil className="h-3.5 w-3.5" /> Edit
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-7 gap-1 text-xs text-primary"
-                  onClick={() => setResetOpen(true)}
-                >
-                  <KeyRound className="h-3.5 w-3.5" /> Reset password
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className={`h-7 gap-1 text-xs ${data.status === "SUSPENDED" ? "text-emerald-600" : "text-amber-600"}`}
-                  disabled={pending}
-                  onClick={toggleSuspend}
-                >
-                  {data.status === "SUSPENDED" ? (
-                    <><ShieldCheck className="h-3.5 w-3.5" /> Activate</>
-                  ) : (
-                    <><ShieldOff className="h-3.5 w-3.5" /> Suspend</>
-                  )}
-                </Button>
-                {data.role !== "ADMIN" && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-7 gap-1 text-xs text-destructive hover:text-destructive"
-                    disabled={pending}
-                    onClick={() => setConfirmDelete(true)}
-                  >
-                    <Trash2 className="h-3.5 w-3.5" /> Delete
-                  </Button>
+                {!isDeleted && (
+                  <>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 gap-1 text-xs text-primary"
+                      onClick={() => setEditOpen(true)}
+                    >
+                      <Pencil className="h-3.5 w-3.5" /> Edit
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 gap-1 text-xs text-primary"
+                      onClick={() => setResetOpen(true)}
+                    >
+                      <KeyRound className="h-3.5 w-3.5" /> Reset password
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className={`h-7 gap-1 text-xs ${data.status === "SUSPENDED" ? "text-emerald-600" : "text-amber-600"}`}
+                      disabled={pending}
+                      onClick={toggleSuspend}
+                    >
+                      {data.status === "SUSPENDED" ? (
+                        <><ShieldCheck className="h-3.5 w-3.5" /> Activate</>
+                      ) : (
+                        <><ShieldOff className="h-3.5 w-3.5" /> Suspend</>
+                      )}
+                    </Button>
+                    {data.role !== "ADMIN" && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 gap-1 text-xs text-destructive hover:text-destructive"
+                        disabled={pending}
+                        onClick={() => setConfirmDelete(true)}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" /> Delete
+                      </Button>
+                    )}
+                  </>
                 )}
               </>
             )}
