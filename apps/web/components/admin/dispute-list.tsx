@@ -1,9 +1,16 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { AlertTriangle, CheckCircle2, Loader2, Mail, User, Clock, FileText } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Loader2, Mail, User, Clock, FileText, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { apiFetch } from "@/lib/api-client";
 
 export interface DisputeItem {
@@ -29,6 +36,12 @@ const ROLE_STYLE: Record<string, string> = {
   HOMEOWNER: "bg-sky-100 text-sky-700",
 };
 
+const STATUS_STYLE: Record<string, string> = {
+  OPEN:      "bg-amber-100 text-amber-700",
+  RESOLVED:  "bg-emerald-100 text-emerald-700",
+  ESCALATED: "bg-destructive/10 text-destructive",
+};
+
 function formatDateTime(iso: string) {
   return new Date(iso).toLocaleString("en-NG", {
     day: "2-digit",
@@ -38,6 +51,61 @@ function formatDateTime(iso: string) {
     minute: "2-digit",
     hour12: true,
   });
+}
+
+function DetailRow({ label, value, mono }: { label: string; value: React.ReactNode; mono?: boolean }) {
+  return (
+    <div className="grid grid-cols-3 gap-3 border-b py-2 text-sm last:border-b-0">
+      <span className="text-muted-foreground">{label}</span>
+      <span className={`col-span-2 break-all font-medium ${mono ? "font-mono text-xs" : ""}`}>{value}</span>
+    </div>
+  );
+}
+
+function DisputeDetailModal({ item, onClose }: { item: DisputeItem; onClose: () => void }) {
+  const displayName = item.raisedByName ?? `User ${item.raisedBy.slice(0, 8)}…`;
+  return (
+    <Dialog open onOpenChange={(v) => { if (!v) onClose(); }}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Dispute details</DialogTitle>
+        </DialogHeader>
+        <div className="flex flex-col">
+          <DetailRow label="Status" value={
+            <Badge className={`text-xs ${STATUS_STYLE[item.status] ?? "bg-muted text-muted-foreground"}`}>
+              {item.status}
+            </Badge>
+          } />
+          <DetailRow label="Raised by" value={
+            <span className="flex flex-col gap-0.5">
+              <span>{displayName}</span>
+              {item.raisedByRole && (
+                <Badge className={`w-fit text-[10px] ${ROLE_STYLE[item.raisedByRole] ?? "bg-muted text-muted-foreground"}`}>
+                  {item.raisedByRole.charAt(0) + item.raisedByRole.slice(1).toLowerCase()}
+                </Badge>
+              )}
+              {item.raisedByEmail && (
+                <a href={`mailto:${item.raisedByEmail}`} className="text-xs text-primary hover:underline">
+                  {item.raisedByEmail}
+                </a>
+              )}
+            </span>
+          } />
+          <DetailRow label="Reason" value={item.reason} />
+          <DetailRow label="Job" value={item.jobId || "—"} mono={!!item.jobId} />
+          {item.agreedPrice !== null && (
+            <DetailRow label="Agreed price" value={`₦${item.agreedPrice.toLocaleString()}`} />
+          )}
+          {item.artisanId && <DetailRow label="Artisan ID" value={item.artisanId} mono />}
+          {item.homeownerId && <DetailRow label="Homeowner ID" value={item.homeownerId} mono />}
+          <DetailRow label="Resolution" value={item.resolution ?? <span className="italic text-muted-foreground font-normal">Not yet resolved</span>} />
+          <DetailRow label="Logged" value={formatDateTime(item.createdAt)} />
+          <DetailRow label="Resolved" value={item.resolvedAt ? formatDateTime(item.resolvedAt) : <span className="italic text-muted-foreground font-normal">—</span>} />
+        </div>
+        <DialogFooter showCloseButton />
+      </DialogContent>
+    </Dialog>
+  );
 }
 
 function DisputeRow({
@@ -50,6 +118,7 @@ function DisputeRow({
   const [pending, startTransition] = useTransition();
   const [resolution, setResolution] = useState("");
   const [expanded, setExpanded] = useState(false);
+  const [viewOpen, setViewOpen] = useState(false);
   const [done, setDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -59,100 +128,114 @@ function DisputeRow({
   const role = item.raisedByRole;
 
   return (
-    <li className="rounded-xl border bg-card">
-      <div
-        className="flex cursor-pointer flex-wrap items-start justify-between gap-3 p-4"
-        onClick={() => setExpanded((v) => !v)}
-        role="button"
-        tabIndex={0}
-        onKeyDown={(e) => e.key === "Enter" && setExpanded((v) => !v)}
-      >
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="flex items-center gap-1.5">
-              <User className="h-3.5 w-3.5 text-muted-foreground" />
-              <span className="text-sm font-semibold">{displayName}</span>
-            </div>
-            {role && (
-              <Badge className={`text-[10px] ${ROLE_STYLE[role] ?? "bg-muted text-muted-foreground"}`}>
-                {role.charAt(0) + role.slice(1).toLowerCase()}
+    <>
+      {viewOpen && <DisputeDetailModal item={item} onClose={() => setViewOpen(false)} />}
+      <li className="rounded-xl border bg-card">
+        <div
+          className="flex cursor-pointer flex-wrap items-start justify-between gap-3 p-4"
+          onClick={() => setExpanded((v) => !v)}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => e.key === "Enter" && setExpanded((v) => !v)}
+        >
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="flex items-center gap-1.5">
+                <User className="h-3.5 w-3.5 text-muted-foreground" />
+                <span className="text-sm font-semibold">{displayName}</span>
+              </div>
+              {role && (
+                <Badge className={`text-[10px] ${ROLE_STYLE[role] ?? "bg-muted text-muted-foreground"}`}>
+                  {role.charAt(0) + role.slice(1).toLowerCase()}
+                </Badge>
+              )}
+              <Badge variant="destructive" className="text-[10px]">
+                {item.status}
               </Badge>
+            </div>
+
+            {item.raisedByEmail && (
+              <a
+                href={`mailto:${item.raisedByEmail}`}
+                className="mt-0.5 flex items-center gap-1 text-xs text-primary hover:underline"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <Mail className="h-3 w-3" />
+                {item.raisedByEmail}
+              </a>
             )}
-            <Badge variant="destructive" className="text-[10px]">
-              {item.status}
-            </Badge>
+
+            <p className="mt-2 text-sm font-medium line-clamp-2">{item.reason}</p>
+
+            <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
+              {item.jobId ? (
+                <span>Job <span className="font-mono">{item.jobId.slice(0, 10)}…</span></span>
+              ) : (
+                <span className="italic">General dispute (no job)</span>
+              )}
+              {item.agreedPrice !== null && (
+                <span>₦{item.agreedPrice.toLocaleString()}</span>
+              )}
+              <span>{formatDateTime(item.createdAt)}</span>
+            </div>
           </div>
-
-          {item.raisedByEmail && (
-            <a
-              href={`mailto:${item.raisedByEmail}`}
-              className="mt-0.5 flex items-center gap-1 text-xs text-primary hover:underline"
-              onClick={(e) => e.stopPropagation()}
+          <div className="flex shrink-0 flex-col items-end gap-1">
+            <button
+              className="text-xs text-primary"
+              onClick={(e) => { e.stopPropagation(); setViewOpen(true); }}
+              type="button"
             >
-              <Mail className="h-3 w-3" />
-              {item.raisedByEmail}
-            </a>
-          )}
-
-          <p className="mt-2 text-sm font-medium line-clamp-2">{item.reason}</p>
-
-          <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
-            {item.jobId ? (
-              <span>Job <span className="font-mono">{item.jobId.slice(0, 10)}…</span></span>
-            ) : (
-              <span className="italic">General dispute (no job)</span>
-            )}
-            {item.agreedPrice !== null && (
-              <span>₦{item.agreedPrice.toLocaleString()}</span>
-            )}
-            <span>{formatDateTime(item.createdAt)}</span>
+              <Eye className="inline h-3.5 w-3.5 mr-1" />View
+            </button>
+            <span className="text-xs text-muted-foreground">{expanded ? "▲ Collapse" : "▼ Resolve"}</span>
           </div>
         </div>
-        <span className="shrink-0 text-xs text-primary">{expanded ? "▲ Collapse" : "▼ Resolve"}</span>
-      </div>
 
-      {expanded && (
-        <div className="border-t px-4 pb-4 pt-3">
-          <textarea
-            className="w-full rounded-md border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-            rows={3}
-            placeholder="Enter resolution notes…"
-            value={resolution}
-            onChange={(e) => setResolution(e.target.value)}
-          />
-          <div className="mt-2 flex justify-end">
-            <Button
-              size="sm"
-              disabled={pending || !resolution.trim()}
-              onClick={() =>
-                startTransition(async () => {
-                  setError(null);
-                  try {
-                    await apiFetch(`/api/admin/disputes/${item.id}`, {
-                      method: "PATCH",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ resolution }),
-                    });
-                    onResolved(item.id);
-                    setDone(true);
-                  } catch (err) {
-                    setError(err instanceof Error ? err.message : "Could not save. Please try again.");
-                  }
-                })
-              }
-            >
-              {pending ? <Loader2 className="h-3 w-3 animate-spin" /> : <CheckCircle2 className="h-3 w-3" />}
-              Mark resolved
-            </Button>
+        {expanded && (
+          <div className="border-t px-4 pb-4 pt-3">
+            <textarea
+              className="w-full rounded-md border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+              rows={3}
+              placeholder="Enter resolution notes…"
+              value={resolution}
+              onChange={(e) => setResolution(e.target.value)}
+            />
+            <div className="mt-2 flex justify-end">
+              <Button
+                size="sm"
+                disabled={pending || !resolution.trim()}
+                onClick={() =>
+                  startTransition(async () => {
+                    setError(null);
+                    try {
+                      await apiFetch(`/api/admin/disputes/${item.id}`, {
+                        method: "PATCH",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ resolution }),
+                      });
+                      onResolved(item.id);
+                      setDone(true);
+                    } catch (err) {
+                      setError(err instanceof Error ? err.message : "Could not save. Please try again.");
+                    }
+                  })
+                }
+              >
+                {pending ? <Loader2 className="h-3 w-3 animate-spin" /> : <CheckCircle2 className="h-3 w-3" />}
+                Mark resolved
+              </Button>
+            </div>
+            {error && <p className="mt-2 text-right text-xs text-destructive">{error}</p>}
           </div>
-          {error && <p className="mt-2 text-right text-xs text-destructive">{error}</p>}
-        </div>
-      )}
-    </li>
+        )}
+      </li>
+    </>
   );
 }
 
 function ResolvedHistoryTable({ items }: { items: DisputeItem[] }) {
+  const [selected, setSelected] = useState<DisputeItem | null>(null);
+
   if (items.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center rounded-xl border bg-muted/30 py-16">
@@ -163,71 +246,80 @@ function ResolvedHistoryTable({ items }: { items: DisputeItem[] }) {
   }
 
   return (
-    <div className="overflow-x-auto rounded-xl border bg-card">
-      <table className="w-full min-w-[600px] text-sm">
-        <thead>
-          <tr className="border-b text-left text-xs uppercase text-muted-foreground">
-            <th className="px-4 py-3 font-medium">#</th>
-            <th className="px-4 py-3 font-medium">Raised by</th>
-            <th className="px-4 py-3 font-medium">Reason</th>
-            <th className="px-4 py-3 font-medium">Resolution notes</th>
-            <th className="px-4 py-3 font-medium">Logged</th>
-            <th className="px-4 py-3 font-medium">Resolved</th>
-          </tr>
-        </thead>
-        <tbody>
-          {items.map((item, i) => {
-            const displayName = item.raisedByName ?? `User ${item.raisedBy.slice(0, 8)}…`;
-            return (
-              <tr key={item.id} className="border-b last:border-b-0 transition-colors hover:bg-muted/40">
-                <td className="px-4 py-3 text-muted-foreground">{i + 1}</td>
-                <td className="px-4 py-3">
-                  <div className="flex flex-col gap-0.5">
-                    <div className="flex items-center gap-1.5">
-                      <span className="font-medium">{displayName}</span>
-                      {item.raisedByRole && (
-                        <Badge className={`text-[10px] ${ROLE_STYLE[item.raisedByRole] ?? "bg-muted text-muted-foreground"}`}>
-                          {item.raisedByRole.charAt(0) + item.raisedByRole.slice(1).toLowerCase()}
-                        </Badge>
+    <>
+      {selected && <DisputeDetailModal item={selected} onClose={() => setSelected(null)} />}
+      <div className="overflow-x-auto rounded-xl border bg-card">
+        <table className="w-full min-w-[640px] text-sm">
+          <thead>
+            <tr className="border-b text-left text-xs uppercase text-muted-foreground">
+              <th className="px-4 py-3 font-medium">#</th>
+              <th className="px-4 py-3 font-medium">Raised by</th>
+              <th className="px-4 py-3 font-medium">Reason</th>
+              <th className="px-4 py-3 font-medium">Resolution notes</th>
+              <th className="px-4 py-3 font-medium">Logged</th>
+              <th className="px-4 py-3 font-medium">Resolved</th>
+              <th className="px-4 py-3 text-right font-medium">View</th>
+            </tr>
+          </thead>
+          <tbody>
+            {items.map((item, i) => {
+              const displayName = item.raisedByName ?? `User ${item.raisedBy.slice(0, 8)}…`;
+              return (
+                <tr key={item.id} className="border-b last:border-b-0 transition-colors hover:bg-muted/40">
+                  <td className="px-4 py-3 text-muted-foreground">{i + 1}</td>
+                  <td className="px-4 py-3">
+                    <div className="flex flex-col gap-0.5">
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-medium">{displayName}</span>
+                        {item.raisedByRole && (
+                          <Badge className={`text-[10px] ${ROLE_STYLE[item.raisedByRole] ?? "bg-muted text-muted-foreground"}`}>
+                            {item.raisedByRole.charAt(0) + item.raisedByRole.slice(1).toLowerCase()}
+                          </Badge>
+                        )}
+                      </div>
+                      {item.raisedByEmail && (
+                        <a href={`mailto:${item.raisedByEmail}`} className="text-xs text-primary hover:underline">
+                          {item.raisedByEmail}
+                        </a>
                       )}
                     </div>
-                    {item.raisedByEmail && (
-                      <a href={`mailto:${item.raisedByEmail}`} className="text-xs text-primary hover:underline">
-                        {item.raisedByEmail}
-                      </a>
+                  </td>
+                  <td className="max-w-[160px] px-4 py-3">
+                    <p className="line-clamp-3 text-muted-foreground">{item.reason}</p>
+                  </td>
+                  <td className="max-w-[180px] px-4 py-3">
+                    {item.resolution ? (
+                      <p className="line-clamp-3 text-emerald-700">{item.resolution}</p>
+                    ) : (
+                      <span className="italic text-muted-foreground">—</span>
                     )}
-                  </div>
-                </td>
-                <td className="max-w-[180px] px-4 py-3">
-                  <p className="line-clamp-3 text-muted-foreground">{item.reason}</p>
-                </td>
-                <td className="max-w-[200px] px-4 py-3">
-                  {item.resolution ? (
-                    <p className="line-clamp-3 text-emerald-700">{item.resolution}</p>
-                  ) : (
-                    <span className="italic text-muted-foreground">—</span>
-                  )}
-                </td>
-                <td className="px-4 py-3 text-xs text-muted-foreground">
-                  <div className="flex items-center gap-1">
-                    <Clock className="h-3 w-3" />
-                    {formatDateTime(item.createdAt)}
-                  </div>
-                </td>
-                <td className="px-4 py-3 text-xs text-muted-foreground">
-                  {item.resolvedAt ? (
+                  </td>
+                  <td className="px-4 py-3 text-xs text-muted-foreground">
                     <div className="flex items-center gap-1">
-                      <CheckCircle2 className="h-3 w-3 text-emerald-600" />
-                      {formatDateTime(item.resolvedAt)}
+                      <Clock className="h-3 w-3" />
+                      {formatDateTime(item.createdAt)}
                     </div>
-                  ) : "—"}
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-    </div>
+                  </td>
+                  <td className="px-4 py-3 text-xs text-muted-foreground">
+                    {item.resolvedAt ? (
+                      <div className="flex items-center gap-1">
+                        <CheckCircle2 className="h-3 w-3 text-emerald-600" />
+                        {formatDateTime(item.resolvedAt)}
+                      </div>
+                    ) : "—"}
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs" onClick={() => setSelected(item)}>
+                      <Eye className="h-3.5 w-3.5" /> View
+                    </Button>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </>
   );
 }
 
