@@ -132,6 +132,7 @@ export function AccessLogTable({ entries }: { entries: AccessLogRow[] }) {
       <table className="w-full text-left text-sm">
         <thead className="border-b bg-muted/40 text-xs uppercase tracking-wide text-muted-foreground">
           <tr>
+            <th className="px-4 py-3 font-medium">#</th>
             <th className="px-4 py-3 font-medium">Admin</th>
             <th className="px-4 py-3 font-medium">Action</th>
             <th className="px-4 py-3 font-medium">Target</th>
@@ -142,13 +143,14 @@ export function AccessLogTable({ entries }: { entries: AccessLogRow[] }) {
         <tbody className="divide-y">
           {rows.length === 0 ? (
             <tr>
-              <td colSpan={5} className="px-4 py-6 text-center text-sm text-muted-foreground">
+              <td colSpan={6} className="px-4 py-6 text-center text-sm text-muted-foreground">
                 No admin actions match your search.
               </td>
             </tr>
           ) : (
-            rows.map((entry) => (
+            rows.map((entry, i) => (
               <tr key={entry.id}>
+                <td className="px-4 py-3 text-sm text-muted-foreground">{(page - 1) * PAGE_SIZE + i + 1}</td>
                 <td className="px-4 py-3">{entry.adminEmail ?? entry.adminId}</td>
                 <td className="px-4 py-3">
                   <Badge className={ACTION_STYLE[entry.action] ?? ""}>{entry.action}</Badge>

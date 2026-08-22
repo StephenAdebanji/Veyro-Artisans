@@ -66,6 +66,7 @@ export function JobsTable({ rows: allRows }: { rows: JobsTableRow[] }) {
         <table className="w-full min-w-[320px] text-sm">
           <thead>
             <tr className="border-b text-left text-xs uppercase text-muted-foreground">
+              <th className="pb-2 pr-4 font-medium">#</th>
               <th className="pb-2 pr-4 font-medium">Job</th>
               <th className="hidden pb-2 pr-4 font-medium sm:table-cell">Customer</th>
               <th className="pb-2 pr-4 font-medium">Status</th>
@@ -74,8 +75,9 @@ export function JobsTable({ rows: allRows }: { rows: JobsTableRow[] }) {
             </tr>
           </thead>
           <tbody>
-            {rows.map((row) => (
+            {rows.map((row, i) => (
               <tr key={row.id} className="border-b last:border-b-0 transition-colors hover:bg-muted/40">
+                <td className="py-3 pr-4 text-sm text-muted-foreground">{(page - 1) * PAGE_SIZE + i + 1}</td>
                 <td className="py-3 pr-4">
                   <p className="line-clamp-2 max-w-[120px] break-words font-medium sm:max-w-[200px] lg:max-w-none">
                     {row.description}
