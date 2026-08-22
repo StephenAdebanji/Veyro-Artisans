@@ -4,7 +4,9 @@ import { useMemo, useState } from "react";
 import { TablePagination, PAGE_SIZE } from "@/components/shared/table-pagination";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Eye } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Eye, Search, X } from "lucide-react";
 import { JobTimelineModal } from "@/components/shared/job-timeline-modal";
 import { SKILL_LABELS } from "@/components/shared/skill-labels";
 import type { JobHistoryItem, SkillCategory } from "@veyro/contracts";
@@ -52,15 +54,40 @@ export function HistoryClient({
 }) {
   const [tab, setTab] = useState<Tab>(defaultTab);
   const [selected, setSelected] = useState<HistoryRow | null>(null);
+  const [query, setQuery] = useState("");
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
   const [page, setPage] = useState(1);
 
-  function handleTab(t: Tab) { setTab(t); setPage(1); }
+  function reset() { setPage(1); }
+  function handleTab(t: Tab) { setTab(t); reset(); }
+  function handleSearch(q: string) { setQuery(q); reset(); }
+  function handleFrom(v: string) { setFromDate(v); reset(); }
+  function handleTo(v: string) { setToDate(v); reset(); }
+  function clearDates() { setFromDate(""); setToDate(""); reset(); }
 
-  const filtered = useMemo(() => jobs.filter((j) => {
-    if (tab === "active") return j.status === "ACTIVE" || j.status === "IN_PROGRESS";
-    if (tab === "completed") return j.status === "COMPLETED";
-    return true;
-  }), [jobs, tab]);
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    const from = fromDate ? new Date(`${fromDate}T00:00:00`) : null;
+    const to = toDate ? new Date(`${toDate}T23:59:59.999`) : null;
+    return jobs.filter((j) => {
+      if (tab === "active" && j.status !== "ACTIVE" && j.status !== "IN_PROGRESS") return false;
+      if (tab === "completed" && j.status !== "COMPLETED") return false;
+      if (q) {
+        const desc = j.description.toLowerCase();
+        const artisan = (j.artisanName ?? "").toLowerCase();
+        const homeowner = (j.homeownerName ?? "").toLowerCase();
+        const cat = (SKILL_LABELS[j.category as SkillCategory] ?? j.category).toLowerCase();
+        if (!desc.includes(q) && !artisan.includes(q) && !homeowner.includes(q) && !cat.includes(q)) return false;
+      }
+      if (from || to) {
+        const d = new Date(j.startedAt);
+        if (from && d < from) return false;
+        if (to && d > to) return false;
+      }
+      return true;
+    });
+  }, [jobs, tab, query, fromDate, toDate]);
 
   const pageRows = useMemo(
     () => filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
@@ -101,6 +128,27 @@ export function HistoryClient({
             </button>
           );
         })}
+      </div>
+
+      {/* Filters */}
+      <div className="mt-4 flex flex-wrap items-end gap-3">
+        <div className="relative max-w-xs flex-1">
+          <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input value={query} onChange={(e) => handleSearch(e.target.value)} placeholder="Search by description, person, or category…" className="pl-8" />
+        </div>
+        <div className="flex flex-col gap-1">
+          <Label className="text-xs text-muted-foreground">From</Label>
+          <Input type="date" value={fromDate} max={toDate || undefined} onChange={(e) => handleFrom(e.target.value)} className="w-36" />
+        </div>
+        <div className="flex flex-col gap-1">
+          <Label className="text-xs text-muted-foreground">To</Label>
+          <Input type="date" value={toDate} min={fromDate || undefined} onChange={(e) => handleTo(e.target.value)} className="w-36" />
+        </div>
+        {(fromDate || toDate) && (
+          <Button variant="ghost" size="sm" className="h-8 gap-1 self-end text-xs text-muted-foreground" onClick={clearDates}>
+            <X className="h-3.5 w-3.5" /> Clear dates
+          </Button>
+        )}
       </div>
 
       {/* Table */}

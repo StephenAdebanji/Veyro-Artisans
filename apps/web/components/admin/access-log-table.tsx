@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { TablePagination, PAGE_SIZE } from "@/components/shared/table-pagination";
-import { Eye, X } from "lucide-react";
+import { Eye, X, Search } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -44,28 +44,36 @@ function DetailRow({ label, value }: { label: string; value: string }) {
 
 export function AccessLogTable({ entries }: { entries: AccessLogRow[] }) {
   const [selected, setSelected] = useState<AccessLogRow | null>(null);
+  const [query, setQuery] = useState("");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
   const [page, setPage] = useState(1);
 
-  function setFrom(v: string) { setFromDate(v); setPage(1); }
-  function setTo(v: string) { setToDate(v); setPage(1); }
-  function clearDates() { setFromDate(""); setToDate(""); setPage(1); }
+  function reset() { setPage(1); }
+  function handleSearch(v: string) { setQuery(v); reset(); }
+  function setFrom(v: string) { setFromDate(v); reset(); }
+  function setTo(v: string) { setToDate(v); reset(); }
+  function clearDates() { setFromDate(""); setToDate(""); reset(); }
 
   const filtered = useMemo(() => {
-    if (!fromDate && !toDate) return entries;
-    // Date inputs are local-time "YYYY-MM-DD" with no time component — treat
-    // `from` as the start of that day and `to` as the end of that day so the
-    // range is inclusive on both ends.
+    const q = query.trim().toLowerCase();
     const from = fromDate ? new Date(`${fromDate}T00:00:00`) : null;
     const to = toDate ? new Date(`${toDate}T23:59:59.999`) : null;
     return entries.filter((entry) => {
-      const createdAt = new Date(entry.createdAt);
-      if (from && createdAt < from) return false;
-      if (to && createdAt > to) return false;
+      if (q) {
+        const admin = (entry.adminEmail ?? entry.adminId).toLowerCase();
+        const action = entry.action.toLowerCase();
+        const target = (entry.targetLabel ?? `${entry.targetType} ${entry.targetId}`).toLowerCase();
+        if (!admin.includes(q) && !action.includes(q) && !target.includes(q)) return false;
+      }
+      if (from || to) {
+        const createdAt = new Date(entry.createdAt);
+        if (from && createdAt < from) return false;
+        if (to && createdAt > to) return false;
+      }
       return true;
     });
-  }, [entries, fromDate, toDate]);
+  }, [entries, query, fromDate, toDate]);
 
   const rows = useMemo(
     () => filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
@@ -79,6 +87,10 @@ export function AccessLogTable({ entries }: { entries: AccessLogRow[] }) {
   return (
     <>
       <div className="flex flex-wrap items-end gap-3 border-b p-4">
+        <div className="relative max-w-xs flex-1">
+          <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input value={query} onChange={(e) => handleSearch(e.target.value)} placeholder="Search by admin, action, or target…" className="pl-8" />
+        </div>
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="access-log-from" className="text-xs text-muted-foreground">From</Label>
           <Input
@@ -131,7 +143,7 @@ export function AccessLogTable({ entries }: { entries: AccessLogRow[] }) {
           {rows.length === 0 ? (
             <tr>
               <td colSpan={5} className="px-4 py-6 text-center text-sm text-muted-foreground">
-                No admin actions in this date range.
+                No admin actions match your search.
               </td>
             </tr>
           ) : (

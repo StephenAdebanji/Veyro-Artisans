@@ -4,7 +4,8 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Eye } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Eye, Search } from "lucide-react";
 import { TablePagination, PAGE_SIZE } from "@/components/shared/table-pagination";
 import type { JobFeedItem, JobFeedStatus } from "@veyro/contracts";
 
@@ -31,10 +32,24 @@ export interface JobsTableRow extends JobFeedItem {
 }
 
 export function JobsTable({ rows: allRows }: { rows: JobsTableRow[] }) {
+  const [query, setQuery] = useState("");
   const [page, setPage] = useState(1);
+
+  function handleSearch(q: string) { setQuery(q); setPage(1); }
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return allRows;
+    return allRows.filter(
+      (row) =>
+        row.description.toLowerCase().includes(q) ||
+        row.customerName.toLowerCase().includes(q),
+    );
+  }, [allRows, query]);
+
   const rows = useMemo(
-    () => allRows.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
-    [allRows, page],
+    () => filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
+    [filtered, page],
   );
 
   if (allRows.length === 0) {
@@ -43,6 +58,10 @@ export function JobsTable({ rows: allRows }: { rows: JobsTableRow[] }) {
 
   return (
     <div>
+      <div className="mb-3 relative max-w-xs">
+        <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Input value={query} onChange={(e) => handleSearch(e.target.value)} placeholder="Search by job or customer…" className="pl-8" />
+      </div>
       <div className="overflow-x-auto">
         <table className="w-full min-w-[320px] text-sm">
           <thead>
@@ -88,7 +107,7 @@ export function JobsTable({ rows: allRows }: { rows: JobsTableRow[] }) {
           </tbody>
         </table>
       </div>
-      <TablePagination total={allRows.length} page={page} onPage={setPage} />
+      <TablePagination total={filtered.length} page={page} onPage={setPage} />
     </div>
   );
 }

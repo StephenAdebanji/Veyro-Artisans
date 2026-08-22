@@ -3,10 +3,11 @@
 import { useMemo, useState, useTransition } from "react";
 import { TablePagination, PAGE_SIZE } from "@/components/shared/table-pagination";
 import Link from "next/link";
-import { Eye, Pencil, Trash2, ShieldOff, ShieldCheck, KeyRound, Search } from "lucide-react";
+import { Eye, Pencil, Trash2, ShieldOff, ShieldCheck, KeyRound, Search, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { SKILL_LABELS } from "@/components/shared/skill-labels";
 import { EditArtisanModal, type EditArtisanData } from "./edit-user-modal";
 import { ResetPasswordModal } from "./reset-password-modal";
@@ -22,6 +23,7 @@ type ArtisanRow = {
   primarySkill: string | null;
   verificationStatus: string;
   profilePhotoUrl: string | null;
+  createdAt: string;
   user: { email: string; status: string; role: string };
 };
 
@@ -227,28 +229,39 @@ function ArtisanActionRow({
 export function ArtisansTable({ initialRows }: { initialRows: ArtisanRow[] }) {
   const [allRows, setAllRows] = useState(initialRows);
   const [query, setQuery] = useState("");
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
   const [page, setPage] = useState(1);
 
   function handleDeleted(id: string) {
     setAllRows((prev) => prev.filter((r) => r.id !== id));
   }
-
-  function handleSearch(q: string) {
-    setQuery(q);
-    setPage(1);
-  }
+  function reset() { setPage(1); }
+  function handleSearch(q: string) { setQuery(q); reset(); }
+  function handleFrom(v: string) { setFromDate(v); reset(); }
+  function handleTo(v: string) { setToDate(v); reset(); }
+  function clearDates() { setFromDate(""); setToDate(""); reset(); }
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return allRows;
+    const from = fromDate ? new Date(`${fromDate}T00:00:00`) : null;
+    const to = toDate ? new Date(`${toDate}T23:59:59.999`) : null;
     return allRows.filter((row) => {
-      const name = [row.firstName, row.lastName].filter(Boolean).join(" ").toLowerCase();
-      const category = row.primarySkill
-        ? (SKILL_LABELS[row.primarySkill as SkillCategory] ?? row.primarySkill).toLowerCase()
-        : "";
-      return name.includes(q) || row.user.email.toLowerCase().includes(q) || category.includes(q);
+      if (q) {
+        const name = [row.firstName, row.lastName].filter(Boolean).join(" ").toLowerCase();
+        const category = row.primarySkill
+          ? (SKILL_LABELS[row.primarySkill as SkillCategory] ?? row.primarySkill).toLowerCase()
+          : "";
+        if (!name.includes(q) && !row.user.email.toLowerCase().includes(q) && !category.includes(q)) return false;
+      }
+      if (from || to) {
+        const d = new Date(row.createdAt);
+        if (from && d < from) return false;
+        if (to && d > to) return false;
+      }
+      return true;
     });
-  }, [allRows, query]);
+  }, [allRows, query, fromDate, toDate]);
 
   const rows = useMemo(
     () => filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
@@ -262,17 +275,25 @@ export function ArtisansTable({ initialRows }: { initialRows: ArtisanRow[] }) {
   return (
     <div>
       <div className="border-b p-4">
-        <p className="mb-3 text-sm text-muted-foreground">
-          All registered artisans — {allRows.length} total
-        </p>
-        <div className="relative max-w-xs">
-          <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            value={query}
-            onChange={(e) => handleSearch(e.target.value)}
-            placeholder="Search by name, email, or category…"
-            className="pl-8"
-          />
+        <p className="mb-3 text-sm text-muted-foreground">All registered artisans — {allRows.length} total</p>
+        <div className="flex flex-wrap items-end gap-3">
+          <div className="relative max-w-xs flex-1">
+            <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input value={query} onChange={(e) => handleSearch(e.target.value)} placeholder="Search by name, email, or category…" className="pl-8" />
+          </div>
+          <div className="flex flex-col gap-1">
+            <Label className="text-xs text-muted-foreground">From</Label>
+            <Input type="date" value={fromDate} max={toDate || undefined} onChange={(e) => handleFrom(e.target.value)} className="w-36" />
+          </div>
+          <div className="flex flex-col gap-1">
+            <Label className="text-xs text-muted-foreground">To</Label>
+            <Input type="date" value={toDate} min={fromDate || undefined} onChange={(e) => handleTo(e.target.value)} className="w-36" />
+          </div>
+          {(fromDate || toDate) && (
+            <Button variant="ghost" size="sm" className="h-8 gap-1 self-end text-xs text-muted-foreground" onClick={clearDates}>
+              <X className="h-3.5 w-3.5" /> Clear dates
+            </Button>
+          )}
         </div>
       </div>
       <div className="overflow-x-auto">

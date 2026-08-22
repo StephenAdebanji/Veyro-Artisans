@@ -13,7 +13,11 @@ export default async function AdminArtisansPage() {
     <main className="flex-1 px-6 py-10">
       <h1 className="text-2xl font-bold">Artisans</h1>
       <div className="mt-6 rounded-xl border bg-card">
-        <ArtisansTable initialRows={artisans.map((a) => ({ ...a, profilePhotoUrl: a.profilePhotoUrl ?? null }))} />
+        <ArtisansTable initialRows={artisans.map((a) => ({
+          ...a,
+          profilePhotoUrl: a.profilePhotoUrl ?? null,
+          createdAt: a.user.createdAt.toISOString(),
+        }))} />
       </div>
     </main>
   );

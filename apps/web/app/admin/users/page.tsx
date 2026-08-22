@@ -59,7 +59,7 @@ export default async function AdminUsersPage() {
 
   const rows = withDates
     .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
-    .map(({ row }) => row);
+    .map(({ row, createdAt }) => ({ ...row, createdAt: createdAt.toISOString() }));
 
   return (
     <main className="flex-1 px-6 py-10">
