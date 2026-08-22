@@ -13,6 +13,13 @@ import { ResetPasswordModal } from "./reset-password-modal";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { Avatar } from "@/components/shared/avatar";
 import { apiFetch } from "@/lib/api-client";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 type ArtisanCombinedRow = {
   kind: "artisan";
@@ -88,6 +95,7 @@ function UserActionRow({
   onDeleted: (kind: CombinedUserRow["kind"], id: string) => void;
 }) {
   const [data, setData] = useState(row);
+  const [viewOpen, setViewOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [resetOpen, setResetOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -144,6 +152,37 @@ function UserActionRow({
 
   return (
     <>
+      {data.kind === "admin" && (
+        <Dialog open={viewOpen} onOpenChange={(v) => { if (!v) setViewOpen(false); }}>
+          <DialogContent className="max-w-sm">
+            <DialogHeader>
+              <DialogTitle>Admin account</DialogTitle>
+            </DialogHeader>
+            <div className="flex flex-col divide-y text-sm">
+              {[
+                ["Name",   name],
+                ["Email",  data.email],
+                ["Role",   data.role],
+                ["Status", data.status],
+                ["Joined", new Date(data.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })],
+              ].map(([label, value]) => (
+                <div key={label} className="flex justify-between py-2">
+                  <span className="text-muted-foreground">{label}</span>
+                  <span className="font-medium">{value}</span>
+                </div>
+              ))}
+              {data.deleteReason && (
+                <div className="flex flex-col gap-1 py-2">
+                  <span className="text-muted-foreground">Deletion reason</span>
+                  <span className="text-destructive">{data.deleteReason}</span>
+                </div>
+              )}
+            </div>
+            <DialogFooter showCloseButton />
+          </DialogContent>
+        </Dialog>
+      )}
+
       <ConfirmDialog
         open={confirmDelete}
         title={`Delete ${data.kind === "artisan" ? "artisan" : "homeowner"}`}
@@ -187,7 +226,9 @@ function UserActionRow({
         <td className="py-3 pr-4">
           <div className="flex items-center justify-end gap-1">
             {data.kind === "admin" ? (
-              <span className="text-xs text-muted-foreground">—</span>
+              <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs" onClick={() => setViewOpen(true)}>
+                <Eye className="h-3.5 w-3.5" /> View
+              </Button>
             ) : (
               <>
                 {href && (
