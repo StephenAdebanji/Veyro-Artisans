@@ -1,3 +1,16 @@
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Terms of Service",
+  description:
+    "Review the VEYRO Terms of Service — the rules and agreements that govern your use of the VEYRO platform as a homeowner or artisan.",
+  openGraph: {
+    title: "Terms of Service | VEYRO",
+    description:
+      "Review the VEYRO Terms of Service — the rules and agreements that govern your use of the VEYRO platform as a homeowner or artisan.",
+  },
+};
+
 import Link from "next/link";
 import { LegalPage, type LegalSection } from "@/components/legal/legal-page";
 

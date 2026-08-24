@@ -3,10 +3,31 @@ import "./globals.css";
 import { Providers } from "./providers";
 import TopLoader from "nextjs-toploader";
 
+const siteUrl = process.env.NEXTAUTH_URL ?? "https://veyro-artisans-web.vercel.app";
+const defaultDescription =
+  "VEYRO matches homeowners with verified, trusted artisans in real time, with AI-driven recommendations and blockchain-backed trust records.";
+
 export const metadata: Metadata = {
-  title: "VEYRO — Connecting Homes with Trusted Hands",
-  description:
-    "VEYRO matches homeowners with verified, trusted artisans in real time, with AI-driven recommendations and blockchain-backed trust records.",
+  metadataBase: new URL(siteUrl),
+  title: {
+    default: "VEYRO — Connecting Homes with Trusted Hands",
+    template: "%s | VEYRO",
+  },
+  description: defaultDescription,
+  openGraph: {
+    type: "website",
+    locale: "en_NG",
+    siteName: "VEYRO",
+    title: "VEYRO — Connecting Homes with Trusted Hands",
+    description: defaultDescription,
+    images: [{ url: "/og.png", width: 1200, height: 630, alt: "VEYRO — Connecting Homes with Trusted Hands" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "VEYRO — Connecting Homes with Trusted Hands",
+    description: defaultDescription,
+    images: ["/og.png"],
+  },
 };
 
 export default function RootLayout({

@@ -1,3 +1,16 @@
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "VEYRO — Hire Verified Artisans Near You",
+  description:
+    "Find and hire trusted, verified artisans for any home job — plumbing, electrical, carpentry, and more. Instant matching, AI-powered recommendations, and blockchain trust records.",
+  openGraph: {
+    title: "VEYRO — Hire Verified Artisans Near You",
+    description:
+      "Find and hire trusted, verified artisans for any home job — plumbing, electrical, carpentry, and more. Instant matching, AI-powered recommendations, and blockchain trust records.",
+  },
+};
+
 export const dynamic = "force-dynamic";
 
 import { ArtisanCta } from "@/components/landing/artisan-cta";

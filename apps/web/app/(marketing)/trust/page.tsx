@@ -1,3 +1,16 @@
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Trust & Safety",
+  description:
+    "Learn how VEYRO verifies every artisan, protects your payments, and uses blockchain-backed trust records to keep every transaction safe and transparent.",
+  openGraph: {
+    title: "Trust & Safety | VEYRO",
+    description:
+      "Learn how VEYRO verifies every artisan, protects your payments, and uses blockchain-backed trust records to keep every transaction safe and transparent.",
+  },
+};
+
 import Link from "next/link";
 import { ShieldCheck, Star, FileCheck, Link2, CheckCircle2, AlertTriangle, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";

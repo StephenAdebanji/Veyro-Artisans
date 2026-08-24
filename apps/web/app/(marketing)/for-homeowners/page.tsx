@@ -1,3 +1,16 @@
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "For Homeowners",
+  description:
+    "Hire trusted, verified artisans for any home repair or project. VEYRO gives you instant matching, transparent pricing, and verified reviews — all in one place.",
+  openGraph: {
+    title: "For Homeowners | VEYRO",
+    description:
+      "Hire trusted, verified artisans for any home repair or project. VEYRO gives you instant matching, transparent pricing, and verified reviews — all in one place.",
+  },
+};
+
 import Link from "next/link";
 import { CheckCircle2, Clock, ShieldCheck, Star, Zap, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";

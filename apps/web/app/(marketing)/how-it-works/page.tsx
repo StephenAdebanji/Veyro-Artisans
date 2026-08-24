@@ -1,3 +1,16 @@
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "How It Works",
+  description:
+    "See how VEYRO connects homeowners with verified artisans in three simple steps — post a job, get matched instantly, and get the work done with confidence.",
+  openGraph: {
+    title: "How It Works | VEYRO",
+    description:
+      "See how VEYRO connects homeowners with verified artisans in three simple steps — post a job, get matched instantly, and get the work done with confidence.",
+  },
+};
+
 import Link from "next/link";
 import { CheckCircle2, MessageSquare, Search, ShieldCheck, Star, UserCheck, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";

@@ -1,3 +1,16 @@
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "For Artisans",
+  description:
+    "Join VEYRO as a verified artisan and grow your business. Get matched with homeowners, build your reputation with trust records, and get paid securely.",
+  openGraph: {
+    title: "For Artisans | VEYRO",
+    description:
+      "Join VEYRO as a verified artisan and grow your business. Get matched with homeowners, build your reputation with trust records, and get paid securely.",
+  },
+};
+
 import Link from "next/link";
 import { Briefcase, ShieldCheck, Star, TrendingUp, Zap, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";

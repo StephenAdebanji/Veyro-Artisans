@@ -1,3 +1,16 @@
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Privacy Policy",
+  description:
+    "Read the VEYRO Privacy Policy to understand how we collect, use, and protect your personal data when you use our platform.",
+  openGraph: {
+    title: "Privacy Policy | VEYRO",
+    description:
+      "Read the VEYRO Privacy Policy to understand how we collect, use, and protect your personal data when you use our platform.",
+  },
+};
+
 import Link from "next/link";
 import { LegalPage, type LegalSection } from "@/components/legal/legal-page";
 
