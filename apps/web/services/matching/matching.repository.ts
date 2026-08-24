@@ -339,6 +339,7 @@ export const matchingRepository = {
         id: true,
         email: true,
         role: true,
+        status: true,
         artisanProfile: { select: { firstName: true, lastName: true } },
         homeownerProfile: { select: { fullName: true } },
       },
@@ -349,7 +350,7 @@ export const matchingRepository = {
           (u.artisanProfile
             ? [u.artisanProfile.firstName, u.artisanProfile.lastName].filter(Boolean).join(" ")
             : u.homeownerProfile?.fullName) || null;
-        return [u.id, { id: u.id, name, email: u.email, role: u.role }];
+        return [u.id, { id: u.id, name, email: u.email, role: u.role, status: u.status }];
       }),
     );
 
@@ -380,6 +381,7 @@ export const matchingRepository = {
         id: true,
         email: true,
         role: true,
+        status: true,
         artisanProfile: { select: { firstName: true, lastName: true } },
         homeownerProfile: { select: { fullName: true } },
       },
@@ -390,7 +392,7 @@ export const matchingRepository = {
           (u.artisanProfile
             ? [u.artisanProfile.firstName, u.artisanProfile.lastName].filter(Boolean).join(" ")
             : u.homeownerProfile?.fullName) || null;
-        return [u.id, { id: u.id, name, email: u.email, role: u.role }];
+        return [u.id, { id: u.id, name, email: u.email, role: u.role, status: u.status }];
       }),
     );
 

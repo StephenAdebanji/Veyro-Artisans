@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { TablePagination, PAGE_SIZE } from "@/components/shared/table-pagination";
 import Link from "next/link";
 import { Eye, Pencil, Trash2, ShieldOff, ShieldCheck, KeyRound, Search, X } from "lucide-react";
@@ -94,6 +95,7 @@ function UserActionRow({
   index: number;
   onDeleted: (kind: CombinedUserRow["kind"], id: string) => void;
 }) {
+  const router = useRouter();
   const [data, setData] = useState(row);
   const [viewOpen, setViewOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
@@ -143,6 +145,7 @@ function UserActionRow({
         setConfirmDelete(false);
         setDeleteReason("");
         setData((prev) => ({ ...prev, status: "DELETED", deleteReason: deleteReason.trim() }));
+        router.refresh();
       } catch (err) {
         setConfirmDelete(false);
         setActionError(err instanceof Error ? err.message : "Could not delete user.");

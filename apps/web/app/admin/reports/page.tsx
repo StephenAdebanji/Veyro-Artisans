@@ -9,6 +9,7 @@ function toItem(d: Awaited<ReturnType<typeof matchingRepository.listOpenDisputes
     raisedByName: d.raisedByUser?.name ?? null,
     raisedByEmail: d.raisedByUser?.email ?? null,
     raisedByRole: (d.raisedByUser?.role ?? null) as string | null,
+    raisedByStatus: (d.raisedByUser?.status ?? null) as string | null,
     reason: d.reason,
     status: d.status as "OPEN" | "RESOLVED" | "ESCALATED",
     resolution: d.resolution ?? null,

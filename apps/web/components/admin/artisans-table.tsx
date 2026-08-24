@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { TablePagination, PAGE_SIZE } from "@/components/shared/table-pagination";
 import Link from "next/link";
 import { Eye, Pencil, Trash2, ShieldOff, ShieldCheck, KeyRound, Search, X } from "lucide-react";
@@ -54,6 +55,7 @@ function ArtisanActionRow({
   index: number;
   onDeleted: (id: string) => void;
 }) {
+  const router = useRouter();
   const [data, setData] = useState(row);
   const [editOpen, setEditOpen] = useState(false);
   const [resetOpen, setResetOpen] = useState(false);
@@ -97,6 +99,7 @@ function ArtisanActionRow({
           ...prev,
           user: { ...prev.user, status: "DELETED", deleteReason: deleteReason.trim() },
         }));
+        router.refresh();
       } catch (err) {
         setConfirmDelete(false);
         setActionError(err instanceof Error ? err.message : "Could not delete artisan.");

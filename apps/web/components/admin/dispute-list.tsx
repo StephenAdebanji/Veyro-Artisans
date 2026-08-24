@@ -20,6 +20,7 @@ export interface DisputeItem {
   raisedByName: string | null;
   raisedByEmail: string | null;
   raisedByRole: string | null;
+  raisedByStatus: string | null;
   reason: string;
   status: "OPEN" | "RESOLVED" | "ESCALATED";
   resolution: string | null;
@@ -63,7 +64,8 @@ function DetailRow({ label, value, mono }: { label: string; value: React.ReactNo
 }
 
 function DisputeDetailModal({ item, onClose }: { item: DisputeItem; onClose: () => void }) {
-  const displayName = item.raisedByName ?? `User ${item.raisedBy.slice(0, 8)}…`;
+  const isHardDeleted = !item.raisedByEmail && !item.raisedByRole;
+  const displayName = item.raisedByName ?? (isHardDeleted ? "Deleted user" : item.raisedByEmail ?? "Unknown");
   return (
     <Dialog open onOpenChange={(v) => { if (!v) onClose(); }}>
       <DialogContent className="max-w-lg">
@@ -78,7 +80,15 @@ function DisputeDetailModal({ item, onClose }: { item: DisputeItem; onClose: () 
           } />
           <DetailRow label="Raised by" value={
             <span className="flex flex-col gap-0.5">
-              <span>{displayName}</span>
+              <span className="flex items-center gap-1.5">
+                {displayName}
+                {item.raisedByStatus === "DELETED" && (
+                  <Badge className="text-[10px] bg-red-100 text-red-700">Deleted</Badge>
+                )}
+                {isHardDeleted && (
+                  <Badge className="text-[10px] bg-red-100 text-red-700">Account deleted</Badge>
+                )}
+              </span>
               {item.raisedByRole && (
                 <Badge className={`w-fit text-[10px] ${ROLE_STYLE[item.raisedByRole] ?? "bg-muted text-muted-foreground"}`}>
                   {item.raisedByRole.charAt(0) + item.raisedByRole.slice(1).toLowerCase()}
@@ -124,7 +134,8 @@ function DisputeRow({
 
   if (done) return null;
 
-  const displayName = item.raisedByName ?? `User ${item.raisedBy.slice(0, 8)}…`;
+  const isHardDeleted = !item.raisedByEmail && !item.raisedByRole;
+  const displayName = item.raisedByName ?? (isHardDeleted ? "Deleted user" : item.raisedByEmail ?? "Unknown");
   const role = item.raisedByRole;
 
   return (
@@ -143,6 +154,9 @@ function DisputeRow({
               <div className="flex items-center gap-1.5">
                 <User className="h-3.5 w-3.5 text-muted-foreground" />
                 <span className="text-sm font-semibold">{displayName}</span>
+                {(item.raisedByStatus === "DELETED" || isHardDeleted) && (
+                  <Badge className="text-[10px] bg-red-100 text-red-700">Deleted</Badge>
+                )}
               </div>
               {role && (
                 <Badge className={`text-[10px] ${ROLE_STYLE[role] ?? "bg-muted text-muted-foreground"}`}>
@@ -265,7 +279,8 @@ function ResolvedHistoryTable({ items }: { items: DisputeItem[] }) {
           </thead>
           <tbody>
             {items.map((item, i) => {
-              const displayName = item.raisedByName ?? `User ${item.raisedBy.slice(0, 8)}…`;
+              const isHardDeleted = !item.raisedByEmail && !item.raisedByRole;
+  const displayName = item.raisedByName ?? (isHardDeleted ? "Deleted user" : item.raisedByEmail ?? "Unknown");
               return (
                 <tr key={item.id} className="border-b last:border-b-0 transition-colors hover:bg-muted/40">
                   <td className="px-4 py-3 text-muted-foreground">{i + 1}</td>
@@ -273,6 +288,9 @@ function ResolvedHistoryTable({ items }: { items: DisputeItem[] }) {
                     <div className="flex flex-col gap-0.5">
                       <div className="flex items-center gap-1.5">
                         <span className="font-medium">{displayName}</span>
+                        {(item.raisedByStatus === "DELETED" || isHardDeleted) && (
+                          <Badge className="text-[10px] bg-red-100 text-red-700">Deleted</Badge>
+                        )}
                         {item.raisedByRole && (
                           <Badge className={`text-[10px] ${ROLE_STYLE[item.raisedByRole] ?? "bg-muted text-muted-foreground"}`}>
                             {item.raisedByRole.charAt(0) + item.raisedByRole.slice(1).toLowerCase()}
