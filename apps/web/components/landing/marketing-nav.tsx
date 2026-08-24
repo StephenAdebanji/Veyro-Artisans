@@ -8,6 +8,7 @@ const LINKS = [
   { href: "/for-homeowners", label: "For homeowners" },
   { href: "/for-artisans", label: "For artisans" },
   { href: "/trust", label: "Trust" },
+  { href: "/faq", label: "FAQ" },
 ];
 
 export function MarketingNav() {

@@ -15,6 +15,11 @@ export function Footer() {
           <Link href="/for-homeowners">For homeowners</Link>
           <Link href="/for-artisans">For artisans</Link>
           <Link href="/trust">Trust</Link>
+          <Link href="/faq">FAQ</Link>
+        </nav>
+        <nav className="flex flex-wrap gap-4 text-xs">
+          <Link href="/privacy">Privacy Policy</Link>
+          <Link href="/terms">Terms of Service</Link>
         </nav>
         <p>© {new Date().getFullYear()} VEYRO. Connecting Homes with Trusted Hands.</p>
       </div>
