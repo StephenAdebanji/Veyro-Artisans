@@ -409,6 +409,7 @@ function UserActionRow({
 export function UsersTable({ initialRows }: { initialRows: CombinedUserRow[] }) {
   const [allRows, setAllRows] = useState(initialRows);
   const [query, setQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
   const [page, setPage] = useState(1);
@@ -427,6 +428,7 @@ export function UsersTable({ initialRows }: { initialRows: CombinedUserRow[] }) 
     const from = fromDate ? new Date(`${fromDate}T00:00:00`) : null;
     const to = toDate ? new Date(`${toDate}T23:59:59.999`) : null;
     return allRows.filter((row) => {
+      if (statusFilter !== "ALL" && row.status !== statusFilter) return false;
       if (q) {
         const name = displayName(row).toLowerCase();
         if (!name.includes(q) && !row.email.toLowerCase().includes(q)) return false;
@@ -438,7 +440,7 @@ export function UsersTable({ initialRows }: { initialRows: CombinedUserRow[] }) 
       }
       return true;
     });
-  }, [allRows, query, fromDate, toDate]);
+  }, [allRows, query, statusFilter, fromDate, toDate]);
 
   const rows = useMemo(
     () => filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
@@ -459,6 +461,19 @@ export function UsersTable({ initialRows }: { initialRows: CombinedUserRow[] }) 
           <div className="relative max-w-xs flex-1">
             <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input value={query} onChange={(e) => handleSearch(e.target.value)} placeholder="Search by name or email…" className="pl-8" />
+          </div>
+          <div className="flex flex-col gap-1">
+            <Label className="text-xs text-muted-foreground">Status</Label>
+            <select
+              value={statusFilter}
+              onChange={(e) => { setStatusFilter(e.target.value); reset(); }}
+              className="h-9 rounded-md border border-input bg-background px-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            >
+              <option value="ALL">All</option>
+              <option value="ACTIVE">Active</option>
+              <option value="SUSPENDED">Suspended</option>
+              <option value="DELETED">Deleted</option>
+            </select>
           </div>
           <div className="flex flex-col gap-1">
             <Label className="text-xs text-muted-foreground">From</Label>
