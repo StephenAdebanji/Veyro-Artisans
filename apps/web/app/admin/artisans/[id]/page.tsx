@@ -1,7 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowLeft, MapPin, Star, Briefcase, Shield, Clock, Calendar } from "lucide-react";
+import { ArrowLeft, MapPin, Star, Briefcase, Shield, Clock, Calendar, Link2 } from "lucide-react";
 import { auth } from "@/platform/auth-session";
 import { userRepository } from "@/services/user/user.repository";
 import { prisma } from "@/platform/prisma";
@@ -50,6 +50,16 @@ export default async function AdminArtisanDetailPage({
   // Fetch credentials from trust schema.
   const credentials = await prisma.credential.findMany({
     where: { artisanId: id },
+    orderBy: { createdAt: "desc" },
+  });
+
+  // Collect all refIds that could have blockchain records for this artisan:
+  // artisan.id (for IDENTITY_VERIFIED + TRUST_SCORE_UPDATE),
+  // each credential.id (for CREDENTIAL_VERIFIED).
+  // Review hashes are tied to reviewId which we don't need to pre-load here.
+  const credentialIds = credentials.map((c) => c.id);
+  const blockchainRecords = await prisma.blockchainRecord.findMany({
+    where: { refId: { in: [id, ...credentialIds] } },
     orderBy: { createdAt: "desc" },
   });
 
@@ -263,6 +273,99 @@ export default async function AdminArtisanDetailPage({
           </div>
         </div>
       )}
+
+      {/* Blockchain Trust Anchors */}
+      <div className="mt-5 rounded-2xl border bg-card p-5">
+        <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+          <Link2 className="h-4 w-4" /> Blockchain Trust Anchors
+        </h2>
+        {blockchainRecords.length === 0 ? (
+          <p className="text-sm text-muted-foreground">No on-chain records yet for this artisan.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="border-b text-left text-muted-foreground">
+                  <th className="pb-2 pr-4 font-medium">Type</th>
+                  <th className="pb-2 pr-4 font-medium">Status</th>
+                  <th className="pb-2 pr-4 font-medium">Tx Hash</th>
+                  <th className="pb-2 pr-4 font-medium">Network</th>
+                  <th className="pb-2 font-medium">Date</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y">
+                {blockchainRecords.map((rec) => {
+                  const explorerUrl = rec.txHash
+                    ? rec.network === "POLYGON_AMOY"
+                      ? `https://amoy.polygonscan.com/tx/${rec.txHash}`
+                      : null
+                    : null;
+                  const statusStyle =
+                    rec.status === "CONFIRMED"
+                      ? "bg-emerald-100 text-emerald-700"
+                      : rec.status === "FAILED"
+                      ? "bg-red-100 text-red-700"
+                      : "bg-amber-100 text-amber-700";
+                  return (
+                    <tr key={rec.id} className="py-2">
+                      <td className="py-2 pr-4 font-mono font-medium">
+                        {rec.type.replace(/_/g, " ")}
+                      </td>
+                      <td className="py-2 pr-4">
+                        <span className={`rounded px-1.5 py-0.5 text-xs font-medium ${statusStyle}`}>
+                          {rec.status}
+                        </span>
+                      </td>
+                      <td className="py-2 pr-4 font-mono">
+                        {rec.txHash ? (
+                          explorerUrl ? (
+                            <a
+                              href={explorerUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-primary underline underline-offset-2"
+                            >
+                              {rec.txHash.slice(0, 10)}…{rec.txHash.slice(-6)}
+                            </a>
+                          ) : (
+                            <span className="text-muted-foreground">
+                              {rec.txHash.slice(0, 10)}…{rec.txHash.slice(-6)}
+                            </span>
+                          )
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
+                      </td>
+                      <td className="py-2 pr-4 text-muted-foreground">
+                        {rec.network ?? "—"}
+                      </td>
+                      <td className="py-2 text-muted-foreground">
+                        {new Date(rec.createdAt).toLocaleDateString("en-GB", {
+                          day: "numeric",
+                          month: "short",
+                          year: "numeric",
+                        })}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+        <p className="mt-3 text-xs text-muted-foreground">
+          Records on the Polygon Amoy testnet are publicly verifiable at{" "}
+          <a
+            href="https://amoy.polygonscan.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline underline-offset-2"
+          >
+            amoy.polygonscan.com
+          </a>
+          . Click any Tx Hash to view the full on-chain record.
+        </p>
+      </div>
 
       <VerificationPanel
         artisanId={artisan.id}

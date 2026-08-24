@@ -1,7 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowLeft, MapPin, Mail, Calendar, Shield } from "lucide-react";
+import { ArrowLeft, MapPin, Mail, Calendar, Shield, Link2 } from "lucide-react";
 import { auth } from "@/platform/auth-session";
 import { userRepository } from "@/services/user/user.repository";
 import { Badge } from "@/components/ui/badge";
@@ -122,6 +122,18 @@ export default async function AdminHomeownerDetailPage({
             <dd className="font-mono text-xs text-muted-foreground">{homeowner.id}</dd>
           </div>
         </dl>
+      </div>
+
+      {/* Blockchain Trust Anchors */}
+      <div className="mt-5 rounded-2xl border bg-card p-5">
+        <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+          <Link2 className="h-4 w-4" /> Blockchain Trust Anchors
+        </h2>
+        <p className="text-sm text-muted-foreground">
+          Homeowner accounts are not tracked on-chain. Blockchain trust anchoring applies only to
+          artisan profiles — recording identity verification, credential approvals, reviews, and
+          trust score history.
+        </p>
       </div>
     </main>
   );
