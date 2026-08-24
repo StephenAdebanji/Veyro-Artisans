@@ -66,13 +66,13 @@ function LogDisputeSection() {
           <textarea
             className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-rose-300"
             rows={3}
-            maxLength={200}
+            maxLength={500}
             placeholder="Describe the issue in detail…"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             required
           />
-          <p className="mt-1 text-right text-xs text-muted-foreground">{description.length} / 200</p>
+          <p className="mt-1 text-right text-xs text-muted-foreground">{description.length} / 500</p>
           {error && <p className="text-sm text-destructive">{error}</p>}
           <div>
             <Button type="submit" disabled={submitting} className="bg-rose-600 hover:bg-rose-700">
