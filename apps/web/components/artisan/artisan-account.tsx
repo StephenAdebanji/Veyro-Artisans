@@ -97,11 +97,13 @@ function LogDisputeSection() {
           <textarea
             className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-rose-300"
             rows={3}
+            maxLength={200}
             placeholder="Describe the issue in detail…"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             required
           />
+          <p className="mt-1 text-right text-xs text-muted-foreground">{description.length} / 200</p>
           {error && <p className="text-sm text-destructive">{error}</p>}
           <Button
             type="submit"
@@ -409,10 +411,12 @@ export function ArtisanAccount({
                   <Textarea
                     id="bio"
                     rows={4}
+                    maxLength={500}
                     placeholder="Tell homeowners about your experience…"
                     value={bio}
                     onChange={(e) => { setBio(e.target.value); setSaved(false); }}
                   />
+                  <p className="mt-1 text-right text-xs text-muted-foreground">{bio.length} / 500</p>
                 </div>
 
                 <div className="flex flex-col gap-1.5">

@@ -145,7 +145,9 @@ export function Step2Professional() {
           placeholder="Tell homeowners about your craft."
           value={bio}
           onChange={(event) => setBio(event.target.value)}
+          maxLength={500}
         />
+        <p className="mt-1 text-right text-xs text-muted-foreground">{bio.length} / 500</p>
       </div>
       {error && <p className="text-sm text-destructive sm:col-span-2">{error}</p>}
       <div className="sm:col-span-2">

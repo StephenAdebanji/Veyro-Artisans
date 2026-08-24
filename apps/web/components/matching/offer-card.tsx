@@ -262,10 +262,12 @@ export function OfferCard({
           <textarea
             className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-destructive/30"
             rows={3}
+            maxLength={200}
             placeholder="e.g. Price is too high, I need someone sooner…"
             value={rejectReason}
             onChange={(e) => { setRejectReason(e.target.value); setRejectError(null); }}
           />
+          <p className="mt-1 text-right text-xs text-muted-foreground">{rejectReason.length} / 200</p>
           {rejectError && <p className="mt-1 text-xs text-destructive">{rejectError}</p>}
           <div className="mt-3 flex gap-2">
             <Button

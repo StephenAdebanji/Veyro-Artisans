@@ -197,10 +197,12 @@ function UserActionRow({
         <textarea
           className="w-full rounded-md border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
           rows={3}
+          maxLength={200}
           placeholder="Reason for deletion…"
           value={deleteReason}
           onChange={(e) => setDeleteReason(e.target.value)}
         />
+        <p className="mt-1 text-right text-xs text-muted-foreground">{deleteReason.length} / 200</p>
       </ConfirmDialog>
 
       <tr className="border-b last:border-b-0 hover:bg-muted/30">

@@ -196,10 +196,12 @@ function DisputeRow({
             <textarea
               className="w-full rounded-md border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
               rows={3}
+              maxLength={500}
               placeholder="Enter resolution notes…"
               value={resolution}
               onChange={(e) => setResolution(e.target.value)}
             />
+            <p className="mt-1 text-right text-xs text-muted-foreground">{resolution.length} / 500</p>
             <div className="mt-2 flex justify-end">
               <Button
                 size="sm"

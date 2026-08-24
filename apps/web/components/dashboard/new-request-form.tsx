@@ -193,7 +193,9 @@ export function NewRequestForm({ defaultAddress }: { defaultAddress?: DefaultAdd
           value={description}
           onChange={(event) => setDescription(event.target.value)}
           required
+          maxLength={500}
         />
+        <p className="mt-1 text-right text-xs text-muted-foreground">{description.length} / 500</p>
       </div>
 
       {/* Address mode */}

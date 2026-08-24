@@ -66,11 +66,13 @@ function LogDisputeSection() {
           <textarea
             className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-rose-300"
             rows={3}
+            maxLength={200}
             placeholder="Describe the issue in detail…"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             required
           />
+          <p className="mt-1 text-right text-xs text-muted-foreground">{description.length} / 200</p>
           {error && <p className="text-sm text-destructive">{error}</p>}
           <div>
             <Button type="submit" disabled={submitting} className="bg-rose-600 hover:bg-rose-700">
@@ -154,10 +156,12 @@ export function EditProfileForm({ artisanId, email, initialData }: EditProfileFo
               <Textarea
                 id="bio"
                 rows={4}
+                maxLength={500}
                 placeholder="Tell homeowners about your experience and what you specialise in…"
                 value={bio}
                 onChange={(e) => setBio(e.target.value)}
               />
+              <p className="mt-1 text-right text-xs text-muted-foreground">{bio.length} / 500</p>
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">

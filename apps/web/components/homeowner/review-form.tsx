@@ -85,9 +85,11 @@ export function ReviewForm({ jobId }: { jobId: string }) {
         placeholder="Add a comment (optional)"
         value={comment}
         onChange={(e) => setComment(e.target.value)}
-        className="mb-4 resize-none"
+        className="mb-1 resize-none"
         rows={3}
+        maxLength={500}
       />
+      <p className="mb-4 text-right text-xs text-muted-foreground">{comment.length} / 500</p>
 
       <Button
         className="w-full"

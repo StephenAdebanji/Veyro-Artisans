@@ -282,12 +282,14 @@ function RejectReasonDialog({
         <textarea
           id="rejection-reason"
           rows={4}
+          maxLength={200}
           className="w-full rounded-md border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
           placeholder={`e.g. Your Government ID could not be approved — please re-upload a clear, valid, and unexpired document.`}
           value={reason}
           onChange={(e) => setReason(e.target.value)}
         />
-        <p className="mt-1.5 text-xs text-muted-foreground">
+        <p className="mt-1 text-right text-xs text-muted-foreground">{reason.length} / 200</p>
+        <p className="mt-1 text-xs text-muted-foreground">
           A standard reminder will be appended automatically:{" "}
           <em>&ldquo;Please review the file and make sure it is correct, clear, and not outdated.&rdquo;</em>
         </p>
