@@ -60,6 +60,7 @@ function ArtisanActionRow({
   const [editOpen, setEditOpen] = useState(false);
   const [resetOpen, setResetOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [confirmPurge, setConfirmPurge] = useState(false);
   const [deleteReason, setDeleteReason] = useState("");
   const [actionError, setActionError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -107,6 +108,24 @@ function ArtisanActionRow({
     });
   }
 
+  function handlePurge() {
+    startTransition(async () => {
+      try {
+        await apiFetch(`/api/admin/artisans/${data.id}`, {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ reason: "Permanently purged by admin" }),
+        });
+        setConfirmPurge(false);
+        onDeleted(data.id);
+        router.refresh();
+      } catch (err) {
+        setConfirmPurge(false);
+        setActionError(err instanceof Error ? err.message : "Could not purge artisan.");
+      }
+    });
+  }
+
   function handleSaved(updated: EditArtisanData) {
     setData((prev) => ({
       ...prev,
@@ -130,6 +149,16 @@ function ArtisanActionRow({
 
   return (
     <>
+      <ConfirmDialog
+        open={confirmPurge}
+        title="Permanently purge artisan"
+        description={`This will irreversibly delete all of ${name}'s data — profile, credentials, chat history, and account. This cannot be undone.`}
+        confirmLabel="Purge permanently"
+        destructive
+        loading={pending}
+        onConfirm={handlePurge}
+        onCancel={() => setConfirmPurge(false)}
+      />
       <ConfirmDialog
         open={confirmDelete}
         title="Delete artisan"
@@ -180,6 +209,17 @@ function ArtisanActionRow({
                 <Eye className="h-3.5 w-3.5" /> View
               </Button>
             </Link>
+            {isDeleted && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 gap-1 text-xs text-destructive hover:text-destructive"
+                disabled={pending}
+                onClick={() => setConfirmPurge(true)}
+              >
+                <Trash2 className="h-3.5 w-3.5" /> Purge
+              </Button>
+            )}
             {!isDeleted && (
               <>
                 <Button

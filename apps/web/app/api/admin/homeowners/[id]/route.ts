@@ -4,6 +4,9 @@ import { z } from "zod";
 import { auth } from "@/platform/auth-session";
 import { userRepository } from "@/services/user/user.repository";
 import { authRepository } from "@/services/auth/auth.repository";
+import { authService } from "@/services/auth/auth.service";
+import { chatService } from "@/services/chat/chat.service";
+import { notificationService } from "@/services/notification/notification.service";
 import { withApiErrorHandling } from "@/platform/api-handler";
 import type { Role, UserStatus } from "@prisma/client";
 
@@ -67,7 +70,21 @@ export const DELETE = withApiErrorHandling(async (req: Request, { params }: { pa
   const { id } = await params;
   const body = await req.json().catch(() => ({})) as { reason?: string };
   const reason = typeof body.reason === "string" && body.reason.trim() ? body.reason.trim() : "No reason provided";
-  await userRepository.deleteHomeowner(id, reason);
+
+  const homeowner = await userRepository.findHomeownerProfileFull(id);
+  if (!homeowner) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+  if (homeowner.user.status === "DELETED") {
+    // Hard delete — user was already soft-deleted, now permanently purge
+    await chatService.deleteDataForParticipant(id);
+    await userRepository.deleteHomeownerProfileByUserId(homeowner.userId);
+    await notificationService.deleteForUser(homeowner.userId);
+    await authService.deleteUser(homeowner.userId);
+  } else {
+    // Soft delete — mark as DELETED, keep profile in DB
+    await userRepository.deleteHomeowner(id, reason);
+  }
+
   revalidatePath("/admin", "layout");
   return NextResponse.json({ ok: true });
 });

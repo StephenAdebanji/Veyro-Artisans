@@ -89,7 +89,7 @@ export function AccountDangerZone({ email }: { email: string }) {
       <section className="rounded-xl border border-rose-200 bg-rose-50/50 p-6 dark:border-rose-900 dark:bg-rose-950/20">
         <h2 className="text-base font-semibold text-rose-700 dark:text-rose-400">Delete my account</h2>
         <p className="mt-0.5 text-sm text-muted-foreground">
-          Permanently deletes your profile and personal data. This cannot be undone.
+          Deactivates your account immediately. Your data will be permanently removed by an admin after review.
         </p>
         <div className="mt-4">
           <Button
@@ -111,7 +111,7 @@ export function AccountDangerZone({ email }: { email: string }) {
       <ConfirmDialog
         open={confirmOpen}
         title="Delete your account?"
-        description={`This permanently deletes your VEYRO profile and personal data. To confirm, type your email address (${email}) below.`}
+        description={`This will deactivate your account immediately. You will be signed out and will no longer be able to log in. To confirm, type your email address (${email}) below.`}
         confirmLabel={deleting ? "Deleting…" : "Delete my account"}
         destructive
         loading={deleting}
@@ -144,7 +144,7 @@ export function AccountDangerZone({ email }: { email: string }) {
             <CheckCircle2 className="h-10 w-10 text-emerald-600" />
             <DialogTitle>Account deleted</DialogTitle>
             <DialogDescription>
-              Your VEYRO account and personal data have been permanently deleted.
+              Your VEYRO account has been deactivated. Your data will be permanently removed by an admin after review.
             </DialogDescription>
           </DialogHeader>
           <Button onClick={handleReturnHome} className="w-full">

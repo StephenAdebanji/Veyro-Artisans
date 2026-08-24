@@ -3,9 +3,7 @@ import { z } from "zod";
 import { auth } from "@/platform/auth-session";
 import { authService } from "@/services/auth/auth.service";
 import { userService } from "@/services/user/user.service";
-import { chatService } from "@/services/chat/chat.service";
-import { notificationService } from "@/services/notification/notification.service";
-import { trustService } from "@/services/trust/trust.service";
+import { userRepository } from "@/services/user/user.repository";
 import { withApiErrorHandling } from "@/platform/api-handler";
 
 const deleteSchema = z.object({
@@ -38,20 +36,14 @@ export const DELETE = withApiErrorHandling(async (request: Request) => {
   if (user.role === "HOMEOWNER") {
     const homeowner = await userService.getHomeownerProfileByUserId(userId);
     if (homeowner) {
-      await chatService.deleteDataForParticipant(homeowner.id);
-      await userService.deleteHomeownerAccount(userId);
+      await userRepository.deleteHomeowner(homeowner.id, "Deleted by account holder");
     }
   } else if (user.role === "ARTISAN") {
     const artisan = await userService.getArtisanProfileByUserId(userId);
     if (artisan) {
-      await trustService.deleteCredentialsForArtisan(artisan.id);
-      await chatService.deleteDataForParticipant(artisan.id);
-      await userService.deleteArtisanAccount(userId);
+      await userRepository.deleteArtisan(artisan.id, "Deleted by account holder");
     }
   }
-
-  await notificationService.deleteForUser(userId);
-  await authService.deleteUser(userId);
 
   return NextResponse.json({ ok: true });
 });
