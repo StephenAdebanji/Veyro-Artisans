@@ -16,6 +16,8 @@ import { trustService } from "@/services/trust/trust.service";
 import { userService } from "@/services/user/user.service";
 import { RatingCard } from "@/components/artisan/rating-card";
 import { VerifiedBanner } from "@/components/artisan/verified-banner";
+import { SKILL_LABELS } from "@/components/shared/skill-labels";
+import type { SkillCategory } from "@veyro/contracts";
 type ArtisanOnboardingStatus = "DRAFT" | "PENDING_REVIEW" | "ACTIVE" | "SUSPENDED";
 type ArtisanVerificationStatus = "UNVERIFIED" | "VERIFIED" | "REJECTED";
 
@@ -158,9 +160,16 @@ export default async function ArtisanDashboardPage() {
             <AvailableJobsSummaryText serviceRadiusKm={profile.serviceRadiusKm} fallback={availableJobs.length} />
           </p>
         </div>
-        <Badge variant="secondary" className="text-emerald-700">
-          {isAvailableNow(profile.availability) ? "Available for jobs" : "Outside working hours"}
-        </Badge>
+        <div className="flex flex-col items-end gap-1.5">
+          {profile.primarySkill && (
+            <Badge variant="outline" className="border-violet-200 bg-violet-50 text-violet-700">
+              {SKILL_LABELS[profile.primarySkill as SkillCategory] ?? profile.primarySkill}
+            </Badge>
+          )}
+          <Badge variant="secondary" className="text-emerald-700">
+            {isAvailableNow(profile.availability) ? "Available for jobs" : "Outside working hours"}
+          </Badge>
+        </div>
       </div>
 
       <div className="mt-6 grid gap-4 sm:grid-cols-4">
