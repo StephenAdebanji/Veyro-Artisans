@@ -70,7 +70,7 @@ function DisputeDetailModal({ item, onClose }: { item: DisputeItem; onClose: () 
         <DialogHeader>
           <DialogTitle>Dispute details</DialogTitle>
         </DialogHeader>
-        <div className="flex flex-col">
+        <div className="max-h-[60vh] overflow-y-auto flex flex-col">
           <DetailRow label="Status" value={
             <Badge className={`text-xs ${STATUS_STYLE[item.status] ?? "bg-muted text-muted-foreground"}`}>
               {item.status}
