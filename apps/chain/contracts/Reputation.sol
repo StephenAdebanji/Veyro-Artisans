@@ -13,7 +13,7 @@ import "./interfaces/ITrustRegistry.sol";
  * storage wired up. Phase 9 adds the real per-record validation rules.
  */
 contract Reputation is ITrustRegistry {
-    address public owner;
+    address public immutable owner;
 
     mapping(bytes32 => string) private records;
 

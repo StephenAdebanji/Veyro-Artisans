@@ -14,7 +14,7 @@ import "./interfaces/ITrustRegistry.sol";
  * contract should enforce beyond "the backend wallet says so".
  */
 contract IdentityVerification is ITrustRegistry {
-    address public owner;
+    address public immutable owner;
 
     mapping(bytes32 => string) private records;
 
