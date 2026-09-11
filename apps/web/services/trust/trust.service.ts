@@ -126,16 +126,29 @@ class TrustService implements TrustServicePort {
   }
 
   async applyNewReview(artisanId: string): Promise<void> {
-    // Read all source-of-truth data in parallel — ratings AND job counts so
-    // the full trust score (completion rate included) is always correct.
-    const [reviewRows, completedJobs, totalJobsAccepted] = await Promise.all([
+    // Read all source-of-truth data in parallel — ratings, job counts, and
+    // response times so the full trust score is always correct.
+    const [reviewRows, completedJobs, totalJobsAccepted, respondedMatches] = await Promise.all([
       prisma.review.findMany({ where: { artisanId }, select: { rating: true } }),
       prisma.job.count({ where: { artisanId, status: "COMPLETED" } }),
       prisma.job.count({ where: { artisanId } }),
+      prisma.match.findMany({
+        where: { artisanId, respondedAt: { not: null } },
+        select: { createdAt: true, respondedAt: true },
+      }),
     ]);
+
     const ratingCount = reviewRows.length;
     const ratingAvg =
       ratingCount > 0 ? reviewRows.reduce((s, r) => s + r.rating, 0) / ratingCount : 0;
+
+    const responseTimes = respondedMatches
+      .filter((m) => m.respondedAt !== null)
+      .map((m) => (m.respondedAt!.getTime() - m.createdAt.getTime()) / 1000);
+    const responseTimeAvgSeconds =
+      responseTimes.length > 0
+        ? responseTimes.reduce((a, b) => a + b, 0) / responseTimes.length
+        : null;
 
     await trustRepository.getOrCreateTrustProfile(artisanId);
     await trustRepository.updateTrustProfile(artisanId, {
@@ -143,6 +156,7 @@ class TrustService implements TrustServicePort {
       ratingCount,
       completedJobs,
       totalJobsAccepted,
+      ...(responseTimeAvgSeconds !== null ? { responseTimeAvgSeconds } : {}),
     });
     await this.recalculateTrustScore(artisanId);
 

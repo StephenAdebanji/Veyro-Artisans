@@ -19,12 +19,13 @@ function clamp(v: number) {
   return Math.max(0, Math.min(1, v));
 }
 
-// Bar colors — distinct but harmonious
+// Bar colors — four distinct hues that sit apart on the wheel but feel cohesive
+// violet (identity/trust) · amber (star rating) · emerald (completion/success) · sky (response time/speed)
 const BAR_COLORS = {
-  identity: "bg-emerald-500",
-  rating: "bg-teal-500",
-  completion: "bg-sky-500",
-  response: "bg-indigo-400",
+  identity: "bg-violet-500",
+  rating: "bg-amber-500",
+  completion: "bg-emerald-500",
+  response: "bg-sky-500",
 } as const;
 
 // Ring arc: green (high) → teal (mid) → red (low)
