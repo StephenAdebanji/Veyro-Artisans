@@ -32,4 +32,11 @@ export const blockchainRepository = {
   async findForRef(refId: string) {
     return prisma.blockchainRecord.findMany({ where: { refId }, orderBy: { createdAt: "desc" } });
   },
+
+  async findFailedForRef(refId: string) {
+    return prisma.blockchainRecord.findMany({
+      where: { refId, status: "FAILED" },
+      orderBy: { createdAt: "desc" },
+    });
+  },
 };

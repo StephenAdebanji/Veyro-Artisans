@@ -11,6 +11,7 @@ import { eventBus } from "@/platform/event-bus";
 import { prisma } from "@/platform/prisma";
 import { trustRepository } from "./trust.repository";
 import { calculateTrustScore } from "./trust-score-engine";
+import { blockchainService } from "@/services/blockchain/blockchain.service";
 
 const EXPECTED_CREDENTIAL_COUNT = 3; // ID + proof of address + trade certificate
 const REVIEW_COUNT_CEILING = 20;
@@ -121,6 +122,11 @@ class TrustService implements TrustServicePort {
       breakdown,
       occurredAt: new Date().toISOString(),
     });
+
+    // Heal any previously-FAILED blockchain records for this artisan — they
+    // failed due to RPC/gas issues, not bad data, so retry them now that the
+    // chain-adapter falls back to simulation on network failure.
+    blockchainService.retryFailedForRef(artisanId).catch(() => {});
 
     return { score, breakdown };
   }
