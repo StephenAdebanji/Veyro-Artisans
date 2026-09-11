@@ -471,15 +471,15 @@ export function MatchingScreen({
                               )}
                             </div>
                             <div className="mt-0.5 flex items-center gap-3">
-                              {c.ratingAvg != null && c.ratingAvg > 0 ? (
+                              {(c.ratingCount ?? 0) >= 3 ? (
                                 <span className="flex items-center gap-0.5 text-[11px] text-amber-600 dark:text-amber-400">
-                                  ★ {c.ratingAvg.toFixed(1)}
-                                  {c.ratingCount != null && c.ratingCount > 0 && (
-                                    <span className="text-muted-foreground">({c.ratingCount})</span>
-                                  )}
+                                  ★ {c.ratingAvg?.toFixed(1)}
+                                  <span className="text-muted-foreground">({c.ratingCount})</span>
                                 </span>
                               ) : (
-                                <span className="text-[11px] text-muted-foreground">No reviews yet</span>
+                                <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+                                  New artisan
+                                </span>
                               )}
                               <div className="flex items-center gap-1.5">
                                 <div className="h-1.5 w-12 overflow-hidden rounded-full bg-violet-200 dark:bg-violet-800">
