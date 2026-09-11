@@ -19,19 +19,19 @@ function clamp(v: number) {
   return Math.max(0, Math.min(1, v));
 }
 
-// Cohesive cool palette — all from the indigo/sky/teal family
+// Bar colors — distinct but harmonious
 const BAR_COLORS = {
-  identity: "bg-indigo-500",
-  rating: "bg-sky-500",
-  completion: "bg-teal-500",
-  response: "bg-cyan-500",
+  identity: "bg-emerald-500",
+  rating: "bg-teal-500",
+  completion: "bg-sky-500",
+  response: "bg-indigo-400",
 } as const;
 
-// Ring arc: indigo → sky → rose (cool throughout; rose is alert, not harsh red)
+// Ring arc: green (high) → teal (mid) → red (low)
 function ringColor(score: number) {
-  if (score >= 75) return "#4f46e5"; // indigo-600
-  if (score >= 50) return "#0ea5e9"; // sky-500
-  return "#f43f5e";                  // rose-500
+  if (score >= 75) return "#10b981"; // emerald-500  — green
+  if (score >= 50) return "#14b8a6"; // teal-500     — teal
+  return "#ef4444";                  // red-500      — red
 }
 
 function scoreBand(score: number) {
@@ -90,7 +90,7 @@ export function TrustScoreRing({
       <div className="mb-4 flex items-center justify-between">
         <h3 className="font-semibold">Trust Score</h3>
         {isVerified && (
-          <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-[10px] font-semibold text-indigo-700 dark:bg-indigo-950 dark:text-indigo-400">
+          <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400">
             Verified ✓
           </span>
         )}

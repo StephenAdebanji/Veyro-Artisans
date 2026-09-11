@@ -1,8 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Briefcase, CheckCircle2, ListChecks } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { StatCard } from "@/components/dashboard/stat-card";
 import { ArtisanJobFeed } from "@/components/dashboard/artisan-job-feed";
 import { AvailableJobsCountProvider } from "@/components/dashboard/available-jobs-count-context";
 import { AvailableJobsCount } from "@/components/dashboard/available-jobs-count";
@@ -16,7 +14,7 @@ import { trustService } from "@/services/trust/trust.service";
 import { userService } from "@/services/user/user.service";
 import { RatingCard } from "@/components/artisan/rating-card";
 import { VerifiedBanner } from "@/components/artisan/verified-banner";
-import { TrustScoreRing } from "@/components/dashboard/trust-score-ring";
+import { ArtisanDashboardStatsProvider, LiveTrustScoreRing, LiveStatTiles } from "@/components/dashboard/live-artisan-stats";
 import { SKILL_LABELS } from "@/components/shared/skill-labels";
 import type { SkillCategory } from "@veyro/contracts";
 type ArtisanOnboardingStatus = "DRAFT" | "PENDING_REVIEW" | "ACTIVE" | "SUSPENDED";
@@ -153,6 +151,19 @@ export default async function ArtisanDashboardPage() {
         </div>
       )}
 
+      <ArtisanDashboardStatsProvider
+        initial={{
+          trustScore: trustProfile?.score ?? 0,
+          isVerified,
+          ratingAvg: trustProfile?.ratingAvg ?? 0,
+          ratingCount: trustProfile?.ratingCount ?? 0,
+          completedJobs: trustProfile?.completedJobs ?? 0,
+          totalJobsAccepted: trustProfile?.totalJobsAccepted ?? 0,
+          responseTimeAvgSeconds: trustProfile?.responseTimeAvgSeconds ?? 0,
+          activeJobsCount,
+          completedJobsCount: completedJobsActual,
+        }}
+      >
       <AvailableJobsCountProvider initialCount={availableJobs.length}>
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
@@ -173,17 +184,10 @@ export default async function ArtisanDashboardPage() {
         </div>
       </div>
 
-      <div className="mt-6 grid gap-4 sm:grid-cols-4">
-        <StatCard
-          icon={ListChecks}
-          value={<AvailableJobsCount fallback={availableJobs.length} />}
-          label="Available jobs"
-          accent="violet"
-        />
-        <StatCard icon={Briefcase} value={activeJobsCount} label="Active jobs" href="/artisan/history?tab=active" accent="blue" />
-        <StatCard icon={CheckCircle2} value={profile.completedJobs} label="Completed" href="/artisan/history?tab=completed" accent="emerald" />
-        <RatingCard reviews={reviews} />
-      </div>
+      <LiveStatTiles
+        availableJobsSlot={<AvailableJobsCount fallback={availableJobs.length} />}
+        ratingSlot={<RatingCard reviews={reviews} />}
+      />
 
       <div className="mt-8 grid gap-6 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">
@@ -225,15 +229,7 @@ export default async function ArtisanDashboardPage() {
         </div>
 
         <div className="space-y-4">
-          <TrustScoreRing
-            score={trustProfile?.score ?? 0}
-            isVerified={isVerified}
-            ratingAvg={trustProfile?.ratingAvg ?? 0}
-            ratingCount={trustProfile?.ratingCount ?? 0}
-            completedJobs={trustProfile?.completedJobs ?? 0}
-            totalJobsAccepted={trustProfile?.totalJobsAccepted ?? 0}
-            responseTimeAvgSeconds={trustProfile?.responseTimeAvgSeconds ?? 0}
-          />
+          <LiveTrustScoreRing />
 
           <div className="rounded-xl border bg-card p-4">
             <h3 className="font-semibold">Reputation</h3>
@@ -263,6 +259,7 @@ export default async function ArtisanDashboardPage() {
         </div>
       </div>
       </AvailableJobsCountProvider>
+      </ArtisanDashboardStatsProvider>
     </main>
   );
 }
