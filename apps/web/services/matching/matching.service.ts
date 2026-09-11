@@ -490,6 +490,10 @@ class MatchingService implements MatchingServicePort {
     return matchingRepository.countDisputesForArtisan(artisanId);
   }
 
+  async countDisputesRaisedByUser(userId: string): Promise<number> {
+    return matchingRepository.countDisputesRaisedByUser(userId);
+  }
+
   private toHistoryItem(job: {
     id: string; serviceRequestId: string; artisanId: string; homeownerId: string;
     agreedPrice: number; status: string; startedAt: Date; inProgressAt?: Date | null;

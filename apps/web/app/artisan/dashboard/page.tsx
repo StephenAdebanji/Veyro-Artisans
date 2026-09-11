@@ -78,7 +78,7 @@ export default async function ArtisanDashboardPage() {
       : Promise.resolve([]),
     matchingService.countActiveJobsForArtisan(profile.id),
     matchingService.listJobsFeedForArtisan(profile.id),
-    matchingService.countDisputesForArtisan(profile.id),
+    matchingService.countDisputesRaisedByUser(userId),
     matchingService.listReviewsForArtisan(profile.id),
   ]);
 

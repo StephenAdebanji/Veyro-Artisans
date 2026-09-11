@@ -325,6 +325,10 @@ export const matchingRepository = {
     return prisma.dispute.count({ where: { job: { artisanId } } });
   },
 
+  async countDisputesRaisedByUser(userId: string) {
+    return prisma.dispute.count({ where: { raisedBy: userId } });
+  },
+
   async listOpenDisputes() {
     const disputes = await prisma.dispute.findMany({
       where: { status: "OPEN" },
