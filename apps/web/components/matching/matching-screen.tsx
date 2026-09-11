@@ -436,52 +436,82 @@ export function MatchingScreen({
           </div>
         ) : (
           <>
-            {/* AI Selecting panel — shown while waiting for offers */}
-            {visibleOffers.length === 0 && !acceptedMatchId && secondsLeft > 0 && (
+            {/* AI Suggestions panel — stays visible until homeowner accepts */}
+            {!acceptedMatchId && secondsLeft > 0 && (
               <div className="mb-5 rounded-xl border border-violet-200 bg-violet-50 p-5 dark:border-violet-900 dark:bg-violet-950/30">
                 <div className="mb-3 flex items-center gap-2">
                   <Sparkles className="h-4 w-4 text-violet-600 dark:text-violet-400" />
                   <span className="text-sm font-semibold text-violet-800 dark:text-violet-300">
-                    VEYRO AI is finding your best match
+                    VEYRO AI top picks
                   </span>
                   {aiLoading && <Loader2 className="h-3.5 w-3.5 animate-spin text-violet-500" />}
                 </div>
 
-                {!aiLoading && freshAiCandidates.length > 0 ? (
-                  <div className="space-y-2.5">
-                    {freshAiCandidates.slice(0, 3).map((c, idx) => {
+                {!aiLoading && aiCandidates.length > 0 ? (
+                  <div className="space-y-3">
+                    {aiCandidates.slice(0, 3).map((c, idx) => {
+                      const hasOffered = respondedArtisanIds.has(c.artisanId);
                       const isInvited = invitedArtisanIds.has(c.artisanId);
                       const isInviting = invitingArtisanId === c.artisanId;
+                      const trustScore = Math.round((c.breakdown?.trust ?? 0) * 100);
+                      const matchPct = c.semanticScore ?? Math.round(c.score * 100);
                       return (
-                        <div key={c.artisanId} className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
-                          <span className="w-4 shrink-0 text-xs font-bold text-violet-500">#{idx + 1}</span>
-                          <Avatar src={c.artisanProfilePhotoUrl} name={c.artisanName} size={24} />
-                          <span className="min-w-0 flex-1 truncate text-sm font-medium text-violet-900 dark:text-violet-200">
-                            {c.artisanName ?? "Artisan"}
-                          </span>
-                          <div className="flex shrink-0 items-center gap-2">
-                            <div className="h-1.5 w-16 overflow-hidden rounded-full bg-violet-200 dark:bg-violet-800">
-                              <div
-                                className="h-full rounded-full bg-violet-600 dark:bg-violet-400 transition-all duration-500"
-                                style={{ width: `${c.semanticScore ?? Math.round(c.score * 100)}%` }}
-                              />
+                        <div key={c.artisanId} className="flex flex-wrap items-start gap-x-3 gap-y-1">
+                          <span className="mt-0.5 w-4 shrink-0 text-xs font-bold text-violet-500">#{idx + 1}</span>
+                          <Avatar src={c.artisanProfilePhotoUrl} name={c.artisanName} size={28} />
+                          <div className="min-w-0 flex-1">
+                            <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                              <span className="truncate text-sm font-medium text-violet-900 dark:text-violet-200">
+                                {c.artisanName ?? "Artisan"}
+                              </span>
+                              {trustScore > 0 && (
+                                <span className="rounded bg-violet-100 px-1.5 py-0.5 text-[10px] font-semibold text-violet-700 dark:bg-violet-900/60 dark:text-violet-300">
+                                  Trust {trustScore}
+                                </span>
+                              )}
                             </div>
-                            <span className="w-8 text-right text-xs font-semibold text-violet-700 dark:text-violet-300">
-                              {c.semanticScore ?? Math.round(c.score * 100)}%
-                            </span>
+                            <div className="mt-0.5 flex items-center gap-3">
+                              {c.ratingAvg != null && c.ratingAvg > 0 ? (
+                                <span className="flex items-center gap-0.5 text-[11px] text-amber-600 dark:text-amber-400">
+                                  ★ {c.ratingAvg.toFixed(1)}
+                                  {c.ratingCount != null && c.ratingCount > 0 && (
+                                    <span className="text-muted-foreground">({c.ratingCount})</span>
+                                  )}
+                                </span>
+                              ) : (
+                                <span className="text-[11px] text-muted-foreground">No reviews yet</span>
+                              )}
+                              <div className="flex items-center gap-1.5">
+                                <div className="h-1.5 w-12 overflow-hidden rounded-full bg-violet-200 dark:bg-violet-800">
+                                  <div
+                                    className="h-full rounded-full bg-violet-600 dark:bg-violet-400 transition-all duration-500"
+                                    style={{ width: `${matchPct}%` }}
+                                  />
+                                </div>
+                                <span className="text-[11px] font-semibold text-violet-700 dark:text-violet-300">
+                                  {matchPct}% match
+                                </span>
+                              </div>
+                            </div>
                           </div>
-                          <button
-                            type="button"
-                            onClick={() => handleInviteArtisan(c.artisanId)}
-                            disabled={isInvited || isInviting}
-                            className={`ml-auto shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold transition-colors sm:ml-0 ${
-                              isInvited
-                                ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400"
-                                : "bg-violet-600 text-white hover:bg-violet-700 disabled:opacity-60"
-                            }`}
-                          >
-                            {isInvited ? "Invited ✓" : isInviting ? "Inviting…" : "Invite to offer"}
-                          </button>
+                          {hasOffered ? (
+                            <span className="shrink-0 rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400">
+                              Offered ↓
+                            </span>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => handleInviteArtisan(c.artisanId)}
+                              disabled={isInvited || isInviting}
+                              className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold transition-colors ${
+                                isInvited
+                                  ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400"
+                                  : "bg-violet-600 text-white hover:bg-violet-700 disabled:opacity-60"
+                              }`}
+                            >
+                              {isInvited ? "Invited ✓" : isInviting ? "Inviting…" : "Invite to offer"}
+                            </button>
+                          )}
                         </div>
                       );
                     })}

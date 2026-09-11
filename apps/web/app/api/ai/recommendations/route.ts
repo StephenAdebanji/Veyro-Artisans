@@ -12,10 +12,15 @@ import type { RankedArtisan } from "@veyro/contracts";
 // trusting whatever was true at scoring time.
 async function withProfilePhotos(ranked: RankedArtisan[]): Promise<RankedArtisan[]> {
   const profiles = await Promise.all(ranked.map((r) => userService.getArtisanProfile(r.artisanId)));
-  return ranked.map((r, i) => ({
-    ...r,
-    artisanProfilePhotoUrl: (profiles[i] as { profilePhotoUrl?: string | null } | null)?.profilePhotoUrl ?? null,
-  }));
+  return ranked.map((r, i) => {
+    const p = profiles[i] as { profilePhotoUrl?: string | null; ratingAvg?: number | null; ratingCount?: number | null } | null;
+    return {
+      ...r,
+      artisanProfilePhotoUrl: p?.profilePhotoUrl ?? null,
+      ratingAvg: p?.ratingAvg ?? null,
+      ratingCount: p?.ratingCount ?? null,
+    };
+  });
 }
 
 export const GET = withApiErrorHandling(async (request: Request) => {
