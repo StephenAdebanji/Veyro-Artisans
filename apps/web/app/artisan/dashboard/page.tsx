@@ -16,6 +16,7 @@ import { trustService } from "@/services/trust/trust.service";
 import { userService } from "@/services/user/user.service";
 import { RatingCard } from "@/components/artisan/rating-card";
 import { VerifiedBanner } from "@/components/artisan/verified-banner";
+import { TrustScoreRing } from "@/components/dashboard/trust-score-ring";
 import { SKILL_LABELS } from "@/components/shared/skill-labels";
 import type { SkillCategory } from "@veyro/contracts";
 type ArtisanOnboardingStatus = "DRAFT" | "PENDING_REVIEW" | "ACTIVE" | "SUSPENDED";
@@ -177,9 +178,10 @@ export default async function ArtisanDashboardPage() {
           icon={ListChecks}
           value={<AvailableJobsCount fallback={availableJobs.length} />}
           label="Available jobs"
+          accent="violet"
         />
-        <StatCard icon={Briefcase} value={activeJobsCount} label="Active jobs" href="/artisan/history?tab=active" />
-        <StatCard icon={CheckCircle2} value={profile.completedJobs} label="Completed" href="/artisan/history?tab=completed" />
+        <StatCard icon={Briefcase} value={activeJobsCount} label="Active jobs" href="/artisan/history?tab=active" accent="blue" />
+        <StatCard icon={CheckCircle2} value={profile.completedJobs} label="Completed" href="/artisan/history?tab=completed" accent="emerald" />
         <RatingCard reviews={reviews} />
       </div>
 
@@ -223,17 +225,15 @@ export default async function ArtisanDashboardPage() {
         </div>
 
         <div className="space-y-4">
-          <div className="rounded-xl border bg-card p-4">
-            <h3 className="flex items-center gap-1.5 font-semibold">Trust Score</h3>
-            <p className="mt-2 text-3xl font-bold text-primary">{Math.round(trustProfile?.score ?? 0)}/100</p>
-            <p className="text-xs text-muted-foreground">
-              Based on verified identity, credentials, ratings, reviews, completion rate and response
-              time.
-            </p>
-            <div className="mt-3 h-2 overflow-hidden rounded-full bg-muted">
-              <div className="h-full bg-primary" style={{ width: `${Math.min(100, trustProfile?.score ?? 0)}%` }} />
-            </div>
-          </div>
+          <TrustScoreRing
+            score={trustProfile?.score ?? 0}
+            isVerified={isVerified}
+            ratingAvg={trustProfile?.ratingAvg ?? 0}
+            ratingCount={trustProfile?.ratingCount ?? 0}
+            completedJobs={trustProfile?.completedJobs ?? 0}
+            totalJobsAccepted={trustProfile?.totalJobsAccepted ?? 0}
+            responseTimeAvgSeconds={trustProfile?.responseTimeAvgSeconds ?? 0}
+          />
 
           <div className="rounded-xl border bg-card p-4">
             <h3 className="font-semibold">Reputation</h3>

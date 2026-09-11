@@ -74,9 +74,9 @@ export default async function HomeownerDashboardPage() {
       </div>
 
       <div className="mt-6 grid gap-4 sm:grid-cols-3">
-        <StatCard icon={Briefcase} value={activeJobsCount} label="Active jobs" href="/homeowner/history?tab=active" />
-        <StatCard icon={CheckCircle2} value={completedCount} label="Completed" href="/homeowner/history?tab=completed" />
-        <StatCard icon={MessageSquare} value={unreadCount} label="Unread messages" href="/homeowner/messages" />
+        <StatCard icon={Briefcase} value={activeJobsCount} label="Active jobs" href="/homeowner/history?tab=active" accent="blue" />
+        <StatCard icon={CheckCircle2} value={completedCount} label="Completed" href="/homeowner/history?tab=completed" accent="emerald" />
+        <StatCard icon={MessageSquare} value={unreadCount} label="Unread messages" href="/homeowner/messages" accent="violet" />
       </div>
 
       <section className="mt-8">
