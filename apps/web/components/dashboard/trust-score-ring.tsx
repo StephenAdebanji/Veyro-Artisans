@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface TrustScoreRingProps {
   score: number;
@@ -19,11 +19,35 @@ function clamp(v: number) {
   return Math.max(0, Math.min(1, v));
 }
 
-function FactorBar({ label, value, color }: { label: string; value: number; color: string }) {
+// Cohesive cool palette — all from the indigo/sky/teal family
+const BAR_COLORS = {
+  identity: "bg-indigo-500",
+  rating: "bg-sky-500",
+  completion: "bg-teal-500",
+  response: "bg-cyan-500",
+} as const;
+
+// Ring arc: indigo → sky → rose (cool throughout; rose is alert, not harsh red)
+function ringColor(score: number) {
+  if (score >= 75) return "#4f46e5"; // indigo-600
+  if (score >= 50) return "#0ea5e9"; // sky-500
+  return "#f43f5e";                  // rose-500
+}
+
+function scoreBand(score: number) {
+  if (score >= 75) return "Strong";
+  if (score >= 50) return "Moderate";
+  return "Building";
+}
+
+function FactorBar({ label, value, color, weight }: { label: string; value: number; color: string; weight: string }) {
   return (
     <div className="space-y-1">
       <div className="flex justify-between text-[11px]">
-        <span className="text-muted-foreground">{label}</span>
+        <span className="text-muted-foreground">
+          {label}
+          <span className="ml-1 text-[10px] opacity-50">{weight}</span>
+        </span>
         <span className="font-semibold">{Math.round(value * 100)}%</span>
       </div>
       <div className="h-1.5 overflow-hidden rounded-full bg-muted">
@@ -46,6 +70,7 @@ export function TrustScoreRing({
   responseTimeAvgSeconds,
 }: TrustScoreRingProps) {
   const circleRef = useRef<SVGCircleElement>(null);
+  const [hovered, setHovered] = useState(false);
 
   useEffect(() => {
     const circle = circleRef.current;
@@ -58,26 +83,27 @@ export function TrustScoreRing({
   const ratingFactor = ratingCount >= 3 ? clamp(ratingAvg / 5) : 0.5;
   const completionFactor = totalJobsAccepted > 0 ? clamp(completedJobs / totalJobsAccepted) : 0;
   const responseFactor = responseTimeAvgSeconds > 0 ? clamp(120 / responseTimeAvgSeconds) : 0;
-
-  const ringColor =
-    score >= 75 ? "#7c3aed" : score >= 50 ? "#f59e0b" : "#ef4444";
+  const color = ringColor(score);
 
   return (
     <div className="rounded-xl border bg-card p-5">
       <div className="mb-4 flex items-center justify-between">
         <h3 className="font-semibold">Trust Score</h3>
         {isVerified && (
-          <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400">
+          <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-[10px] font-semibold text-indigo-700 dark:bg-indigo-950 dark:text-indigo-400">
             Verified ✓
           </span>
         )}
       </div>
 
-      {/* Ring */}
+      {/* Ring with hover tooltip */}
       <div className="flex justify-center">
-        <div className="relative inline-flex items-center justify-center">
+        <div
+          className="relative inline-flex cursor-default items-center justify-center"
+          onMouseEnter={() => setHovered(true)}
+          onMouseLeave={() => setHovered(false)}
+        >
           <svg width="120" height="120" viewBox="0 0 120 120" className="-rotate-90">
-            {/* Background track */}
             <circle
               cx="60" cy="60" r={RADIUS}
               fill="none"
@@ -85,12 +111,11 @@ export function TrustScoreRing({
               strokeWidth="10"
               className="text-muted"
             />
-            {/* Progress arc */}
             <circle
               ref={circleRef}
               cx="60" cy="60" r={RADIUS}
               fill="none"
-              stroke={ringColor}
+              stroke={color}
               strokeWidth="10"
               strokeLinecap="round"
               strokeDasharray={CIRCUMFERENCE}
@@ -98,20 +123,51 @@ export function TrustScoreRing({
             />
           </svg>
           <div className="absolute flex flex-col items-center">
-            <span className="text-3xl font-bold leading-none" style={{ color: ringColor }}>
+            <span className="text-3xl font-bold leading-none" style={{ color }}>
               {Math.round(score)}
             </span>
             <span className="text-[10px] text-muted-foreground">/ 100</span>
           </div>
+
+          {/* Hover tooltip */}
+          {hovered && (
+            <div className="absolute bottom-[calc(100%+8px)] left-1/2 z-50 w-56 -translate-x-1/2 rounded-lg border bg-popover px-3.5 py-3 text-[11px] shadow-lg">
+              <p className="font-semibold text-foreground">
+                {scoreBand(score)} trust ({Math.round(score)}/100)
+              </p>
+              <p className="mt-1 text-muted-foreground leading-relaxed">
+                Homeowners see this score when deciding who to hire. A higher score means
+                more completed jobs, verified identity, good reviews, and fast replies.
+              </p>
+              <div className="mt-2.5 space-y-1 border-t pt-2">
+                <p className="font-medium text-foreground mb-1">How it's calculated</p>
+                {[
+                  ["Identity verification", "20%"],
+                  ["Credential verification", "20%"],
+                  ["Star rating", "25%"],
+                  ["Review count", "15%"],
+                  ["Completion rate", "10%"],
+                  ["Response time", "10%"],
+                ].map(([factor, weight]) => (
+                  <div key={factor} className="flex justify-between text-muted-foreground">
+                    <span>{factor}</span>
+                    <span className="font-medium">{weight}</span>
+                  </div>
+                ))}
+              </div>
+              {/* Arrow */}
+              <div className="absolute -bottom-[5px] left-1/2 h-2.5 w-2.5 -translate-x-1/2 rotate-45 border-b border-r bg-popover" />
+            </div>
+          )}
         </div>
       </div>
 
       {/* Factor breakdown */}
       <div className="mt-4 space-y-2.5">
-        <FactorBar label="Identity" value={isVerified ? 1 : 0} color="bg-violet-500" />
-        <FactorBar label="Rating" value={ratingFactor} color="bg-amber-500" />
-        <FactorBar label="Completion" value={completionFactor} color="bg-emerald-500" />
-        <FactorBar label="Response time" value={responseFactor} color="bg-blue-500" />
+        <FactorBar label="Identity" value={isVerified ? 1 : 0} color={BAR_COLORS.identity} weight="20%" />
+        <FactorBar label="Rating" value={ratingFactor} color={BAR_COLORS.rating} weight="25%" />
+        <FactorBar label="Completion" value={completionFactor} color={BAR_COLORS.completion} weight="10%" />
+        <FactorBar label="Response time" value={responseFactor} color={BAR_COLORS.response} weight="10%" />
       </div>
     </div>
   );

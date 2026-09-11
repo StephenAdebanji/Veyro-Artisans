@@ -3,10 +3,10 @@ import type { LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 
 const accentStyles = {
-  violet: { bar: "bg-violet-500", icon: "text-violet-600 dark:text-violet-400" },
-  emerald: { bar: "bg-emerald-500", icon: "text-emerald-600 dark:text-emerald-400" },
-  amber: { bar: "bg-amber-500", icon: "text-amber-600 dark:text-amber-400" },
-  blue: { bar: "bg-blue-500", icon: "text-blue-600 dark:text-blue-400" },
+  violet: { bar: "bg-indigo-500", icon: "text-indigo-600 dark:text-indigo-400" },
+  emerald: { bar: "bg-teal-500", icon: "text-teal-600 dark:text-teal-400" },
+  amber: { bar: "bg-sky-500", icon: "text-sky-600 dark:text-sky-400" },
+  blue: { bar: "bg-sky-500", icon: "text-sky-600 dark:text-sky-400" },
 } as const;
 
 type Accent = keyof typeof accentStyles;
