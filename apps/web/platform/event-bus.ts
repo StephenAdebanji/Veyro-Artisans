@@ -42,6 +42,9 @@ const globalForEventBus = globalThis as unknown as { __veyroEventBus?: EventBus 
 
 export const eventBus = globalForEventBus.__veyroEventBus ?? new EventBus();
 
-if (process.env.NODE_ENV !== "production") {
-  globalForEventBus.__veyroEventBus = eventBus;
-}
+// Always stash — not just in dev. In production the same module-graph split
+// can occur (instrumentation bundle vs. API-route bundle), causing handlers
+// registered at boot to subscribe to a different emitter than the one
+// services publish to. Unconditionally writing here ensures every graph
+// resolves to the same singleton within the process.
+globalForEventBus.__veyroEventBus = eventBus;
