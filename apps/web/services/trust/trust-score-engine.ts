@@ -44,7 +44,9 @@ export function calculateTrustScore(inputs: TrustScoreInputs): {
     credentialVerification: clamp01(
       safeRatio(inputs.approvedCredentialCount, inputs.expectedCredentialCount),
     ),
-    ratings: clamp01(inputs.ratingAvg / 5),
+    // Fewer than 3 reviews is not a reliable signal — treat as neutral (0.5) until
+    // enough data exists. This prevents a single bad review from tanking a new artisan.
+    ratings: inputs.reviewCount >= 3 ? clamp01(inputs.ratingAvg / 5) : 0.5,
     reviews: clamp01(safeRatio(inputs.reviewCount, inputs.reviewCountCeiling)),
     completionRate: clamp01(safeRatio(inputs.completedJobs, inputs.totalJobsAccepted)),
     responseTime: clamp01(
