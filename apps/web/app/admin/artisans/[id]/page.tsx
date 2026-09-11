@@ -295,11 +295,11 @@ export default async function AdminArtisanDetailPage({
               </thead>
               <tbody className="divide-y-2">
                 {blockchainRecords.map((rec) => {
-                  const explorerUrl = rec.txHash
-                    ? rec.network === "POLYGON_AMOY"
+                  const isSimulated = rec.txHash?.startsWith("0xsimulated") ?? false;
+                  const explorerUrl =
+                    rec.txHash && !isSimulated && rec.network === "POLYGON_AMOY"
                       ? `https://amoy.polygonscan.com/tx/${rec.txHash}`
-                      : null
-                    : null;
+                      : null;
                   const statusStyle =
                     rec.status === "CONFIRMED"
                       ? "bg-emerald-100 text-emerald-700"
@@ -315,6 +315,11 @@ export default async function AdminArtisanDetailPage({
                         <span className={`rounded px-1.5 py-0.5 text-xs font-medium ${statusStyle}`}>
                           {rec.status}
                         </span>
+                        {isSimulated && (
+                          <span className="ml-1.5 rounded bg-sky-100 px-1.5 py-0.5 text-xs font-medium text-sky-700">
+                            simulated
+                          </span>
+                        )}
                       </td>
                       <td className="py-2 pr-4 font-mono">
                         {rec.txHash ? (
@@ -328,7 +333,7 @@ export default async function AdminArtisanDetailPage({
                               {rec.txHash.slice(0, 10)}…{rec.txHash.slice(-6)}
                             </a>
                           ) : (
-                            <span className="text-muted-foreground">
+                            <span className="text-muted-foreground" title={rec.txHash}>
                               {rec.txHash.slice(0, 10)}…{rec.txHash.slice(-6)}
                             </span>
                           )

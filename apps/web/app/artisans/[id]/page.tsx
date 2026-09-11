@@ -185,12 +185,21 @@ export default async function ArtisanProfilePage({ params }: { params: Promise<{
             <p className="mt-2 text-2xl font-bold text-primary">{Math.round(profile.trustScore)}/100</p>
             {latestChainRecord ? (
               <div className="mt-2">
-                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-medium text-emerald-700 ring-1 ring-emerald-200">
-                  <svg className="h-2.5 w-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
-                    <path d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
-                  Anchored on-chain
-                </span>
+                {latestChainRecord.txHash?.startsWith("0xsimulated") ? (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-sky-50 px-2 py-0.5 text-[10px] font-medium text-sky-700 ring-1 ring-sky-200">
+                    <svg className="h-2.5 w-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
+                      <path d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                    Anchored (simulated)
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-medium text-emerald-700 ring-1 ring-emerald-200">
+                    <svg className="h-2.5 w-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
+                      <path d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                    Anchored on-chain
+                  </span>
+                )}
                 <p className="mt-1 font-mono text-[10px] text-muted-foreground break-all">
                   {latestChainRecord.txHash?.slice(0, 20)}…
                 </p>
