@@ -238,7 +238,7 @@ function UserActionRow({
         <p className="mt-1 text-right text-xs text-muted-foreground">{deleteReason.length} / 200</p>
       </ConfirmDialog>
 
-      <tr className="border-b last:border-b-0 hover:bg-muted/30">
+      <tr className="border-b-2 last:border-b-0 hover:bg-muted/30">
         <td className="py-3 pl-4 pr-4 text-sm text-muted-foreground">{index}</td>
         <td className="py-3 pr-4 font-medium">
           <div className="flex items-center gap-2.5">
@@ -334,7 +334,7 @@ function UserActionRow({
         </td>
       </tr>
       {actionError && (
-        <tr className="border-b last:border-b-0">
+        <tr className="border-b-2 last:border-b-0">
           <td colSpan={7} className="py-1.5 pl-4 pr-4 text-right text-xs text-destructive">
             {actionError}
           </td>
@@ -493,7 +493,7 @@ export function UsersTable({ initialRows }: { initialRows: CombinedUserRow[] }) 
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b text-left text-xs uppercase text-muted-foreground">
+            <tr className="border-b-2 text-left text-xs uppercase text-muted-foreground">
               <th className="py-3 pl-4 pr-4 font-medium">#</th>
               <th className="py-3 pr-4 font-medium">Name</th>
               <th className="py-3 pr-4 font-medium">Email</th>

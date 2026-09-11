@@ -130,7 +130,7 @@ export function AccessLogTable({ entries }: { entries: AccessLogRow[] }) {
       </div>
 
       <table className="w-full text-left text-sm">
-        <thead className="border-b bg-muted/40 text-xs uppercase tracking-wide text-muted-foreground">
+        <thead className="border-b-2 bg-muted/40 text-xs uppercase tracking-wide text-muted-foreground">
           <tr>
             <th className="px-4 py-3 font-medium">#</th>
             <th className="px-4 py-3 font-medium">Admin</th>
@@ -140,7 +140,7 @@ export function AccessLogTable({ entries }: { entries: AccessLogRow[] }) {
             <th className="px-4 py-3 text-right font-medium">Details</th>
           </tr>
         </thead>
-        <tbody className="divide-y">
+        <tbody className="divide-y-2">
           {rows.length === 0 ? (
             <tr>
               <td colSpan={6} className="px-4 py-6 text-center text-sm text-muted-foreground">

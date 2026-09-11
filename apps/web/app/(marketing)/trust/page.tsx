@@ -145,7 +145,7 @@ export default function TrustPage() {
           <div className="mt-6 overflow-hidden rounded-xl border bg-card">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b bg-muted/30">
+                <tr className="border-b-2 bg-muted/30">
                   <th className="px-4 py-3 text-left font-medium">Factor</th>
                   <th className="px-4 py-3 text-left font-medium">Weight</th>
                   <th className="hidden px-4 py-3 text-left font-medium md:table-cell">What it measures</th>
@@ -153,7 +153,7 @@ export default function TrustPage() {
               </thead>
               <tbody>
                 {TRUST_SCORE_FACTORS.map(({ label, weight, description }) => (
-                  <tr key={label} className="border-b last:border-b-0">
+                  <tr key={label} className="border-b-2 last:border-b-0">
                     <td className="px-4 py-3 font-medium">{label}</td>
                     <td className="px-4 py-3 text-[#1E3A8A] font-bold">{weight}</td>
                     <td className="hidden px-4 py-3 text-muted-foreground md:table-cell">{description}</td>
@@ -175,7 +175,7 @@ export default function TrustPage() {
           <div className="mt-6 overflow-hidden rounded-xl border bg-card">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b bg-muted/30">
+                <tr className="border-b-2 bg-muted/30">
                   <th className="px-4 py-3 text-left font-medium">Aspect</th>
                   <th className="px-4 py-3 text-left font-medium text-[#1E3A8A]">VEYRO</th>
                   <th className="px-4 py-3 text-left font-medium text-muted-foreground">Others</th>
@@ -183,7 +183,7 @@ export default function TrustPage() {
               </thead>
               <tbody>
                 {COMPARED.map(({ aspect, veyro, others }) => (
-                  <tr key={aspect} className="border-b last:border-b-0">
+                  <tr key={aspect} className="border-b-2 last:border-b-0">
                     <td className="px-4 py-3 font-medium">{aspect}</td>
                     <td className="px-4 py-3">
                       <div className="flex items-start gap-2">

@@ -285,7 +285,7 @@ export default async function AdminArtisanDetailPage({
           <div className="overflow-x-auto">
             <table className="w-full text-xs">
               <thead>
-                <tr className="border-b text-left text-muted-foreground">
+                <tr className="border-b-2 text-left text-muted-foreground">
                   <th className="pb-2 pr-4 font-medium">Type</th>
                   <th className="pb-2 pr-4 font-medium">Status</th>
                   <th className="pb-2 pr-4 font-medium">Tx Hash</th>
@@ -293,7 +293,7 @@ export default async function AdminArtisanDetailPage({
                   <th className="pb-2 font-medium">Date</th>
                 </tr>
               </thead>
-              <tbody className="divide-y">
+              <tbody className="divide-y-2">
                 {blockchainRecords.map((rec) => {
                   const explorerUrl = rec.txHash
                     ? rec.network === "POLYGON_AMOY"
