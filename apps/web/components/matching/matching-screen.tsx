@@ -108,7 +108,12 @@ export function MatchingScreen({
       );
       socketRef.current = socket;
 
-      socket.emit("join-request", { serviceRequestId });
+      // Re-join the room on every connect (initial + reconnects after a
+      // network drop or Railway sleep). Without this, the homeowner's socket
+      // is no longer in the room after a reconnect and misses incoming offers.
+      socket.on("connect", () => {
+        socket.emit("join-request", { serviceRequestId });
+      });
 
       socket.on("offer-created", (offer: OfferData) => {
         if (!mounted) return;
