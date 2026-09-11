@@ -128,13 +128,16 @@ class TrustService implements TrustServicePort {
   async applyNewReview(artisanId: string): Promise<void> {
     // Read all source-of-truth data in parallel — ratings, job counts, and
     // response times so the full trust score is always correct.
-    const [reviewRows, completedJobs, totalJobsAccepted, respondedMatches] = await Promise.all([
+    const [reviewRows, completedJobs, totalJobsAccepted, offeredMatches] = await Promise.all([
       prisma.review.findMany({ where: { artisanId }, select: { rating: true } }),
       prisma.job.count({ where: { artisanId, status: "COMPLETED" } }),
       prisma.job.count({ where: { artisanId } }),
+      // Response time = how fast the artisan offered after the request was posted.
+      // Match.createdAt = when artisan submitted the offer.
+      // ServiceRequest.createdAt = when the homeowner posted.
       prisma.match.findMany({
-        where: { artisanId, respondedAt: { not: null } },
-        select: { createdAt: true, respondedAt: true },
+        where: { artisanId },
+        select: { createdAt: true, serviceRequest: { select: { createdAt: true } } },
       }),
     ]);
 
@@ -142,9 +145,9 @@ class TrustService implements TrustServicePort {
     const ratingAvg =
       ratingCount > 0 ? reviewRows.reduce((s, r) => s + r.rating, 0) / ratingCount : 0;
 
-    const responseTimes = respondedMatches
-      .filter((m) => m.respondedAt !== null)
-      .map((m) => (m.respondedAt!.getTime() - m.createdAt.getTime()) / 1000);
+    const responseTimes = offeredMatches
+      .map((m) => (m.createdAt.getTime() - m.serviceRequest.createdAt.getTime()) / 1000)
+      .filter((t) => t >= 0);
     const responseTimeAvgSeconds =
       responseTimes.length > 0
         ? responseTimes.reduce((a, b) => a + b, 0) / responseTimes.length
