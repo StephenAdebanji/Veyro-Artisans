@@ -23,6 +23,22 @@ async function withProfilePhotos(ranked: RankedArtisan[]): Promise<RankedArtisan
   });
 }
 
+// New artisans (fewer than 3 reviews) should never occupy the #1 spot —
+// they need jobs to build reviews, but an unproven artisan as the top pick
+// undermines homeowner trust in the panel. If #1 is new, swap in the first
+// established artisan (3+ reviews) above them.
+const MIN_REVIEWS_FOR_TOP = 3;
+function promoteEstablished(ranked: RankedArtisan[]): RankedArtisan[] {
+  if (ranked.length < 2) return ranked;
+  if ((ranked[0].ratingCount ?? 0) >= MIN_REVIEWS_FOR_TOP) return ranked;
+  const establishedIdx = ranked.findIndex((r) => (r.ratingCount ?? 0) >= MIN_REVIEWS_FOR_TOP);
+  if (establishedIdx === -1) return ranked; // all new — leave order as-is
+  const reordered = [...ranked];
+  const [promoted] = reordered.splice(establishedIdx, 1);
+  reordered.unshift(promoted);
+  return reordered;
+}
+
 export const GET = withApiErrorHandling(async (request: Request) => {
   const url = new URL(request.url);
   const serviceRequestId = url.searchParams.get("serviceRequestId");
@@ -36,7 +52,7 @@ export const GET = withApiErrorHandling(async (request: Request) => {
     orderBy: { createdAt: "desc" },
   });
   if (cached) {
-    const ranked = await withProfilePhotos(cached.output as unknown as RankedArtisan[]);
+    const ranked = promoteEstablished(await withProfilePhotos(cached.output as unknown as RankedArtisan[]));
     return NextResponse.json({ ranked, cached: true });
   }
 
@@ -80,5 +96,5 @@ export const GET = withApiErrorHandling(async (request: Request) => {
     artisanNames,
   });
 
-  return NextResponse.json({ ranked: await withProfilePhotos(ranked), cached: false });
+  return NextResponse.json({ ranked: promoteEstablished(await withProfilePhotos(ranked)), cached: false });
 });
