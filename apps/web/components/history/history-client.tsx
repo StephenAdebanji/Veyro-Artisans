@@ -158,7 +158,7 @@ export function HistoryClient({
         <div className="mt-4 overflow-x-auto rounded-xl border bg-card">
           <table className="w-full min-w-[580px] text-sm">
             <thead>
-              <tr className="border-b text-left text-xs uppercase text-muted-foreground">
+              <tr className="border-b-2 text-left text-xs uppercase text-muted-foreground">
                 <th className="px-4 py-3 font-medium">#</th>
                 <th className="px-4 py-3 font-medium">Job</th>
                 <th className="px-4 py-3 font-medium">Category</th>
@@ -172,7 +172,7 @@ export function HistoryClient({
               {pageRows.map((job, i) => (
                 <tr
                   key={job.jobId}
-                  className="border-b last:border-b-0 transition-colors hover:bg-muted/40"
+                  className="border-b-2 last:border-b-0 transition-colors hover:bg-muted/40"
                 >
                   <td className="px-4 py-3 text-sm text-muted-foreground">{(page - 1) * PAGE_SIZE + i + 1}</td>
                   <td className="max-w-[160px] px-4 py-3">

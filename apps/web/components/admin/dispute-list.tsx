@@ -267,7 +267,7 @@ function ResolvedHistoryTable({ items }: { items: DisputeItem[] }) {
       <div className="overflow-x-auto rounded-xl border bg-card">
         <table className="w-full min-w-[640px] text-sm">
           <thead>
-            <tr className="border-b text-left text-xs uppercase text-muted-foreground">
+            <tr className="border-b-2 text-left text-xs uppercase text-muted-foreground">
               <th className="px-4 py-3 font-medium">#</th>
               <th className="px-4 py-3 font-medium">Raised by</th>
               <th className="px-4 py-3 font-medium">Reason</th>
@@ -282,7 +282,7 @@ function ResolvedHistoryTable({ items }: { items: DisputeItem[] }) {
               const isHardDeleted = !item.raisedByEmail && !item.raisedByRole;
   const displayName = item.raisedByName ?? (isHardDeleted ? "Deleted user" : item.raisedByEmail ?? "Unknown");
               return (
-                <tr key={item.id} className="border-b last:border-b-0 transition-colors hover:bg-muted/40">
+                <tr key={item.id} className="border-b-2 last:border-b-0 transition-colors hover:bg-muted/40">
                   <td className="px-4 py-3 text-muted-foreground">{i + 1}</td>
                   <td className="px-4 py-3">
                     <div className="flex flex-col gap-0.5">
