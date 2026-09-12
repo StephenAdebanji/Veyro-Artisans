@@ -298,9 +298,18 @@ export function ArtisansTable({ initialRows }: { initialRows: ArtisanRow[] }) {
   const [allRows, setAllRows] = useState(initialRows);
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
+  const [categoryFilter, setCategoryFilter] = useState<string>("ALL");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
   const [page, setPage] = useState(1);
+
+  // Unique categories present in the data, sorted alphabetically by label.
+  const categoryOptions = useMemo(() => {
+    const cats = Array.from(new Set(allRows.map((r) => r.primarySkill).filter(Boolean))) as string[];
+    return cats.sort((a, b) =>
+      (SKILL_LABELS[a as SkillCategory] ?? a).localeCompare(SKILL_LABELS[b as SkillCategory] ?? b),
+    );
+  }, [allRows]);
 
   function handleDeleted(id: string) {
     setAllRows((prev) => prev.filter((r) => r.id !== id));
@@ -317,6 +326,7 @@ export function ArtisansTable({ initialRows }: { initialRows: ArtisanRow[] }) {
     const to = toDate ? new Date(`${toDate}T23:59:59.999`) : null;
     return allRows.filter((row) => {
       if (statusFilter !== "ALL" && row.user.status !== statusFilter) return false;
+      if (categoryFilter !== "ALL" && row.primarySkill !== categoryFilter) return false;
       if (q) {
         const name = [row.firstName, row.lastName].filter(Boolean).join(" ").toLowerCase();
         const category = row.primarySkill
@@ -362,6 +372,21 @@ export function ArtisansTable({ initialRows }: { initialRows: ArtisanRow[] }) {
               <option value="ACTIVE">Active</option>
               <option value="SUSPENDED">Suspended</option>
               <option value="DELETED">Deleted</option>
+            </select>
+          </div>
+          <div className="flex flex-col gap-1">
+            <Label className="text-xs text-muted-foreground">Category</Label>
+            <select
+              value={categoryFilter}
+              onChange={(e) => { setCategoryFilter(e.target.value); reset(); }}
+              className="h-9 rounded-md border border-input bg-background px-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            >
+              <option value="ALL">All categories</option>
+              {categoryOptions.map((cat) => (
+                <option key={cat} value={cat}>
+                  {SKILL_LABELS[cat as SkillCategory] ?? cat}
+                </option>
+              ))}
             </select>
           </div>
           <div className="flex flex-col gap-1">
