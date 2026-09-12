@@ -6,7 +6,6 @@ import { ArtisanJobFeed } from "@/components/dashboard/artisan-job-feed";
 import { AvailableJobsCountProvider, useAvailableJobsCount } from "@/components/dashboard/available-jobs-count-context";
 import { JobsTable, type JobsTableRow } from "@/components/dashboard/jobs-table";
 import { apiFetch } from "@/lib/api-client";
-import { SKILL_LABELS } from "@/components/shared/skill-labels";
 import type { AvailableRequestSummary, DeclinedOfferNotice, SkillCategory } from "@veyro/contracts";
 
 type Tab = "available" | "pending" | "active";
@@ -67,17 +66,7 @@ function ArtisanJobsTabsInner({
 }: ArtisanJobsTabsProps) {
   const jobsCount = useAvailableJobsCount();
   const [tab, setTab] = useState<Tab>("available");
-  const [categoryFilter, setCategoryFilter] = useState<SkillCategory | "all">("all");
   const [declinedNotices, setDeclinedNotices] = useState<DeclinedOfferNotice[]>([]);
-
-  // Unique categories present in the loaded job list, in insertion order.
-  const availableCategories = Array.from(
-    new Set(availableJobs.map((j) => j.category as SkillCategory)),
-  );
-  const filteredJobs =
-    categoryFilter === "all"
-      ? availableJobs
-      : availableJobs.filter((j) => j.category === categoryFilter);
   const dismissTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
 
   function dismissNotice(matchId: string) {
@@ -223,48 +212,14 @@ function ArtisanJobsTabsInner({
       <div className="mt-5">
         {tab === "available" &&
           (category ? (
-            <div>
-              {availableCategories.length > 1 && (
-                <div className="mb-4 flex flex-wrap gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setCategoryFilter("all")}
-                    className={`rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
-                      categoryFilter === "all"
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-muted text-muted-foreground hover:bg-muted/80"
-                    }`}
-                  >
-                    All ({availableJobs.length})
-                  </button>
-                  {availableCategories.map((cat) => {
-                    const count = availableJobs.filter((j) => j.category === cat).length;
-                    return (
-                      <button
-                        key={cat}
-                        type="button"
-                        onClick={() => setCategoryFilter(cat)}
-                        className={`rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
-                          categoryFilter === cat
-                            ? "bg-primary text-primary-foreground"
-                            : "bg-muted text-muted-foreground hover:bg-muted/80"
-                        }`}
-                      >
-                        {SKILL_LABELS[cat] ?? cat} ({count})
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-              <ArtisanJobFeed
-                initialJobs={filteredJobs}
-                artisanId={artisanId}
-                category={category}
-                artisanLat={artisanLat}
-                artisanLng={artisanLng}
-                serviceRadiusKm={serviceRadiusKm}
-              />
-            </div>
+            <ArtisanJobFeed
+              initialJobs={availableJobs}
+              artisanId={artisanId}
+              category={category}
+              artisanLat={artisanLat}
+              artisanLng={artisanLng}
+              serviceRadiusKm={serviceRadiusKm}
+            />
           ) : (
             <p className="text-sm text-muted-foreground">
               Complete your profile (set your trade category) to see available jobs.
