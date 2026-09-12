@@ -151,9 +151,9 @@ function ArtisanActionRow({
     <>
       <ConfirmDialog
         open={confirmPurge}
-        title="Permanently purge artisan"
-        description={`This will irreversibly delete all of ${name}'s data — profile, credentials, chat history, and account. This cannot be undone.`}
-        confirmLabel="Purge permanently"
+        title={`Nuclear option 💣 — purge ${name}?`}
+        description={`Every trace of ${name}'s account will be wiped — profile, credentials, job history, chat records, everything. Gone for good, no recovery. Only do this if you're absolutely certain.`}
+        confirmLabel="Yes, purge permanently"
         destructive
         loading={pending}
         onConfirm={handlePurge}
@@ -161,8 +161,8 @@ function ArtisanActionRow({
       />
       <ConfirmDialog
         open={confirmDelete}
-        title="Delete artisan"
-        description={`This will permanently deactivate ${name}'s account. Please provide a reason.`}
+        title={`Remove ${name} from VEYRO?`}
+        description={`This will deactivate their account immediately. They won't be able to log in. Let them know why — it helps if they ever want to appeal.`}
         confirmLabel="Delete"
         destructive
         loading={pending}

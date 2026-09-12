@@ -12,13 +12,13 @@ export default async function SignInPage({
   return (
     <AuthLayout title="Welcome back" subtitle="Hire trusted artisans in minutes." mode="sign-in">
       {params.registered === "1" && (
-        <div className="mb-4 rounded-md border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-          Account created successfully — please sign in to continue.
+        <div className="mb-4 rounded-md border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+          🎉 You&apos;re in! Welcome to VEYRO — sign in below to get started.
         </div>
       )}
       {params.reset === "1" && (
         <div className="mb-4 rounded-md border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-          Password reset email sent — check your inbox.
+          🔐 New password set! Sign in below and you&apos;re good to go.
         </div>
       )}
       <IdleReasonBanner reason={params.reason} />

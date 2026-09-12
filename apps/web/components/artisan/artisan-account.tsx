@@ -29,6 +29,8 @@ import { AccountDangerZone } from "@/components/shared/account-danger-zone";
 import { COUNTRIES, NIGERIAN_STATES, NIGERIAN_LGAS } from "@/lib/location-data";
 import { SKILL_LABELS } from "@/components/shared/skill-labels";
 import { apiFetch } from "@/lib/api-client";
+import { toast } from "sonner";
+import { T } from "@/lib/toasts";
 import type { SkillCategory } from "@veyro/contracts";
 
 const COUNTRY_OPTIONS = COUNTRIES.map((c) => ({ value: c.code, label: c.name }));
@@ -73,7 +75,7 @@ function LogDisputeSection() {
       setSubmitted(true);
       setDescription("");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to submit. Please try again.");
+      setError(err instanceof Error ? err.message : T.disputeFailed);
     } finally {
       setSubmitting(false);
     }
@@ -160,8 +162,6 @@ export function ArtisanAccount({
   const router = useRouter();
   const [tab, setTab] = useState<Tab>("profile");
   const [saving, startSave] = useTransition();
-  const [saved, setSaved] = useState(false);
-  const [saveError, setSaveError] = useState<string | null>(null);
 
   // Profile tab state
   const [bio, setBio] = useState(initialData.bio);
@@ -189,15 +189,10 @@ export function ArtisanAccount({
   const [kycStaged, setKycStaged] = useState<Record<string, StagedItem>>({});
 
   function handleKycStaged(categoryId: string, item: StagedItem) {
-    setSaved(false);
-    setSaveError(null);
     setKycStaged((prev) => ({ ...prev, [categoryId]: item }));
   }
 
   function handleSave() {
-    setSaved(false);
-    setSaveError(null);
-
     if (tab === "profile") {
       startSave(async () => {
         const selectedCountry = COUNTRIES.find((c) => c.code === countryCode);
@@ -216,10 +211,10 @@ export function ArtisanAccount({
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(body),
           });
-          setSaved(true);
+          toast.success(T.profileSaved);
           router.refresh();
-        } catch (err) {
-          setSaveError(err instanceof Error ? err.message : "Failed to save changes.");
+        } catch {
+          toast.error(T.saveFailed);
         }
       });
       return;
@@ -265,20 +260,17 @@ export function ArtisanAccount({
             return next;
           });
           if (kycStatus === "REJECTED") setKycStatus("UNVERIFIED");
-          setSaved(true);
+          toast.success(T.credentialSubmitted);
           router.refresh();
         }
 
-        if (failCount > 0)
-          setSaveError(`${failCount} document(s) failed to submit. Try saving again.`);
+        if (failCount > 0) toast.error(T.saveFailed);
       });
       return;
     }
   }
 
   function handleCancel() {
-    setSaved(false);
-    setSaveError(null);
     if (tab === "profile") {
       setBio(initialData.bio);
       setPhone(initialData.phone);
@@ -333,7 +325,7 @@ export function ArtisanAccount({
         ).map(({ id, icon: Icon, label }) => (
           <button
             key={id}
-            onClick={() => { setTab(id); setSaved(false); setSaveError(null); }}
+            onClick={() => { setTab(id);  }}
             className={`flex flex-1 items-center justify-center gap-2 rounded-lg py-2 text-sm font-medium transition-colors ${
               tab === id
                 ? "bg-white shadow-sm dark:bg-card"
@@ -386,7 +378,7 @@ export function ArtisanAccount({
                     type="tel"
                     placeholder="e.g. +2348012345678"
                     value={phone}
-                    onChange={(e) => { setPhone(e.target.value); setSaved(false); }}
+                    onChange={(e) => { setPhone(e.target.value);  }}
                   />
                 </div>
                 <div className="flex flex-col gap-1.5 sm:col-span-2">
@@ -414,7 +406,7 @@ export function ArtisanAccount({
                     maxLength={500}
                     placeholder="Tell homeowners about your experience…"
                     value={bio}
-                    onChange={(e) => { setBio(e.target.value); setSaved(false); }}
+                    onChange={(e) => { setBio(e.target.value);  }}
                   />
                   <p className="mt-1 text-right text-xs text-muted-foreground">{bio.length} / 500</p>
                 </div>
@@ -424,7 +416,7 @@ export function ArtisanAccount({
                   <SearchableSelect
                     options={COUNTRY_OPTIONS}
                     value={countryCode}
-                    onChange={(code) => { setCountryCode(code); setStateVal(""); setLga(""); setSaved(false); }}
+                    onChange={(code) => { setCountryCode(code); setStateVal(""); setLga("");  }}
                     placeholder="Select country"
                   />
                 </div>
@@ -435,14 +427,14 @@ export function ArtisanAccount({
                     <SearchableSelect
                       options={NIGERIAN_STATE_OPTIONS}
                       value={stateVal}
-                      onChange={(s) => { setStateVal(s); setLga(""); setSaved(false); }}
+                      onChange={(s) => { setStateVal(s); setLga("");  }}
                       placeholder="Select state"
                     />
                   ) : (
                     <Input
                       placeholder="State / Province / Region"
                       value={stateVal}
-                      onChange={(e) => { setStateVal(e.target.value); setLga(""); setSaved(false); }}
+                      onChange={(e) => { setStateVal(e.target.value); setLga("");  }}
                     />
                   )}
                 </div>
@@ -453,7 +445,7 @@ export function ArtisanAccount({
                     <SearchableSelect
                       options={lgaOptions}
                       value={lga}
-                      onChange={(l) => { setLga(l); setSaved(false); }}
+                      onChange={(l) => { setLga(l);  }}
                       placeholder="Select LGA"
                     />
                   </div>
@@ -467,7 +459,7 @@ export function ArtisanAccount({
                     min={1}
                     inputMode="numeric"
                     value={serviceRadiusKm}
-                    onChange={(e) => { setServiceRadiusKm(e.target.value); setSaved(false); }}
+                    onChange={(e) => { setServiceRadiusKm(e.target.value);  }}
                     placeholder="e.g. 20"
                   />
                 </div>
@@ -496,7 +488,6 @@ export function ArtisanAccount({
       {/* Save / Cancel — only on Profile and KYC tabs */}
       {showSaveCancel && (
         <div className="mt-6 border-t pt-6">
-          {saveError && <p className="mb-3 text-sm text-destructive">{saveError}</p>}
           <div className="flex items-center gap-3">
             <Button onClick={handleSave} disabled={saving} className="min-w-[100px]">
               {saving && <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />}
@@ -506,11 +497,6 @@ export function ArtisanAccount({
               <Button variant="outline" onClick={handleCancel} disabled={saving}>
                 Cancel
               </Button>
-            )}
-            {saved && (
-              <span className="flex items-center gap-1.5 text-sm text-emerald-600">
-                <CheckCircle2 className="h-4 w-4" /> Saved
-              </span>
             )}
           </div>
         </div>

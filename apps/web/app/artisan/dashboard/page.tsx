@@ -15,6 +15,7 @@ import { userService } from "@/services/user/user.service";
 import { RatingCard } from "@/components/artisan/rating-card";
 import { VerifiedBanner } from "@/components/artisan/verified-banner";
 import { ArtisanDashboardStatsProvider, LiveTrustScoreRing, LiveStatTiles } from "@/components/dashboard/live-artisan-stats";
+import { WelcomeBanner } from "@/components/shared/welcome-banner";
 import { SKILL_LABELS } from "@/components/shared/skill-labels";
 import type { SkillCategory } from "@veyro/contracts";
 type ArtisanOnboardingStatus = "DRAFT" | "PENDING_REVIEW" | "ACTIVE" | "SUSPENDED";
@@ -44,7 +45,13 @@ interface ArtisanProfileRecord {
   } | null;
 }
 
-export default async function ArtisanDashboardPage() {
+export default async function ArtisanDashboardPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ welcome?: string }>;
+}) {
+  const params = await searchParams;
+  const isNewUser = params?.welcome === "1";
   const session = await auth();
   const userId = (session?.user as { id?: string } | undefined)?.id;
   if (!userId) redirect("/sign-in");
@@ -114,6 +121,7 @@ export default async function ArtisanDashboardPage() {
 
   return (
     <main className="flex-1 px-6 py-10">
+      {isNewUser && <WelcomeBanner name={profile.firstName ?? "there"} role="artisan" />}
       {profile.verificationStatus === "VERIFIED" && (
         <VerifiedBanner artisanId={profile.id} />
       )}

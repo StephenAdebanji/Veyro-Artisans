@@ -265,9 +265,9 @@ export function MatchingScreen({
             ✕
           </button>
           <div>
-            <h2 className="text-xl font-semibold">Request cancelled</h2>
+            <h2 className="text-xl font-semibold">Request cancelled 👌</h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              Your request has been removed. Ready to post again?
+              No worries — it&apos;s been removed. Ready to give it another shot?
             </p>
           </div>
           <div className="flex flex-col items-center gap-3">
@@ -364,9 +364,9 @@ export function MatchingScreen({
         <div className="mb-6 flex flex-col items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-6 text-center">
           <CheckCircle2 className="h-10 w-10 text-emerald-500" />
           <div>
-            <p className="text-lg font-semibold text-emerald-800">Artisan confirmed!</p>
+            <p className="text-lg font-semibold text-emerald-800">Artisan confirmed! 🎉</p>
             <p className="text-sm text-emerald-700">
-              Your artisan is on the way. You can chat or call them below.
+              Great choice! Your artisan is on the way — chat or call them below if you need anything.
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -409,9 +409,9 @@ export function MatchingScreen({
               ⏱
             </div>
             <div>
-              <h2 className="text-xl font-semibold">No artisans responded</h2>
+              <h2 className="text-xl font-semibold">No artisans responded 😕</h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                No one picked up your request within the offer window.
+                The offer window closed with no takers. Try posting again — timing and category affect visibility.
               </p>
             </div>
             <button

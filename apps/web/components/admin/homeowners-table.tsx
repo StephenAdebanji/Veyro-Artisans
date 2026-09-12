@@ -138,9 +138,9 @@ function HomeownerActionRow({
     <>
       <ConfirmDialog
         open={confirmPurge}
-        title="Permanently purge homeowner"
-        description={`This will irreversibly delete all of ${data.fullName ?? "this homeowner"}'s data — profile, chat history, and account. This cannot be undone.`}
-        confirmLabel="Purge permanently"
+        title={`Nuclear option 💣 — purge ${data.fullName ?? "this homeowner"}?`}
+        description={`Every trace of their account will be wiped — profile, requests, job history, chat records, everything. Gone for good, no recovery. Only do this if you're absolutely certain.`}
+        confirmLabel="Yes, purge permanently"
         destructive
         loading={pending}
         onConfirm={handlePurge}
@@ -148,8 +148,8 @@ function HomeownerActionRow({
       />
       <ConfirmDialog
         open={confirmDelete}
-        title="Delete homeowner"
-        description={`This will permanently deactivate ${data.fullName ?? "this homeowner"}'s account. Please provide a reason.`}
+        title={`Remove ${data.fullName ?? "this homeowner"} from VEYRO?`}
+        description={`This will deactivate their account immediately. They won't be able to log in. Let them know why — it helps if they ever want to appeal.`}
         confirmLabel="Delete"
         destructive
         loading={pending}

@@ -153,10 +153,11 @@ export function IdleSessionGuard() {
       >
         <DialogHeader className="items-center text-center">
           <AlertTriangle className="h-10 w-10 text-amber-500" />
-          <DialogTitle>Still there?</DialogTitle>
+          <DialogTitle>Hey, still there? 👀</DialogTitle>
           <DialogDescription>
-            You&apos;ve been inactive for a while. For your security, you&apos;ll be signed out in{" "}
-            <span className="font-semibold tabular-nums text-foreground">{secondsLeft ?? 0}s</span>.
+            You&apos;ve gone quiet on us. To keep your account safe, we&apos;ll sign you out in{" "}
+            <span className="font-semibold tabular-nums text-foreground">{secondsLeft ?? 0}s</span>{" "}
+            — tap the button below to stay signed in.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="gap-2">

@@ -8,6 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import { COUNTRIES, NIGERIAN_STATES, NIGERIAN_LGAS } from "@/lib/location-data";
+import { toast } from "sonner";
+import { T } from "@/lib/toasts";
 
 const COUNTRY_OPTIONS = COUNTRIES.map((c) => ({ value: c.code, label: c.name }));
 const NIGERIAN_STATE_OPTIONS = NIGERIAN_STATES.map((s) => ({ value: s, label: s }));
@@ -41,7 +43,7 @@ function LogDisputeSection() {
     });
     setSubmitting(false);
     if (!res.ok) {
-      setError("Failed to submit dispute. Please try again.");
+      setError(T.disputeFailed);
     } else {
       setSubmitted(true);
       setDescription("");
@@ -94,8 +96,6 @@ export function SettingsForm({ email, fullName, initial }: SettingsFormProps) {
   const [lga, setLga] = useState(initial.city);
   const [streetAddress, setStreetAddress] = useState(initial.address);
   const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const isNigeria = countryCode === "NG";
   const lgaOptions = useMemo(
@@ -107,13 +107,11 @@ export function SettingsForm({ email, fullName, initial }: SettingsFormProps) {
     setCountryCode(code);
     setState("");
     setLga("");
-    setSaved(false);
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
-    setError(null);
     const res = await fetch("/api/homeowners/profile", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -126,9 +124,9 @@ export function SettingsForm({ email, fullName, initial }: SettingsFormProps) {
     });
     setSaving(false);
     if (!res.ok) {
-      setError("Failed to save. Please try again.");
+      toast.error(T.saveFailed);
     } else {
-      setSaved(true);
+      toast.success(T.profileSaved);
     }
   }
 
@@ -162,7 +160,7 @@ export function SettingsForm({ email, fullName, initial }: SettingsFormProps) {
                 id="phone"
                 placeholder="+234 800 000 0000"
                 value={phone}
-                onChange={(e) => { setPhone(e.target.value); setSaved(false); }}
+                onChange={(e) => { setPhone(e.target.value);  }}
                 autoComplete="tel"
               />
             </div>
@@ -181,14 +179,14 @@ export function SettingsForm({ email, fullName, initial }: SettingsFormProps) {
                 <SearchableSelect
                   options={NIGERIAN_STATE_OPTIONS}
                   value={state}
-                  onChange={(s) => { setState(s); setLga(""); setSaved(false); }}
+                  onChange={(s) => { setState(s); setLga("");  }}
                   placeholder="Select state"
                 />
               ) : (
                 <Input
                   placeholder="State / Province / Region"
                   value={state}
-                  onChange={(e) => { setState(e.target.value); setSaved(false); }}
+                  onChange={(e) => { setState(e.target.value);  }}
                 />
               )}
             </div>
@@ -198,7 +196,7 @@ export function SettingsForm({ email, fullName, initial }: SettingsFormProps) {
                 <SearchableSelect
                   options={lgaOptions}
                   value={lga}
-                  onChange={(l) => { setLga(l); setSaved(false); }}
+                  onChange={(l) => { setLga(l);  }}
                   placeholder="Select LGA"
                 />
               </div>
@@ -209,22 +207,15 @@ export function SettingsForm({ email, fullName, initial }: SettingsFormProps) {
                 id="streetAddress"
                 placeholder="12 Adeola Odeku Street"
                 value={streetAddress}
-                onChange={(e) => { setStreetAddress(e.target.value); setSaved(false); }}
+                onChange={(e) => { setStreetAddress(e.target.value);  }}
               />
             </div>
           </div>
-
-          {error && <p className="mt-3 text-sm text-destructive">{error}</p>}
 
           <div className="mt-4 flex items-center gap-3">
             <Button type="submit" disabled={saving}>
               {saving ? "Saving…" : "Save changes"}
             </Button>
-            {saved && (
-              <span className="flex items-center gap-1.5 text-sm text-emerald-600">
-                <CheckCircle2 className="h-4 w-4" /> Saved
-              </span>
-            )}
           </div>
         </section>
       </form>

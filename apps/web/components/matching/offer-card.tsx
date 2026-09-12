@@ -5,6 +5,7 @@ import Image from "next/image";
 import { Star, Clock, MapPin, Sparkles, MessageCircle, Phone, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { T } from "@/lib/toasts";
 import type { SkillCategory } from "@veyro/contracts";
 
 export interface OfferData {
@@ -105,7 +106,7 @@ export function OfferCard({
     try {
       await onAccept(offer.matchId);
     } catch (err) {
-      setAcceptError(err instanceof Error ? err.message : "Failed to accept offer. Please try again.");
+      setAcceptError(err instanceof Error ? err.message : T.acceptFailed);
     } finally {
       setAccepting(false);
     }
@@ -123,7 +124,7 @@ export function OfferCard({
       setShowRejectForm(false);
       setRejectReason("");
     } catch {
-      setRejectError("Failed to reject offer. Please try again.");
+      setRejectError(T.rejectFailed);
     } finally {
       setRejecting(false);
     }

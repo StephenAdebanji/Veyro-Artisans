@@ -58,7 +58,9 @@ export function SignInForm({ reason }: { reason?: string }) {
 
     const session = await getSession();
     const role = (session?.user as { role?: string } | undefined)?.role ?? "HOMEOWNER";
-    router.push(ROLE_REDIRECT[role] ?? "/");
+    const isNewUser = new URLSearchParams(window.location.search).get("registered") === "1";
+    const base = ROLE_REDIRECT[role] ?? "/";
+    router.push(isNewUser ? `${base}?welcome=1` : base);
     router.refresh();
   }
 

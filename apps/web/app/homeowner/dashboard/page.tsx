@@ -6,6 +6,7 @@ import { ActiveRequestCard } from "@/components/dashboard/active-request-card";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { CategoryPicker } from "@/components/dashboard/category-picker";
 import { CompleteProfileBanner } from "@/components/homeowner/complete-profile-banner";
+import { WelcomeBanner } from "@/components/shared/welcome-banner";
 import { auth } from "@/platform/auth-session";
 import { chatService } from "@/services/chat/chat.service";
 import { matchingService } from "@/services/matching/matching.service";
@@ -18,7 +19,13 @@ const EXPERIENCE_FROM_DB: Record<string, string> = {
   TEN_PLUS: "10+",
 };
 
-export default async function HomeownerDashboardPage() {
+export default async function HomeownerDashboardPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ welcome?: string }>;
+}) {
+  const params = await searchParams;
+  const isNewUser = params?.welcome === "1";
   const session = await auth();
   const userId = (session?.user as { id?: string } | undefined)?.id;
   if (!userId) redirect("/sign-in");
@@ -55,6 +62,7 @@ export default async function HomeownerDashboardPage() {
 
   return (
     <main className="flex-1 px-6 py-10">
+      {isNewUser && <WelcomeBanner name={homeowner.fullName?.split(" ")[0] ?? "there"} role="homeowner" />}
       {profileIncomplete && <CompleteProfileBanner />}
 
       <div className="flex flex-wrap items-center justify-between gap-4">

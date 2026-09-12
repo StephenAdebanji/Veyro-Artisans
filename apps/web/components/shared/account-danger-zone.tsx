@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { apiFetch, ApiRequestError } from "@/lib/api-client";
+import { T } from "@/lib/toasts";
 
 export function AccountDangerZone({ email }: { email: string }) {
   const [exporting, setExporting] = useState(false);
@@ -33,7 +34,7 @@ export function AccountDangerZone({ email }: { email: string }) {
       link.click();
       URL.revokeObjectURL(url);
     } catch (err) {
-      setExportError(err instanceof ApiRequestError ? err.message : "Failed to export your data. Please try again.");
+      setExportError(err instanceof ApiRequestError ? err.message : T.exportFailed);
     } finally {
       setExporting(false);
     }
@@ -57,7 +58,7 @@ export function AccountDangerZone({ email }: { email: string }) {
       setDeleting(false);
       setDeletedOpen(true);
     } catch (err) {
-      setDeleteError(err instanceof ApiRequestError ? err.message : "Failed to delete your account. Please try again.");
+      setDeleteError(err instanceof ApiRequestError ? err.message : T.deleteFailed);
       setDeleting(false);
     }
   }
@@ -110,8 +111,8 @@ export function AccountDangerZone({ email }: { email: string }) {
 
       <ConfirmDialog
         open={confirmOpen}
-        title="Delete your account?"
-        description={`This will deactivate your account immediately. You will be signed out and will no longer be able to log in. To confirm, type your email address (${email}) below.`}
+        title="We're sad to see you go 😢"
+        description={`Your profile, job history, and everything attached to your account will be gone for good. There's no coming back from this one. To confirm, type your email address (${email}) below.`}
         confirmLabel={deleting ? "Deleting…" : "Delete my account"}
         destructive
         loading={deleting}
@@ -142,9 +143,9 @@ export function AccountDangerZone({ email }: { email: string }) {
         >
           <DialogHeader className="items-center text-center">
             <CheckCircle2 className="h-10 w-10 text-emerald-600" />
-            <DialogTitle>Account deleted</DialogTitle>
+            <DialogTitle>Goodbye for now 👋</DialogTitle>
             <DialogDescription>
-              Your VEYRO account has been deactivated. Your data will be permanently removed by an admin after review.
+              Your VEYRO account has been deactivated. We&apos;re sad to see you go — your data will be permanently removed by an admin after review.
             </DialogDescription>
           </DialogHeader>
           <Button onClick={handleReturnHome} className="w-full">

@@ -6,6 +6,8 @@ import { Star, Loader2, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { apiFetch } from "@/lib/api-client";
+import { toast } from "sonner";
+import { T } from "@/lib/toasts";
 
 export function ReviewForm({ jobId }: { jobId: string }) {
   const router = useRouter();
@@ -26,10 +28,11 @@ export function ReviewForm({ jobId }: { jobId: string }) {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ rating, comment: comment.trim() || undefined }),
         });
+        toast.success(T.reviewSubmitted);
         setDone(true);
         router.refresh();
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Could not submit your review. Please try again.");
+        setError(err instanceof Error ? err.message : T.reviewFailed);
       }
     });
   }

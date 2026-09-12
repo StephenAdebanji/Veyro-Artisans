@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { Providers } from "./providers";
 import TopLoader from "nextjs-toploader";
+import { Toaster } from "sonner";
 
 const siteUrl = process.env.NEXTAUTH_URL ?? "https://veyro-artisans-web.vercel.app";
 const defaultDescription =
@@ -40,6 +41,7 @@ export default function RootLayout({
       <body className="flex h-full flex-col">
         <TopLoader color="#1E3A8A" height={3} showSpinner={false} />
         <Providers>{children}</Providers>
+        <Toaster position="bottom-right" richColors closeButton />
       </body>
     </html>
   );
