@@ -88,6 +88,14 @@ export function registerMatchingGateway(io: Server, app: Application): void {
     res.json({ ok: true });
   });
 
+  // Called by apps/web when a homeowner accepts an artisan's offer —
+  // pushes a congratulatory live notice directly to that artisan.
+  app.post("/internal/matching/offer-accepted", (req: Request, res: Response) => {
+    const { artisanUserId, ...payload } = req.body as { artisanUserId: string; [key: string]: unknown };
+    namespace.to(`user:${artisanUserId}`).emit("offer:accepted", payload);
+    res.json({ ok: true });
+  });
+
   // Called by apps/web when a homeowner cancels their service request —
   // broadcasts to all artisans in the skill room so any open job cards for
   // this request disappear immediately without a page refresh.

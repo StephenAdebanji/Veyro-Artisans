@@ -33,15 +33,25 @@ export const POST = withApiErrorHandling(async (_req: Request, { params }: { par
   const { jobId } = await matchingService.respondToOffer(matchId, "ACCEPT");
 
   const artisan = (await userService.getArtisanProfile(match.artisanId)) as
-    | { user?: { phone?: string | null } }
+    | { user?: { phone?: string | null; id?: string | null } }
     | null;
   const artisanPhone = artisan?.user?.phone ?? null;
+  const artisanUserId = artisan?.user?.id ?? null;
 
   fetch(`${REALTIME_URL}/internal/matching/${serviceRequest.id}/responded`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ matchId, decision: "ACCEPT", jobId, artisanId: match.artisanId, artisanPhone }),
   }).catch(() => {});
+
+  // Push a live congratulatory notice directly to the artisan's socket.
+  if (artisanUserId) {
+    fetch(`${REALTIME_URL}/internal/matching/offer-accepted`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ artisanUserId, jobId, description: serviceRequest.description }),
+    }).catch(() => {});
+  }
 
   // Remove the card from every other artisan's live feed — the job is taken.
   fetch(`${REALTIME_URL}/internal/matching/broadcast-cancel`, {

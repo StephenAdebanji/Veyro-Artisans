@@ -66,6 +66,8 @@ function ArtisanJobsTabsInner({
 }: ArtisanJobsTabsProps) {
   const jobsCount = useAvailableJobsCount();
   const [tab, setTab] = useState<Tab>("available");
+  const [acceptedNotice, setAcceptedNotice] = useState<string | null>(null);
+  const acceptedTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [declinedNotices, setDeclinedNotices] = useState<DeclinedOfferNotice[]>([]);
   const dismissTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
 
@@ -93,6 +95,7 @@ function ArtisanJobsTabsInner({
     return () => {
       timers.forEach(clearTimeout);
       timers.clear();
+      if (acceptedTimer.current) clearTimeout(acceptedTimer.current);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialDeclinedNotices]);
@@ -120,6 +123,16 @@ function ArtisanJobsTabsInner({
       socket.on("offer:declined", (notice: DeclinedOfferNotice) => {
         if (!mounted) return;
         showNotice(notice);
+      });
+
+      socket.on("offer:accepted", ({ description }: { description?: string }) => {
+        if (!mounted) return;
+        const msg = description
+          ? `Yayyy! Your offer for "${description}" has been accepted! Please proceed with the job and move the status accordingly.`
+          : "Yayyy! Your offer has been accepted! Please proceed with the job and move the status accordingly.";
+        setAcceptedNotice(msg);
+        if (acceptedTimer.current) clearTimeout(acceptedTimer.current);
+        acceptedTimer.current = setTimeout(() => setAcceptedNotice(null), 10_000);
       });
     }
 
@@ -154,6 +167,24 @@ function ArtisanJobsTabsInner({
 
   return (
     <div>
+      {acceptedNotice && (
+        <div className="mb-4 flex items-start justify-between gap-3 rounded-xl border border-emerald-300 bg-emerald-50 px-4 py-3 dark:border-emerald-800 dark:bg-emerald-950/40">
+          <p className="text-sm font-semibold text-emerald-800 dark:text-emerald-300">
+            🎉 {acceptedNotice}
+          </p>
+          <button
+            type="button"
+            onClick={() => {
+              setAcceptedNotice(null);
+              if (acceptedTimer.current) clearTimeout(acceptedTimer.current);
+            }}
+            aria-label="Dismiss"
+            className="shrink-0 rounded p-0.5 text-emerald-700 hover:bg-emerald-100 dark:text-emerald-400 dark:hover:bg-emerald-900"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      )}
       {declinedNotices.length > 0 && (
         <div className="mb-5 flex flex-col gap-2">
           {declinedNotices.map((notice) => (
