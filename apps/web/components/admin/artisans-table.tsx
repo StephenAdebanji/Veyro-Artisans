@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { SKILL_LABELS } from "@/components/shared/skill-labels";
+import { SKILL_CATEGORIES, SKILL_LABELS } from "@/components/shared/skill-labels";
 import { EditArtisanModal, type EditArtisanData } from "./edit-user-modal";
 import { ResetPasswordModal } from "./reset-password-modal";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
@@ -303,13 +303,10 @@ export function ArtisansTable({ initialRows }: { initialRows: ArtisanRow[] }) {
   const [toDate, setToDate] = useState("");
   const [page, setPage] = useState(1);
 
-  // Unique categories present in the data, sorted alphabetically by label.
-  const categoryOptions = useMemo(() => {
-    const cats = Array.from(new Set(allRows.map((r) => r.primarySkill).filter(Boolean))) as string[];
-    return cats.sort((a, b) =>
-      (SKILL_LABELS[a as SkillCategory] ?? a).localeCompare(SKILL_LABELS[b as SkillCategory] ?? b),
-    );
-  }, [allRows]);
+  // All system categories sorted alphabetically by display label.
+  const categoryOptions = [...SKILL_CATEGORIES].sort((a, b) =>
+    SKILL_LABELS[a].localeCompare(SKILL_LABELS[b]),
+  );
 
   function handleDeleted(id: string) {
     setAllRows((prev) => prev.filter((r) => r.id !== id));
@@ -341,7 +338,7 @@ export function ArtisansTable({ initialRows }: { initialRows: ArtisanRow[] }) {
       }
       return true;
     });
-  }, [allRows, query, statusFilter, fromDate, toDate]);
+  }, [allRows, query, statusFilter, categoryFilter, fromDate, toDate]);
 
   const rows = useMemo(
     () => filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
